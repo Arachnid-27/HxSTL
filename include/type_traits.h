@@ -77,6 +77,56 @@ namespace HxSTL {
         typedef true_type       value;
     };
 
+    template <class T>
+    struct is_integer {
+        typedef false_type      value;
+    };
+
+    template <>
+    struct is_integer<char> {
+        typedef true_type       value;
+    };
+
+    template <>
+    struct is_integer<signed char> {
+        typedef true_type       value;
+    };
+
+    template <>
+    struct is_integer<unsigned char> {
+        typedef true_type       value;
+    };
+
+    template <>
+    struct is_integer<short> {
+        typedef true_type       value;
+    };
+
+    template <>
+    struct is_integer<unsigned short> {
+        typedef true_type       value;
+    };
+
+    template <>
+    struct is_integer<int> {
+        typedef true_type       value;
+    };
+
+    template <>
+    struct is_integer<unsigned int> {
+        typedef true_type       value;
+    };
+
+    template <>
+    struct is_integer<long> {
+        typedef true_type       value;
+    };
+
+    template <>
+    struct is_integer<unsigned long> {
+        typedef true_type       value;
+    };
+
 }
 
 

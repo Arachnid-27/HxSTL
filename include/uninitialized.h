@@ -4,6 +4,7 @@
 
 #include "construct.h"
 #include "iterator.h"
+#include "algorithm.h"
 
 
 namespace HxSTL {
@@ -11,8 +12,8 @@ namespace HxSTL {
     template <class InputIterator, class ForwardIterator>
     inline ForwardIterator uninitialized_copy(InputIterator first, InputIterator last,
             ForwardIterator result) {
-        return __uninitialized_copy(first, last, result, 
-                is_pod<typename iterator_traits<ForwardIterator>::value_type>::value());
+        typedef typename iterator_traits<ForwardIterator>::value_type value_type;
+        return __uninitialized_copy(first, last, result, typename is_pod<value_type>::value());
     }
 
     template <class InputIterator, class ForwardIterator>
@@ -25,7 +26,7 @@ namespace HxSTL {
     inline ForwardIterator __uninitialized_copy(InputIterator first, InputIterator last,
             ForwardIterator result, false_type) {
         for (; first != last; ++first, ++result) {
-            constrcut(&*result, *first);
+            construct(&*result, *first);
         }
         return result;
     }
@@ -33,9 +34,8 @@ namespace HxSTL {
     template <class ForwardIterator, class T>
     inline void uninitialized_fill(ForwardIterator first, ForwardIterator last, 
             const T& x) {
-        __uninitialized_fill(first, last, x, 
-                is_pod<typename iterator_traits<ForwardIterator>::value_type>::value());
-                
+        typedef typename iterator_traits<ForwardIterator>::value_type value_type;
+        __uninitialized_fill(first, last, x, typename is_pod<value_type>::value());
     }
 
     template <class ForwardIterator, class T>
@@ -54,8 +54,8 @@ namespace HxSTL {
 
     template <class ForwardIterator, class Size, class T>
     inline ForwardIterator uninitialized_fill_n(ForwardIterator first, Size n, const T& x) {
-        return __uninitialized_fill_n(first, n, x, 
-                is_pod<typename iterator_traits<ForwardIterator>::value_type>::value());
+        typedef typename iterator_traits<ForwardIterator>::value_type value_type;
+        return __uninitialized_fill_n(first, n, x, typename is_pod<value_type>::value());
     }
 
     template <class ForwardIterator, class Size, class T>
