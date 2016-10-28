@@ -73,7 +73,7 @@ namespace HxSTL {
     };
 
     template <class T>
-    struct is_pod<T *> {
+    struct is_pod<T*> {
         typedef true_type       value;
     };
 

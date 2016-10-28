@@ -3,7 +3,6 @@
 
 
 #include <cstddef>
-#include <climits>
 #include "alloc.h"
 #include "construct.h"
 
