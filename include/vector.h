@@ -35,9 +35,10 @@ namespace HxSTL {
         void initialize_aux(InputIterator first, InputIterator last, false_type);
         void initialize_aux(size_type n, const value_type& val, true_type);
         template <class InputIterator>
-        void refill_and_insert(iterator position, InputIterator first, InputIterator last);
-        void refill_and_insert(iterator position, const T& x, size_type n = 1);
-        void refill_and_copy(size_type n);
+        void insert_aux(iterator position, InputIterator first, InputIterator last, false_type);
+        void insert_aux(iterator position, size_type n, const T& x, true_type);
+        void allocate_and_single_insert(iterator position, const T& x);
+        void destroy_and_initialize(iterator new_start, iterator new_finish, iterator new_end);
         void deallocate();
     public:
         explicit vector(const allocator_type& alloc = allocator_type())
@@ -148,7 +149,7 @@ namespace HxSTL {
 
     template <class T, class Alloc>
     vector<T, Alloc>& vector<T, Alloc>::operator=(const vector& x) {
-        // Todo
+        assign(x.begin(), x.end());
     }
 
     template <class T, class Alloc>
@@ -182,24 +183,72 @@ namespace HxSTL {
     template <class T, class Alloc>
     void vector<T, Alloc>::reserve(size_type n) {
         if (n > capacity()) {
-            refill_and_copy(n);
+            iterator new_start = _alloc.allocate(n);
+            iterator new_finish = new_start;
+
+            try {
+                new_finish = uninitialized_copy(_start, _finish, new_start);
+            } catch (...) {
+                destroy(new_start, new_finish);
+                _alloc.deallocate(new_start, n);
+                throw;
+            }
+
+            destroy_and_initialize(new_start, new_finish, new_start + n);
         }
     }
 
     template <class T, class Alloc>
     template <class InputIterator>
     void vector<T, Alloc>::assign(InputIterator first, InputIterator last) {
-        if (last - first < capacity()) {
+        size_type n = last - first;
+
+        if (n <= capacity()) {
+            iterator old_finish = _finish;
+
             copy(first, last, _start);
-            _finish = _start + (last - first);
+            _finish = _start + n;
+
+            destroy(_finish, old_finish);
         } else {
-            refill_and_copy(last - first);
+            iterator new_start = _alloc.allocate(n);
+            iterator new_finish = new_start;
+
+            try {
+                new_finish = uninitialized_copy(first, last, new_start);
+            } catch (...) {
+                destroy(new_start, new_finish);
+                _alloc.deallocate(new_start, n);
+                throw;
+            }
+
+            destroy_and_initialize(new_start, new_finish, new_finish);
         }
     }
 
     template <class T, class Alloc>
     void vector<T, Alloc>::assign(size_type n, const value_type& val) {
-        // Todo
+        if (n <= capacity()) {
+            iterator old_finish = _finish;
+
+            fill_n(_start, n, val);
+            _finish = _start + n; 
+
+            destroy(_finish, old_finish);
+        } else {
+            iterator new_start = _alloc.allocate(n);
+            iterator new_finish = new_start;
+
+            try {
+                new_finish = uninitialized_fill_n(n, val, new_start);
+            } catch (...) {
+                destroy(new_start, new_finish);
+                _alloc.deallocate(new_start, n);
+                throw;
+            }
+
+            destroy_and_initialize(new_start, new_finish, new_finish);
+        }
     } 
 
     template <class T, class Alloc>
@@ -208,7 +257,7 @@ namespace HxSTL {
             construct(_finish, val);
             ++_finish;
         } else {
-            refill_and_insert(_finish, val);
+            allocate_and_single_insert(_finish, val);
         }
     }
 
@@ -225,30 +274,91 @@ namespace HxSTL {
             copy_backward(position, _finish - 1, _finish);
             *position = val;
         } else {
-            refill_and_insert(position, val);
+            allocate_and_single_insert(position, val);
         }
     }
 
     template <class T, class Alloc>
     void vector<T, Alloc>::insert(iterator position, size_type n, const value_type& val) {
-        if (_end - _finish >= n) {
-            _finish += n;
-            copy_backward(position, _finish - n, _finish);
-            fill_n(position, n, val);
-        } else {
-            refill_and_insert(position, val, n);
-        }
+        insert_aux(position, n, val, true_type());
     }
 
     template <class T, class Alloc>
     template <class InputIterator>
     void vector<T, Alloc>::insert(iterator position, InputIterator first, InputIterator last) {
-        if (_end - _finish >= last - first) {
-            _finish += (last - first);
-            copy_backward(position, _finish - (last - first), _finish);
-            copy(first, last, position);
+        insert_aux(position, first, last, typename is_integer<InputIterator>::value());
+    }
+
+    template <class T, class Alloc>
+    template <class InputIterator>
+    inline void vector<T, Alloc>::insert_aux(iterator position, InputIterator first, InputIterator last, false_type) {
+        size_type n = last - first;
+
+        if (_end - _finish >= n) {
+            size_type element_after = _finish - position;
+
+            iterator old_finish = _finish;
+            if (n > element_after) {
+                _finish = uninitialized_copy(first + element_after, last, _finish);
+                _finish = uninitialized_copy(position, old_finish, _finish);
+                copy_n(first, element_after, position);
+            } else {
+                _finish = uninitialized_copy(_finish - n, _finish, _finish);
+                copy_backward(position, old_finish - n, old_finish);
+                copy(first, last, position);
+            }
         } else {
-            refill_and_insert(position, first, last);
+            size_type new_sz = 2 * capacity() > n ? 2 * capacity() : n;
+
+            iterator new_start = _alloc.allocate(new_sz);
+            iterator new_finish = new_start;
+
+            try {
+                new_finish = uninitialized_copy(_start, position, new_start);
+                new_finish = uninitialized_copy(first, last, new_finish);
+                new_finish = uninitialized_copy(position, _finish, new_finish);
+            } catch (...) {
+                destroy(new_start, new_finish);
+                _alloc.deallocate(new_start, new_sz);
+                throw;
+            }
+
+            destroy_and_initialize(new_start, new_finish, new_start + new_sz);
+        }
+    }
+
+    template <class T, class Alloc>
+    inline void vector<T, Alloc>::insert_aux(iterator position, size_type n, const value_type& val, true_type) {
+        if (_end - _finish >= n) {
+            size_type element_after = _finish - position;
+
+            iterator old_finish = _finish;
+            if (n > element_after) {
+                _finish = uninitialized_fill_n(_finish, n - element_after, val);
+                _finish = uninitialized_copy(position, old_finish, _finish);
+                fill_n(position, element_after, val);
+            } else {
+                _finish = uninitialized_copy(_finish - n, _finish, _finish);
+                copy_backward(position, old_finish - n, old_finish);
+                fill_n(position, n, val);
+            }
+        } else {
+            size_type new_sz = 2 * capacity() > n ? 2 * capacity(): n;
+
+            iterator new_start = _alloc.allocate(new_sz);
+            iterator new_finish = new_start;
+
+            try {
+                new_finish = uninitialized_copy(_start, position, new_start);
+                new_finish = uninitialized_fill_n(new_finish, n, val);
+                new_finish = uninitialized_copy(position, _finish, new_finish);
+            } catch (...) {
+                destroy(new_start, new_finish);
+                _alloc.deallocate(new_start, new_sz);
+                throw;
+            }
+
+            destroy_and_initialize(new_start, new_finish, new_start + new_sz);
         }
     }
 
@@ -271,7 +381,19 @@ namespace HxSTL {
 
     template <class T, class Alloc>
     void vector<T, Alloc>::swap(vector& x) {
-        // Todo
+        iterator temp_iterator;
+        
+        temp_iterator = _start;
+        _start = x._start;
+        x._start = temp_iterator;
+
+        temp_iterator = _finish;
+        _finish = x._finish;
+        x._finish = temp_iterator;
+
+        temp_iterator = _end;
+        _end = x._end;
+        x._end = temp_iterator;
     }
 
     template <class T, class Alloc>
@@ -280,16 +402,16 @@ namespace HxSTL {
     }
 
     template <class T, class Alloc>
-    template <class InputIterator>
-    inline void vector<T, Alloc>::refill_and_insert(iterator position, InputIterator first, InputIterator last) {
-        size_type new_sz = 2 * size() > (last - first) ? 2 * size() : (last - first);
+    inline void vector<T, Alloc>::allocate_and_single_insert(iterator position, const T& x) {
+        size_type new_sz = size() ? 2 * size() : 1;
 
         iterator new_start = _alloc.allocate(new_sz);
         iterator new_finish = new_start;
 
         try {
             new_finish = uninitialized_copy(_start, position, new_start);
-            new_finish = copy(first, last, position);
+            construct(new_finish, x);
+            ++new_finish;
             new_finish = uninitialized_copy(position, _finish, new_finish);
         } catch (...) {
             destroy(new_start, new_finish);
@@ -297,58 +419,7 @@ namespace HxSTL {
             throw;
         }
 
-        destroy(_start, _end);
-        deallocate();
-
-        _start = new_start;
-        _finish = new_finish;
-        _end = new_start + new_sz;
-    }
-
-    template <class T, class Alloc>
-    inline void vector<T, Alloc>::refill_and_insert(iterator position, const T& x, size_type n) {
-        size_type new_sz = 2 * size() > n ? 2 * size(): n;
-
-        iterator new_start = _alloc.allocate(new_sz);
-        iterator new_finish = new_start;
-
-        try {
-            new_finish = uninitialized_copy(_start, position, new_start);
-            new_finish = fill_n(new_finish, n, x);
-            new_finish = uninitialized_copy(position, _finish, new_finish);
-        } catch (...) {
-            destroy(new_start, new_finish);
-            _alloc.deallocate(new_start, new_sz);
-            throw;
-        }
-
-        destroy(_start, _end);
-        deallocate();
-
-        _start = new_start;
-        _finish = new_finish;
-        _end = new_start + new_sz;
-    }
-
-    template <class T, class Alloc>
-    inline void vector<T, Alloc>::refill_and_copy(size_type n) {
-        iterator new_start = _alloc.allocate(n);
-        iterator new_finish = new_start;
-
-        try {
-            new_finish = uninitialized_copy(_start, _finish, new_start);
-        } catch (...) {
-            destroy(new_start, new_finish);
-            _alloc.deallocate(new_start, n);
-            throw;
-        }
-
-        destroy(_start, _finish);
-        deallocate();
-
-        _start = new_start;
-        _finish = new_finish;
-        _end = _start + n;
+        destroy_and_initialize(new_start, new_finish, new_start + new_sz);
     }
 
     template <class T, class Alloc>
@@ -356,6 +427,26 @@ namespace HxSTL {
         if (_start) {
             _alloc.deallocate(_start, capacity());
         }
+    }
+
+    template <class T, class Alloc>
+    inline void vector<T, Alloc>::destroy_and_initialize(iterator new_start, 
+            iterator new_finish, iterator new_end) {
+        destroy(_start, _finish);
+        deallocate();
+
+        _start = new_start;
+        _finish = new_finish;
+        _end = new_end;
+    }
+
+    /*
+     * friend
+     */
+
+    template <class T, class Alloc>
+    void swap(vector<T, Alloc>& x, vector<T, Alloc>& y) {
+        x.swap(y);
     }
 
 }

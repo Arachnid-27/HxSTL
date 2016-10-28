@@ -11,7 +11,7 @@ namespace HxSTL {
 
     template <class T1, class T2>
     inline void construct(T1 *p, const T2 &val) {
-        new (p) T1(val);     // placement new 
+        new (p) T1(val);
     }
 
     template <class T>
@@ -25,7 +25,6 @@ namespace HxSTL {
         __destroy(first, last, typename is_pod<value_type>::value());
     }
 
-    // has non-trivial destructor
     template <class ForwardIterator>
     inline void __destroy(ForwardIterator first, ForwardIterator last, false_type) {
         for (; first != last; ++first) {
@@ -33,7 +32,6 @@ namespace HxSTL {
         }
     }
 
-    // has trivial destructor
     template <class ForwardIterator>
     inline void __destroy(ForwardIterator first, ForwardIterator last, true_type) {}
 

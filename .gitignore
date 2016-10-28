@@ -3,3 +3,6 @@
 
 # Executables
 *.out
+
+# Swap files
+*.swp
