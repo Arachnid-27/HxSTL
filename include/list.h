@@ -10,9 +10,9 @@ namespace HxSTL {
 
     template <class T>
     struct list_node {
-        T _data;
-        list_node<T>*  _prev;
-        list_node<T>* _next;
+        T data;
+        list_node<T>* prev;
+        list_node<T>* next;
     };
 
     template <class T, class Ref, class Ptr>
@@ -32,29 +32,29 @@ namespace HxSTL {
         list_iterator(link_type x): _node(x) {}
         list_iterator(const list_iterator<T, Ref, Ptr>& x): _node(x._node) {}
         
-        reference operator*() const { return (*_node)._data; }
+        reference operator*() const { return _node -> data; }
         pointer operator->() const { return &(operator*()); }
 
         list_iterator& operator++() {
-            _node = (link_type) ((*_node)._next);
+            _node = _node -> next;
             return *this;
         }
 
         list_iterator& operator++(int) {
-            list_iterator& temp = *this;
+            list_iterator& tmp = *this;
             ++*this;
-            return temp;
+            return tmp;
         }
 
         list_iterator& operator--() {
-            _node = (link_type) ((*_node)._prev);
+            _node = _node -> prev;
             return *this;
         }
 
         list_iterator& operator--(int) {
-            list_iterator& temp = *this;
+            list_iterator& tmp = *this;
             --*this;
-            return temp;
+            return tmp;
         }
     public:
         friend bool operator==(const list_iterator& lhs, const list_iterator& rhs) {
@@ -66,7 +66,7 @@ namespace HxSTL {
         }
     };
 
-    template <class T, class Alloc = allocator<T> >
+    template <class T, class Alloc = allocator<list_node<T> > >
     class list {
     public:
         typedef T                                                       value_type;
@@ -91,7 +91,6 @@ namespace HxSTL {
         void initialize_aux(InputIterator first, InputIterator last, false_type);
         void initialize_aux(size_type n, const value_type& val, true_type);
         link_type get_node() { return _alloc.allocate(1); }
-        void put_node(link_type p) { _alloc.deallocate(p, 1); }
         link_type create_node(const T& x);
         void destroy_node(link_type p);
     public:
@@ -205,10 +204,10 @@ namespace HxSTL {
         _node = get_node();
         link_type p = _node;
         while (first != last) {
-            link_type temp = create_node(*first);
-            temp -> prev = p;
-            p -> next = temp;
-            p = temp;
+            link_type tmp = create_node(*first);
+            tmp -> prev = p;
+            p -> next = tmp;
+            p = tmp;
             ++first;
         }
         _node -> prev = p;
@@ -220,10 +219,10 @@ namespace HxSTL {
         _node = get_node();
         link_type p = _node;
         while (n != 0) {
-            link_type temp = create_node(val);
-            temp -> prev = p;
-            p -> next = temp;
-            p = temp;
+            link_type tmp = create_node(val);
+            tmp -> prev = p;
+            p -> next = tmp;
+            p = tmp;
             --n;
         }
         _node -> prev = p;
@@ -246,12 +245,12 @@ namespace HxSTL {
     template <class T, class Alloc>
     typename list<T, Alloc>::iterator 
     list<T, Alloc>::insert(iterator position, const value_type& val) {
-        link_type temp = create_node(val);
-        temp -> next = position._node;
-        temp -> prev = position._node -> prev;
-        (position._node -> prev) -> next = temp;
-        position._node -> prev = temp;
-        return temp;
+        link_type tmp = create_node(val);
+        tmp -> next = position._node;
+        tmp -> prev = position._node -> prev;
+        (position._node -> prev) -> next = tmp;
+        position._node -> prev = tmp;
+        return tmp;
     }
     
     template <class T, class Alloc>
@@ -345,16 +344,16 @@ namespace HxSTL {
     }
 
     template <class T, class Alloc>
-    inline typename list<T, Alloc>::link_type list<T, Allo>::create_node(const T& x) {
+    inline typename list<T, Alloc>::link_type list<T, Alloc>::create_node(const T& x) {
         link_type p = get_node();
-        construct(&(p -> _data), x);
+        construct(&(p -> data), x);
         return p;
     }
     
     template <class T, class Alloc>
     inline void list<T, Alloc>::destroy_node(link_type p) {
         destroy(&(p -> data));
-        put_node(p);
+        _alloc.deallocate(p, 1);
     }
 
 }

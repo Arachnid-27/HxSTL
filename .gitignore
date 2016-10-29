@@ -6,3 +6,6 @@
 
 # Swap files
 *.swp
+
+# Dependence files
+*.d

@@ -40,11 +40,16 @@ namespace HxSTL {
     public:
         explicit vector(const allocator_type& alloc = allocator_type())
             : _start(0), _finish(0), _end(0), _alloc(alloc) {}
+
         explicit vector(size_type n, const value_type& val = value_type(), 
-                const allocator_type& alloc = allocator_type());
+                const allocator_type& alloc = allocator_type())
+            : _alloc(alloc) { initialize_aux(n, val, true_type()); }
+
         template <class InputIterator>
         vector(InputIterator first, InputIterator last, 
-                const allocator_type& alloc = allocator_type());
+                const allocator_type& alloc = allocator_type())
+            : _alloc(alloc) { initialize_aux(first, last, typename is_integer<InputIterator>::value()); }
+
         vector(const vector& x);
 
         ~vector();
@@ -101,19 +106,6 @@ namespace HxSTL {
         friend void swap(vector<T, Alloc>& x, vector<T, Alloc>& y);
     };
 
-    template <class T, class Alloc>
-    vector<T, Alloc>::vector(size_type n, const value_type& val, 
-            const allocator_type& alloc): _alloc(alloc) {
-        initialize_aux(n, val, true_type());
-    }
-
-    template <class T, class Alloc>
-    template <class InputIterator>
-    vector<T, Alloc>::vector(InputIterator first, InputIterator last, 
-            const allocator_type& alloc): _alloc(alloc) {
-        initialize_aux(first, last, typename is_integer<InputIterator>::value());
-    }
-
     template<class T, class Alloc>
     vector<T, Alloc>::vector(const vector<T, Alloc>& x): _alloc(x._alloc) {
         _start = _alloc.allocate(x.capacity());
@@ -123,14 +115,14 @@ namespace HxSTL {
 
     template <class T, class Alloc>
     template <class InputIterator>
-    inline void vector<T, Alloc>::initialize_aux(InputIterator first, InputIterator last, false_type) {
+    void vector<T, Alloc>::initialize_aux(InputIterator first, InputIterator last, false_type) {
         _start = _alloc.allocate(last - first);
         _finish = uninitialized_copy(first, last, _start);
         _end = _finish;
     }
 
     template <class T, class Alloc>
-    inline void vector<T, Alloc>::initialize_aux(size_type n, const value_type& val, true_type) {
+    void vector<T, Alloc>::initialize_aux(size_type n, const value_type& val, true_type) {
         _start = _alloc.allocate(n);
         _finish = uninitialized_fill_n(_start, n, val);
         _end = _start + n;
@@ -142,10 +134,6 @@ namespace HxSTL {
             destroy(_start, _finish);
             _alloc.deallocate(_start, capacity());
         }
-    }
-
-    template <class T, class Alloc>
-    vector<T, Alloc>& vector<T, Alloc>::operator=(const vector& x) {
     }
 
     template <class T, class Alloc>
