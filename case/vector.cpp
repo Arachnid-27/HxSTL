@@ -15,9 +15,8 @@ void test_case_vector() {
     HxSTL::vector<int> vec1(5, 5);
     print_vector(vec1);
 
-    std::cout << "\n-------------------push_back pop_back" << std::endl;
+    std::cout << "\n-------------------push pop" << std::endl;
     vec1.push_back(10);
-    print_vector(vec1);
     vec1.push_back(11);
     print_vector(vec1);
     vec1.pop_back();

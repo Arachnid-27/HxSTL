@@ -83,7 +83,7 @@ namespace HxSTL {
     template <class InputIterator>
     inline typename iterator_traits<InputIterator>::difference_type
     distance(InputIterator first, InputIterator last) {
-        __distance(first, last, iterator_traits<InputIterator>::iterator_category());
+        __distance(first, last, typename iterator_traits<InputIterator>::iterator_category());
     }
 
     template <class InputIterator>

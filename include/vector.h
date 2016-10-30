@@ -35,6 +35,9 @@ namespace HxSTL {
         template <class InputIterator>
         void insert_aux(iterator position, InputIterator first, InputIterator last, false_type);
         void insert_aux(iterator position, size_type n, const T& x, true_type);
+        template <class InputIterator>
+        void assign_aux(InputIterator first, InputIterator last, false_type);
+        void assign_aux(size_type n, const T& x, true_type);
         void allocate_and_single_insert(iterator position, const T& x);
         void destroy_and_initialize(iterator new_start, iterator new_finish, iterator new_end);
     public:
@@ -97,17 +100,24 @@ namespace HxSTL {
 
         allocator_type get_allocator() const { return _alloc; }
     public:
-        friend bool operator==(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs);
-        friend bool operator!=(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs);
-        friend bool operator< (const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs);
-        friend bool operator<=(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs);
-        friend bool operator> (const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs);
-        friend bool operator>=(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs);
-        friend void swap(vector<T, Alloc>& x, vector<T, Alloc>& y);
+        template<class U, class A>
+        friend bool operator==(const vector<U, A>& lhs, const vector<U, A>& rhs);
+        template<class U, class A>
+        friend bool operator!=(const vector<U, A>& lhs, const vector<U, A>& rhs);
+        template<class U, class A>
+        friend bool operator< (const vector<U, A>& lhs, const vector<U, A>& rhs);
+        template<class U, class A>
+        friend bool operator<=(const vector<U, A>& lhs, const vector<U, A>& rhs);
+        template<class U, class A>
+        friend bool operator> (const vector<U, A>& lhs, const vector<U, A>& rhs);
+        template<class U, class A>
+        friend bool operator>=(const vector<U, A>& lhs, const vector<U, A>& rhs);
+        template<class U, class A>
+        friend void swap(vector<U, A>& x, vector<U, A>& y);
     };
 
     template<class T, class Alloc>
-    vector<T, Alloc>::vector(const vector<T, Alloc>& x): _alloc(x._alloc) {
+    vector<T, Alloc>::vector(const vector& x): _alloc(x._alloc) {
         _start = _alloc.allocate(x.capacity());
         _finish = uninitialized_copy(x.begin(), x.end(), _start);
         _end = _start + x.capacity();
@@ -181,6 +191,17 @@ namespace HxSTL {
     template <class T, class Alloc>
     template <class InputIterator>
     void vector<T, Alloc>::assign(InputIterator first, InputIterator last) {
+        assign_aux(first, last, typename is_integer<InputIterator>::value());
+    }
+
+    template <class T, class Alloc>
+    void vector<T, Alloc>::assign(size_type n, const value_type& val) {
+        assign_aux(n, val, true_type());
+    } 
+
+    template <class T, class Alloc>
+    template <class InputIterator>
+    inline void vector<T, Alloc>::assign_aux(InputIterator first, InputIterator last, false_type) {
         size_type n = last - first;
 
         if (n <= capacity()) {
@@ -207,7 +228,7 @@ namespace HxSTL {
     }
 
     template <class T, class Alloc>
-    void vector<T, Alloc>::assign(size_type n, const value_type& val) {
+    inline void vector<T, Alloc>::assign_aux(size_type n, const value_type& val, true_type) {
         if (n <= capacity()) {
             iterator old_finish = _finish;
 
@@ -229,7 +250,7 @@ namespace HxSTL {
 
             destroy_and_initialize(new_start, new_finish, new_finish);
         }
-    } 
+    }
 
     template <class T, class Alloc>
     void vector<T, Alloc>::push_back(const value_type& val) {
@@ -363,19 +384,19 @@ namespace HxSTL {
 
     template <class T, class Alloc>
     void vector<T, Alloc>::swap(vector& x) {
-        iterator temp_iterator;
+        iterator tmp;
         
-        temp_iterator = _start;
+        tmp = _start;
         _start = x._start;
-        x._start = temp_iterator;
+        x._start = tmp;
 
-        temp_iterator = _finish;
+        tmp = _finish;
         _finish = x._finish;
-        x._finish = temp_iterator;
+        x._finish = tmp;
 
-        temp_iterator = _end;
+        tmp = _end;
         _end = x._end;
-        x._end = temp_iterator;
+        x._end = tmp;
     }
 
     template <class T, class Alloc>
@@ -416,38 +437,38 @@ namespace HxSTL {
      * friend
      */
 
-    template <class T, class Alloc>
-    bool operator==(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs) {
+    template<class U, class A>
+    bool operator==(const vector<U, A>& lhs, const vector<U, A>& rhs) {
         // Todo
     }
 
-    template <class T, class Alloc>
-    bool operator!=(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs) {
+    template<class U, class A>
+    bool operator!=(const vector<U, A>& lhs, const vector<U, A>& rhs) {
         return !(lhs == rhs);
     }
     
-    template <class T, class Alloc>
-    bool operator< (const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs) {
+    template<class U, class A>
+    bool operator< (const vector<U, A>& lhs, const vector<U, A>& rhs) {
         // Todo
     }
 
-    template <class T, class Alloc>
-    bool operator<=(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs) {
+    template<class U, class A>
+    bool operator<=(const vector<U, A>& lhs, const vector<U, A>& rhs) {
         return !(lhs < rhs);
     }
 
-    template <class T, class Alloc>
-    bool operator> (const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs) {
+    template<class U, class A>
+    bool operator> (const vector<U, A>& lhs, const vector<U, A>& rhs) {
         return rhs < lhs;
     }
 
-    template <class T, class Alloc>
-    bool operator>=(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs) {
+    template<class U, class A>
+    bool operator>=(const vector<U, A>& lhs, const vector<U, A>& rhs) {
         return !(rhs < lhs);
     }
 
-    template <class T, class Alloc>
-    inline void swap(vector<T, Alloc>& x, vector<T, Alloc>& y) {
+    template<class U, class A>
+    inline void swap(vector<U, A>& x, vector<U, A>& y) {
         x.swap(y);
     }
 

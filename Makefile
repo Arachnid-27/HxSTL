@@ -17,7 +17,7 @@ $(EXE): $(OBJ)
 	$(CC) $< -c $(CPPFLAGS) -o $@
 
 
--include $(DEP)
+include $(DEP)
 
 
 %.d: %.cpp
