@@ -15,22 +15,23 @@ namespace HxSTL {
         list_node<T>* next;
     };
 
-    template <class T, class Ref, class Ptr>
+    template <class T>
     class list_iterator {
     public:
         typedef bidirectional_iterator_tag          iterator_category;
         typedef T                                   value_type;
-        typedef Ptr                                 pointer;
-        typedef Ref                                 reference;
-        typedef list_node<value_type>*              link_type;
+        typedef value_type*                         pointer;
+        typedef value_type&                         reference;
         typedef size_t                              size_type;
         typedef ptrdiff_t                           difference_type;
+
+        typedef list_node<value_type>*              link_type;
     public:
         link_type _node;
     public:
         list_iterator() {}
         list_iterator(link_type x): _node(x) {}
-        list_iterator(const list_iterator<T, Ref, Ptr>& x): _node(x._node) {}
+        list_iterator(const list_iterator& x): _node(x._node) {}
         
         reference operator*() const { return _node -> data; }
         pointer operator->() const { return &(operator*()); }
@@ -69,20 +70,20 @@ namespace HxSTL {
     template <class T, class Alloc = allocator<list_node<T> > >
     class list {
     public:
-        typedef T                                                       value_type;
-        typedef Alloc                                                   allocator_type;
-        typedef value_type&                                             reference;
-        typedef const value_type&                                       const_reference;
-        typedef value_type*                                             pointer;
-        typedef const value_type*                                       const_pointer;
-        typedef list_iterator<value_type, reference, pointer>           iterator;
-        typedef const list_iterator<value_type, reference, pointer>     const_iterator;
-    //  typedef reverse_iterator<iterator>                              reverse_iterator;
-    //  typedef reverse_iterator<const_iterator>                        const_reverse_iterator;
-        typedef ptrdiff_t                                               difference_type;
-        typedef size_t                                                  size_type;
+        typedef T                                       value_type;
+        typedef Alloc                                   allocator_type;
+        typedef value_type&                             reference;
+        typedef const value_type&                       const_reference;
+        typedef value_type*                             pointer;
+        typedef const value_type*                       const_pointer;
+        typedef list_iterator<value_type>               iterator;
+        typedef list_iterator<const value_type>         const_iterator;
+    //  typedef reverse_iterator<iterator>              reverse_iterator;
+    //  typedef reverse_iterator<const_iterator>        const_reverse_iterator;
+        typedef ptrdiff_t                               difference_type;
+        typedef size_t                                  size_type;
 
-        typedef typename iterator::link_type                            link_type;
+        typedef typename iterator::link_type            link_type;
     protected:
         link_type _node;
         allocator_type _alloc;
