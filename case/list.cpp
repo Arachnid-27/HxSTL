@@ -3,7 +3,7 @@
 
 
 void print_list(const HxSTL::list<int>& li) {
-    for (typename HxSTL::list<int>::const_iterator first = li.begin(); first != li.end(); ++first) {
+    for (HxSTL::list<int>::const_iterator first = li.begin(); first != li.end(); ++first) {
         std::cout << *first << " ";
     }
     std::cout << std::endl;
