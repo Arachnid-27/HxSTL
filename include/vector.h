@@ -112,9 +112,12 @@ namespace HxSTL {
         friend bool operator> (const vector<U, A>& lhs, const vector<U, A>& rhs);
         template<class U, class A>
         friend bool operator>=(const vector<U, A>& lhs, const vector<U, A>& rhs);
-        template<class U, class A>
-        friend void swap(vector<U, A>& x, vector<U, A>& y);
     };
+
+    template<class T, class Alloc>
+    void swap(vector<T, Alloc>& x, vector<T, Alloc>& y) {
+        x.swap(y);
+    }
 
     template<class T, class Alloc>
     vector<T, Alloc>::vector(const vector& x): _alloc(x._alloc) {
@@ -465,11 +468,6 @@ namespace HxSTL {
     template<class U, class A>
     bool operator>=(const vector<U, A>& lhs, const vector<U, A>& rhs) {
         return !(rhs < lhs);
-    }
-
-    template<class U, class A>
-    inline void swap(vector<U, A>& x, vector<U, A>& y) {
-        x.swap(y);
     }
 
 }

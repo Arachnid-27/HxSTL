@@ -8,15 +8,15 @@
 
 namespace HxSTL {
 
-    template <class T>
+    template <class T, class Ref, class Ptr>
     class deque_iterator {
     protected:
         enum {__BUFFER_SIZE = 512};
     public:
         typedef bidirectional_iterator_tag          iterator_category;
         typedef T                                   value_type;
-        typedef value_type*                         pointer;
-        typedef value_type&                         reference;
+        typedef Ptr                                 pointer;
+        typedef Ref                                 reference;
         typedef size_t                              size_type;
         typedef ptrdiff_t                           difference_type;
 
@@ -114,21 +114,21 @@ namespace HxSTL {
     template <class T, class Alloc = allocator<T> >
     class deque {
     public:
-        typedef T                                           value_type;
-        typedef Alloc                                       allocator_type;
-        typedef value_type&                                 reference;
-        typedef const value_type&                           const_reference;
-        typedef value_type*                                 pointer;
-        typedef const value_type*                           const_pointer;
-        typedef deque_iterator<value_type>                  iterator;
-        typedef deque_iterator<const value_type>            const_iterator;
-    //  typedef reverse_iterator<iterator>                  reverse_iterator;
-    //  typedef reverse_iterator<const_iterator>            const_reverse_iterator;
-        typedef ptrdiff_t                                   difference_type;
-        typedef size_t                                      size_type;
+        typedef T                                                               value_type;
+        typedef Alloc                                                           allocator_type;
+        typedef value_type&                                                     reference;
+        typedef const value_type&                                               const_reference;
+        typedef value_type*                                                     pointer;
+        typedef const value_type*                                               const_pointer;
+        typedef deque_iterator<value_type, reference, pointer>                  iterator;
+        typedef deque_iterator<value_type, const_reference, const_pointer>      const_iterator;
+    //  typedef reverse_iterator<iterator>                                      reverse_iterator;
+    //  typedef reverse_iterator<const_iterator>                                const_reverse_iterator;
+        typedef ptrdiff_t                                                       difference_type;
+        typedef size_t                                                          size_type;
 
-        typedef typename iterator::map_pointer              map_pointer;
-        typedef allocator<pointer>                          map_allocator_type;
+        typedef typename iterator::map_pointer                                  map_pointer;
+        typedef allocator<pointer>                                              map_allocator_type;
     protected:
         allocator_type _alloc;
         map_allocator_type _map_alloc; 

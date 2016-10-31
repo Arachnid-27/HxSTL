@@ -15,13 +15,13 @@ namespace HxSTL {
         list_node<T>* next;
     };
 
-    template <class T>
+    template <class T, class Ref, class Ptr>
     class list_iterator {
     public:
         typedef bidirectional_iterator_tag          iterator_category;
         typedef T                                   value_type;
-        typedef value_type*                         pointer;
-        typedef value_type&                         reference;
+        typedef Ptr                                 pointer;
+        typedef Ref                                 reference;
         typedef size_t                              size_type;
         typedef ptrdiff_t                           difference_type;
 
@@ -70,20 +70,20 @@ namespace HxSTL {
     template <class T, class Alloc = allocator<list_node<T> > >
     class list {
     public:
-        typedef T                                       value_type;
-        typedef Alloc                                   allocator_type;
-        typedef value_type&                             reference;
-        typedef const value_type&                       const_reference;
-        typedef value_type*                             pointer;
-        typedef const value_type*                       const_pointer;
-        typedef list_iterator<value_type>               iterator;
-        typedef list_iterator<const value_type>         const_iterator;
-    //  typedef reverse_iterator<iterator>              reverse_iterator;
-    //  typedef reverse_iterator<const_iterator>        const_reverse_iterator;
-        typedef ptrdiff_t                               difference_type;
-        typedef size_t                                  size_type;
+        typedef T                                                               value_type;
+        typedef Alloc                                                           allocator_type;
+        typedef value_type&                                                     reference;
+        typedef const value_type&                                               const_reference;
+        typedef value_type*                                                     pointer;
+        typedef const value_type*                                               const_pointer;
+        typedef list_iterator<value_type, reference, pointer>                   iterator;
+        typedef list_iterator<value_type, const_reference, const_pointer>       const_iterator;
+    //  typedef reverse_iterator<iterator>                                      reverse_iterator;
+    //  typedef reverse_iterator<const_iterator>                                const_reverse_iterator;
+        typedef ptrdiff_t                                                       difference_type;
+        typedef size_t                                                          size_type;
 
-        typedef typename iterator::link_type            link_type;
+        typedef typename iterator::link_type                                    link_type;
     protected:
         link_type _node;
         allocator_type _alloc;
@@ -184,9 +184,12 @@ namespace HxSTL {
         friend bool operator> (const list<U, A>& lhs, const list<U, A>& rhs);
         template<class U, class A>
         friend bool operator>=(const list<U, A>& lhs, const list<U, A>& rhs);
-        template<class U, class A>
-        friend void swap(list<U, A>& x, list<U, A>& y);
     };
+    
+    template<class T, class Alloc>
+    void swap(list<T, Alloc>& x, list<T, Alloc>& y) {
+        x.swap(y); 
+    }
 
     template <class T, class Alloc>
     list<T, Alloc>::list(const allocator_type& alloc): _alloc(alloc) {
@@ -465,11 +468,6 @@ namespace HxSTL {
     template<class U, class A>
     bool operator>=(const list<U, A>& lhs, const list<U, A>& rhs) {
         return !(rhs < lhs);
-    }
-
-    template<class U, class A>
-    inline void swap(list<U, A>& x, list<U, A>& y) {
-        x.swap(y);
     }
 
 }

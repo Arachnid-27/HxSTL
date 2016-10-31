@@ -3,11 +3,320 @@
 
 
 #include <cstring>
+#include "utility.h"
 #include "type_traits.h"
 #include "iterator.h"
 
 
 namespace HxSTL {
+
+    template <class InputIterator, class UnaryPredicate>
+    inline bool all_of(InputIterator first, InputIterator last, UnaryPredicate pred) {
+        while (first != last) {
+            if (!pred(*first)) {
+                return false;
+            }
+            ++first;
+        }
+        return true;
+    }
+
+    template <class InputIterator, class UnaryPredicate>
+    inline bool any_of(InputIterator first, InputIterator last, UnaryPredicate pred) {
+        while (first != last) {
+            if (pred(*first)) {
+                return true;
+            }
+            ++first;
+        }
+        return false;
+    }
+
+    template <class InputIterator, class UnaryPredicate>
+    inline bool none_of(InputIterator first, InputIterator last, UnaryPredicate pred) {
+        while (first != last) {
+            if (pred(*first)) {
+                return false;
+            }
+            ++first;
+        }
+        return true;
+    }
+
+    template <class InputIterator, class Function>
+    inline Function for_each(InputIterator first, InputIterator last, Function fn) {
+        while (first != last) {
+            fn(*first);
+            ++first;
+        }
+        return fn;
+    }
+
+    template <class InputIterator, class T>
+    inline InputIterator find(InputIterator first, InputIterator last, const T& val) {
+        while (first != last && *first != val) {
+            ++first;
+        }
+        return first;
+    }
+
+    template <class InputIterator, class UnaryPredicate>
+    inline InputIterator find_if(InputIterator first, InputIterator last, UnaryPredicate pred) {
+        while (first != last && !pred(*first)) {
+            ++first;
+        }
+        return first;
+    }
+
+    template <class InputIterator, class UnaryPredicate>
+    inline InputIterator find_if_not(InputIterator first, InputIterator last, UnaryPredicate pred) {
+        while (first != last && pred(*first)) {
+            ++first;
+        }
+        return first;
+    }
+
+    template <class ForwardIterator1, class ForwardIterator2>
+    inline ForwardIterator1 find_end(ForwardIterator1 first1, ForwardIterator1 last1, 
+            ForwardIterator2 first2, ForwardIterator2 last2); 
+
+    template <class ForwardIterator1, class ForwardIterator2, class BinaryPredicate>
+    inline ForwardIterator1 find_end(ForwardIterator1 first1, ForwardIterator1 last1, 
+            ForwardIterator2 first2, ForwardIterator2 last2, BinaryPredicate pred); 
+
+    template <class InputIterator, class ForwardIterator>
+    inline InputIterator find_first_of(InputIterator first1, InputIterator last1, 
+            ForwardIterator first2, ForwardIterator last2) {
+        while (first1 != last1) {
+            for (ForwardIterator it = first2; it != last2; ++it) {
+                if (*it == *first1) {
+                    return first1;
+                }
+            }
+            ++first1;
+        }
+        return last1;
+    }
+
+    template <class InputIterator, class ForwardIterator, class BinaryPredicate>
+    inline InputIterator find_first_of(InputIterator first1, InputIterator last1, 
+            ForwardIterator first2, ForwardIterator last2, BinaryPredicate pred) {
+        while (first1 != last1) {
+            for (ForwardIterator it = first2; it != last2; ++it) {
+                if (pred(*it, *first1)) {
+                    return first1;
+                }
+            }
+            ++first1;
+        }
+        return last1;
+    }
+
+    template <class ForwardIterator>
+    inline ForwardIterator adjacent_find(ForwardIterator first, ForwardIterator last) {
+        if (first != last) {
+            ForwardIterator next = first;
+            ++next;
+            while (next != last && *first != *next) {
+                ++first;
+                ++next;
+            }
+        }
+        return first;
+    }
+
+    template <class ForwardIterator, class BinaryPredicate>
+    inline ForwardIterator adjacent_find(ForwardIterator first, ForwardIterator last, BinaryPredicate pred) {
+        if (first != last) {
+            ForwardIterator next = first;
+            ++next;
+            while (next != last && !pred(*first, *next)) {
+                ++first;
+                ++next;
+            }
+        }
+        return first;
+    }
+
+    template <class InputIterator, class T>
+    inline typename iterator_traits<InputIterator>::difference_type
+    count(InputIterator first, InputIterator last, const T& val) {
+        typename iterator_traits<InputIterator>::difference_type result = 0;
+        while (first != last) {
+            if (*first == val) {
+                ++result;
+            }
+            ++first;
+        }
+        return result;
+    }
+
+    template <class InputIterator, class UnaryPredicate>
+    inline typename iterator_traits<InputIterator>::difference_type
+    count_if(InputIterator first, InputIterator last, UnaryPredicate pred) {
+        typename iterator_traits<InputIterator>::difference_type result = 0;
+        while (first != last) {
+            if (pred(*first)) {
+                ++result;
+            }
+            ++first;
+        }
+        return result;
+    }
+
+    template <class InputIterator1, class InputIterator2>
+    inline pair<InputIterator1, InputIterator2>
+    mismatch(InputIterator1 first1, InputIterator1 last1, 
+            InputIterator2 first2) {
+        while (first1 != last1 && *first1 == *first2) {
+            ++first1;
+            ++first2;
+        }
+        return make_pair(first1, first2);
+    }
+
+    template <class InputIterator1, class InputIterator2, class BinaryPredicate>
+    inline pair<InputIterator1, InputIterator2>
+    mismatch(InputIterator1 first1, InputIterator1 last1, 
+            InputIterator2 first2, BinaryPredicate pred) {
+        while (first1 != last1 && pred(*first1, *first2)) {
+            ++first1;
+            ++first2;
+        }
+        return make_pair(first1, first2);
+    }
+
+    template <class InputIterator1, class InputIterator2>
+    inline bool equal(InputIterator1 first1, InputIterator1 last1, 
+            InputIterator2 first2) {
+        while (first1 != last1) {
+            if (*first1 != *first2) {
+                return false;
+            }
+            ++first1;
+            ++first2;
+        }
+        return true;
+    }
+
+    template <class InputIterator1, class InputIterator2, class BinaryPredicate>
+    inline bool equal(InputIterator1 first1, InputIterator1 last1, 
+            InputIterator2 first2, BinaryPredicate pred) {
+        while (first1 != last1) {
+            if (!pred(*first1, *first2)) {
+                return false;
+            }
+            ++first1;
+            ++first2;
+        }
+        return true;
+    }
+
+    template <class ForwardIterator1, class ForwardIterator2>
+    inline bool is_permutation(ForwardIterator1 first1, ForwardIterator1 last1, 
+            ForwardIterator2 first2);
+
+    template <class ForwardIterator1, class ForwardIterator2, class BinaryPredicate>
+    inline bool is_permutation(ForwardIterator1 first1, ForwardIterator1 last1, 
+            ForwardIterator2 first2, BinaryPredicate pred);
+
+    template <class ForwardIterator1, class ForwardIterator2>
+    inline ForwardIterator1 search(ForwardIterator1 first1, ForwardIterator1 last1, 
+            ForwardIterator2 first2, ForwardIterator2 last2) {
+        if (first2 == last2) {
+            return first1;
+        }
+
+        ForwardIterator1 it1;
+        ForwardIterator2 it2;
+        while (first1 != last1) {
+            it1 = first1;
+            it2 = first2;
+            while (*it1 == *it2) {
+                ++it1;
+                ++it2;
+                if (it2 == last2) {
+                    return first1;
+                }
+                if (it1 == last1) {
+                    return last1;
+                }
+            }
+            ++first1;
+        }
+        return last1;
+    }
+
+    template <class ForwardIterator1, class ForwardIterator2, class BinaryPredicate>
+    inline ForwardIterator1 search(ForwardIterator1 first1, ForwardIterator1 last1, 
+            ForwardIterator2 first2, ForwardIterator2 last2, BinaryPredicate pred) {
+        if (first2 == last2) {
+            return first1;
+        }
+
+        ForwardIterator1 it1;
+        ForwardIterator2 it2;
+        while (first1 != last1) {
+            it1 = first1;
+            it2 = first2;
+            while (pred(*it1, *it2)) {
+                ++it1;
+                ++it2;
+                if (it2 == last2) {
+                    return first1;
+                }
+                if (it1 == last1) {
+                    return last1;
+                }
+            }
+            ++first1;
+        }
+        return last1;
+    }
+
+    template <class ForwardIterator, class Size, class T>
+    inline ForwardIterator search_n(ForwardIterator first, ForwardIterator last, 
+            Size count, const T& val) {
+        ForwardIterator limit = first;
+        advance(limit, distance(first, last) - count);
+        
+        ForwardIterator it;
+        Size n;
+        while (first != limit) {
+            it = first;
+            n = 0;
+            while (*it == val) {
+                ++it;
+                if (++n == count) {
+                    return first;
+                }
+            }
+            ++first;
+        }
+        return first;
+    }
+
+    template <class ForwardIterator, class Size, class T, class BinaryPredicate>
+    inline ForwardIterator search_n(ForwardIterator first, ForwardIterator last, 
+            Size count, const T& val, BinaryPredicate pred) {
+        ForwardIterator limit = first;
+        advance(limit, distance(first, last) - count);
+        
+        ForwardIterator it;
+        Size n;
+        while (first != limit) {
+            it = first;
+            n = 0;
+            while (pred(*it, val)) {
+                ++it;
+                if (++n == count) {
+                    return first;
+                }
+            }
+            ++first;
+        }
+        return first;
+    }
 
     /*
      * copy
