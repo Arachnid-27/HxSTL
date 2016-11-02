@@ -3,6 +3,7 @@
 
 
 #include <cstring>
+#include <cstdlib>
 #include "utility.h"
 #include "type_traits.h"
 #include "iterator.h"
@@ -98,11 +99,101 @@ namespace HxSTL {
 
     template <class ForwardIterator1, class ForwardIterator2>
     ForwardIterator1 find_end(ForwardIterator1 first1, ForwardIterator1 last1, 
-            ForwardIterator2 first2, ForwardIterator2 last2); 
+            ForwardIterator2 first2, ForwardIterator2 last2) {
+        return __find_end(first1, last1, first2, last2, 
+                typename iterator_traits<ForwardIterator1>::iterator_category(), 
+                typename iterator_traits<ForwardIterator2>::iterator_category());
+    }
 
     template <class ForwardIterator1, class ForwardIterator2, class BinaryPredicate>
     ForwardIterator1 find_end(ForwardIterator1 first1, ForwardIterator1 last1, 
-            ForwardIterator2 first2, ForwardIterator2 last2, BinaryPredicate pred); 
+            ForwardIterator2 first2, ForwardIterator2 last2, BinaryPredicate pred) {
+        return __find_end(first1, last1, first2, last2, pred,
+                typename iterator_traits<ForwardIterator1>::iterator_category(), 
+                typename iterator_traits<ForwardIterator2>::iterator_category());
+    }
+
+    template <class ForwardIterator1, class ForwardIterator2>
+    ForwardIterator1 __find_end(ForwardIterator1 first1, ForwardIterator1 last1, 
+            ForwardIterator2 first2, ForwardIterator2 last2, 
+            forward_iterator_tag, forward_iterator_tag) {
+        ForwardIterator1 first = search(first1, last1, first2, last2);
+        if (first != last1) {
+            while (true) {
+                ForwardIterator1 tmp = search(first, last1, first2, last2);
+                if (tmp != last1) {
+                    first = tmp;
+                } else {
+                    return first;
+                }
+            }
+        }
+        return first;
+    }
+
+    template <class ForwardIterator1, class ForwardIterator2, class BinaryPredicate>
+    ForwardIterator1 __find_end(ForwardIterator1 first1, ForwardIterator1 last1, 
+            ForwardIterator2 first2, ForwardIterator2 last2, BinaryPredicate pred, 
+            forward_iterator_tag, forward_iterator_tag) {
+        ForwardIterator1 first = search(first1, last1, first2, last2);
+        if (first != last1) {
+            while (true) {
+                ForwardIterator1 tmp = search(first, last1, first2, last2, pred);
+                if (tmp != last1) {
+                    first = tmp;
+                } else {
+                    return first;
+                }
+            }
+        }
+        return first;
+    }
+
+    template <class BidirectionalIterator1, class BidirectionalIterator2>
+    BidirectionalIterator1 __find_end(BidirectionalIterator1 first1, BidirectionalIterator1 last1, 
+            BidirectionalIterator2 first2, BidirectionalIterator2 last2, 
+            bidirectional_iterator_tag, bidirectional_iterator_tag) {
+        BidirectionalIterator1 tmp = last1;
+        while (first1 != last1) {
+            BidirectionalIterator1 it1 = last1;
+            BidirectionalIterator2 it2 = last2;
+            while (it2 != first2 && *it2 == *it1) {
+                --it1;
+                --it2;
+                if (it2 == first2) {
+                    return first2;
+                }
+                if (it1 == first1) {
+                    return tmp;
+                }
+            }
+            --last1;
+        }
+        return tmp;
+    } 
+
+    template <class BidirectionalIterator1, class BidirectionalIterator2, class BinaryPredicate>
+    BidirectionalIterator1 __find_end(BidirectionalIterator1 first1, BidirectionalIterator1 last1, 
+            BidirectionalIterator2 first2, BidirectionalIterator2 last2, BinaryPredicate pred,
+            bidirectional_iterator_tag, bidirectional_iterator_tag) {
+        BidirectionalIterator1 tmp = last1;
+        while (first1 != last1) {
+            BidirectionalIterator1 it1 = last1;
+            BidirectionalIterator2 it2 = last2;
+            while (it2 != first2 && pred(*it1, *it2)) {
+                --it1;
+                --it2;
+                if (it2 == first2) {
+                    return first2;
+                }
+                if (it1 == first1) {
+                    return tmp;
+                }
+            }
+            --last1;
+        }
+        return tmp;
+    } 
 
     // find_first_of
 
@@ -774,12 +865,265 @@ namespace HxSTL {
                 }
                 ++first;
             }
+            return ++result;
         }
+        return last;
     }
 
     template <class ForwardIterator, class BinaryPredicate>
     ForwardIterator unique(ForwardIterator first, ForwardIterator last, BinaryPredicate pred) {
+        if (first != last) {
+            ForwardIterator result = first;
+            ++first;
+            while (first != last) {
+                if (!pred(*first, *result)) {
+                    ++result;
+                    *result = *first;
+                }
+                ++first;
+            }
+            return ++result;
+        }
+        return last;
+    }
 
+    // unique_copy
+
+    template <class InputIterator, class OutputIterator>
+    OutputIterator unique_copy(InputIterator first, InputIterator last, OutputIterator result) {
+        *result = *first;
+        ++first;
+        while (first != last) {
+            typename iterator_traits<InputIterator>::value_type val = *first;
+            if (val != *result) {
+                ++result;
+                *result = val;
+            }
+            ++first;
+        }
+        return result;
+    }
+
+    template <class InputIterator, class OutputIterator, class BinaryPredicate>
+    OutputIterator unique_copy(InputIterator first, InputIterator last, 
+            OutputIterator result, BinaryPredicate pred) {
+        *result = *first;
+        ++first;
+        while (first != last) {
+            typename iterator_traits<InputIterator>::value_type val = *first;
+            if (!pred(val, *result)) {
+                ++result;
+                *result = val;
+            }
+            ++first;
+        }
+        return result;
+    }
+
+    // reverse
+
+    template <class BidirectionalIterator>
+    void reverse(BidirectionalIterator first, BidirectionalIterator last) {
+        __reverse(first, last, typename iterator_traits<BidirectionalIterator>::iterator_category());
+    }
+
+    template <class BidirectionalIterator>
+    void __reverse(BidirectionalIterator first, BidirectionalIterator last, bidirectional_iterator_tag) {
+        while (first != last && first != --last) {
+            iter_swap(first, last);
+            ++first;
+        }
+    }
+
+    template <class RandomAccessIterator>
+    void __reverse(RandomAccessIterator first, RandomAccessIterator last, random_access_iterator_tag) {
+        typename iterator_traits<RandomAccessIterator>::difference_type n = (last - first) / 2;
+        while (n > 0) {
+            --last;
+            iter_swap(first, last);
+            ++first;
+            --n;
+        }
+    }
+
+    // reverse_copy
+
+    template <class BidirectionalIterator, class OutputIterator>
+    OutputIterator reverse_copy(BidirectionalIterator first, BidirectionalIterator last, OutputIterator result) {
+        while (first != last) {
+            --last;
+            *result = *last;
+            ++result;
+        }
+        return result;
+    }
+
+    // rotate**
+
+    template <class ForwardIterator>
+    void rotate(ForwardIterator first, ForwardIterator middle, ForwardIterator last) {
+        __rotate(first, middle, last, typename iterator_traits<ForwardIterator>::iterator_category());
+    }
+
+    template <class ForwardIterator>
+    void __rotate(ForwardIterator first, ForwardIterator middle, 
+            ForwardIterator last, forward_iterator_tag) {
+        ForwardIterator next = middle;
+        while (first != last) {
+            iter_swap(first, next);
+            ++first;
+            ++next;
+            if (first == middle) {
+                if (next == last) {
+                    return;
+                }
+                middle = next;
+            } else if (next == last) {
+                next = middle;
+            }
+        }
+
+    }
+
+    template <class BidirectionalIterator>
+    void __rotate(BidirectionalIterator first, BidirectionalIterator middle, 
+            BidirectionalIterator last, bidirectional_iterator_tag) {
+        reverse(first, middle);
+        reverse(middle, last);
+        reverse(first, last);
+    }
+
+    template <class RandomAccessIterator>
+    void __rotate(RandomAccessIterator first, RandomAccessIterator middle, 
+            RandomAccessIterator last, random_access_iterator_tag);
+
+    // rotate_copy
+
+    template <class ForwardIterator, class OutputIterator>
+    OutputIterator rotate_copy(ForwardIterator first, ForwardIterator middle, 
+            ForwardIterator last, OutputIterator result) {
+        result = copy(middle, last, result);
+        return copy(first, middle, result);
+    }
+
+    // random_shuffle**
+
+    template <class RandomAccessIterator>
+    void random_shuffle(RandomAccessIterator first, RandomAccessIterator last) {
+        typedef typename iterator_traits<RandomAccessIterator>::difference_type distance;
+        distance n = last - first;
+        for (int i = 0; i != n; ++i) {
+            swap(first[i], first[rand() % (i + 1)]);
+        }
+    }
+
+    template <class RandomAccessIterator, class RandomNumberGenerator>
+    void random_shuffle(RandomAccessIterator first, RandomAccessIterator last, RandomNumberGenerator& gen) {
+        typedef typename iterator_traits<RandomAccessIterator>::difference_type distance;
+        distance n = last - first;
+        for (int i = 0; i != n; ++i) {
+            swap(first[i], first[gen(i + 1)]);
+        }
+    }
+
+    /*
+     * Partitions 
+     */
+
+    // is_partitioned
+    
+    template <class InputIterator, class UnaryPredicate>
+    bool is_partitioned(InputIterator first, InputIterator last, UnaryPredicate pred) {
+        while (first != last && pred(*first)) {
+            ++first;
+        }
+        while (first != last) {
+            if (pred(*first)) {
+                return false;
+            }
+            ++first;
+        }
+        return true;
+    }
+
+    // partitioned**
+
+    template <class ForwardIterator, class UnaryPredicate>
+    ForwardIterator partition(ForwardIterator first, ForwardIterator last, UnaryPredicate pred) {
+        return __partition(first, last, pred, typename iterator_traits<ForwardIterator>::iterator_category());
+    }
+
+    template <class ForwardIterator, class UnaryPredicate>
+    ForwardIterator __partition(ForwardIterator first, ForwardIterator last, 
+            UnaryPredicate pred, forward_iterator_tag) {
+        while (pred(*first)) {
+            ++first;
+            if (first == last) {
+                return last;
+            }
+        }
+        ForwardIterator next = first;
+        while (++next != last) {
+            while (!pred(*next)) {
+                ++next;
+                if (next == last) {
+                    return first;
+                }
+            }
+            iter_swap(next, first);
+            ++first;
+        }
+        return first;
+    }
+
+    template <class BidirectionalIterator, class UnaryPredicate>
+    BidirectionalIterator __partition(BidirectionalIterator first, BidirectionalIterator last, 
+            UnaryPredicate pred, bidirectional_iterator_tag) {
+        while (first != last) {
+            while (pred(*first)) {
+                ++first;
+                if (first == last) {
+                    return first;
+                }
+            }
+            do {
+                --last;
+                if (first == last) {
+                    return first;
+                }
+            } while (!pred(*last));
+            iter_swap(first, last);
+            ++first;
+        }
+        return first;
+    }
+
+    // stable_partition**
+
+    template <class BidirectionalIterator, class UnaryPredicate>
+    BidirectionalIterator stable_partition(BidirectionalIterator first, BidirectionalIterator last, UnaryPredicate pred) {
+        while (pred(*first)) {
+            ++first;
+            if (first == last) {
+                return first;
+            }
+        }
+        BidirectionalIterator tmp = first;
+        while (first != last) {
+            while (!pred(*tmp)) {
+                ++tmp;
+                if (tmp == last) {
+                    return first;
+                }
+            }
+            BidirectionalIterator middle = tmp;
+            while (tmp != last && pred(*tmp)) {
+                ++tmp;
+            }
+            rotate(first, middle, tmp);
+            first = middle;
+        }
+        return first;
     }
 
 }
