@@ -9,3 +9,6 @@
 
 # Dependence files
 *.d
+
+# Test files
+test/

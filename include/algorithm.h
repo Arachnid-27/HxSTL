@@ -1151,31 +1151,6 @@ namespace HxSTL {
     ForwardIterator partition_point(ForwardIterator first, ForwardIterator last, UnaryPredicate pred) {
     }
 
-    /*
-     * Sorting
-     */
-
-    // sort
-
-    template <class RandomAccessIterator>
-    void sort(RandomAccessIterator first, RandomAccessIterator last) {
-    }
-
-    template <class RandomAccessIterator, class Compare>
-    void sort(RandomAccessIterator first, RandomAccessIterator last, Compare comp) {
-    }
-
-    // partial_sort
-
-    template <class RandomAccessIterator>
-    void partial_sort(RandomAccessIterator first, RandomAccessIterator middle, RandomAccessIterator last) {
-    }
-
-    template <class RandomAccessIterator, class Compare>
-    void partial_sort(RandomAccessIterator first, RandomAccessIterator middle, 
-            RandomAccessIterator last, Compare comp) {
-    }
-
     /**
      * Heap
      */
@@ -1284,16 +1259,12 @@ namespace HxSTL {
 
     template <class RandomAccessIterator>
     void push_heap(RandomAccessIterator first, RandomAccessIterator last) {
-        if (first != last) {
-            __adjust_heap(first, last);
-        }
+        __adjust_heap(first, last);
     }
 
     template <class RandomAccessIterator, class Compare>
     void push_heap(RandomAccessIterator first, RandomAccessIterator last, Compare comp) {
-        if (first != last) {
-            __adjust_heap(first, last, comp);
-        }
+        __adjust_heap(first, last, comp);
     }
 
     // pop_heap
@@ -1301,19 +1272,15 @@ namespace HxSTL {
     template <class RandomAccessIterator>
     void pop_heap(RandomAccessIterator first, RandomAccessIterator last) {
         typedef typename iterator_traits<RandomAccessIterator>::difference_type difference_type;
-        if (first != last) {
-            iter_swap(first, last - 1);
-            __maintain_heap(first, static_cast<difference_type>(0), last - first - 1);
-        }
+        iter_swap(first, last - 1);
+        __maintain_heap(first, static_cast<difference_type>(0), last - first - 1);
     }
 
     template <class RandomAccessIterator, class Compare>
     void pop_heap(RandomAccessIterator first, RandomAccessIterator last, Compare comp) {
         typedef typename iterator_traits<RandomAccessIterator>::difference_type difference_type;
-        if (first != last) {
-            iter_swap(first, last - 1);
-            __maintain_heap(first, static_cast<difference_type>(0), last - first - 1, comp);
-        }
+        iter_swap(first, last - 1);
+        __maintain_heap(first, static_cast<difference_type>(0), last - first - 1, comp);
     }
 
     // make_heap
@@ -1360,6 +1327,388 @@ namespace HxSTL {
             pop_heap(first, last, comp);
             --last;
         }
+    }
+
+    // is_heap
+
+    template <class RandomAccessIterator>
+    bool is_heap(RandomAccessIterator first, RandomAccessIterator last) {
+        typename iterator_traits<RandomAccessIterator>::difference_type n = (last - first - 2) / 2;
+        while (n >= 0) {
+            if (*(first + n) < *(first + (2 * n + 1)) || *(first + n) < *(first + (2 * n + 2))) {
+                return false;
+            }
+            --n;
+        }
+        return true;
+    }
+
+    template <class RandomAccessIterator, class Compare>
+    bool is_heap(RandomAccessIterator first, RandomAccessIterator last, Compare comp) {
+        typename iterator_traits<RandomAccessIterator>::difference_type n = (last - first - 2) / 2;
+        while (n >= 0) {
+            if (comp(*(first + n), *(first + (2 * n + 1))) || comp(*(first + n), *(first + (2 * n + 2)))) {
+                return false;
+            }
+            --n;
+        }
+        return true;
+    }
+
+    /*
+     * Sorting
+     */
+
+    const int  __introsort_threshold = 16;
+
+    template <class RandomAccessIterator, class T>
+    void __unguarded_linear_insert(RandomAccessIterator last, const T& val) {
+        RandomAccessIterator next = last;
+        --next;
+
+        while (val < *next) {
+            *last = *next;
+            last = next;
+            --next;
+        }
+
+        *last = val;
+    }
+
+    template <class RandomAccessIterator, class T, class Compare>
+    void __unguarded_linear_insert(RandomAccessIterator last, const T& val, Compare comp) {
+        RandomAccessIterator next = last;
+        --next;
+
+        while (comp(val, *next)) {
+            *last = *next;
+            last = next;
+            --next;
+        }
+
+        *last = val;
+    }
+
+    template <class RandomAccessIterator>
+    void __linear_insert(RandomAccessIterator first, RandomAccessIterator last) {
+        typename iterator_traits<RandomAccessIterator>::value_type val = *last;
+        if (val < *first) {     // 边界最小
+            copy_backward(first, last, last + 1);
+            *first = val;
+        } else {
+            __unguarded_linear_insert(last, val);
+        }
+    }
+
+    template <class RandomAccessIterator, class Compare>
+    void __linear_insert(RandomAccessIterator first, RandomAccessIterator last, Compare comp) {
+        typename iterator_traits<RandomAccessIterator>::value_type val = *last;
+        if (comp(val, *first)) {     // 边界最小
+            copy_backward(first, last, last + 1);
+            *first = val;
+        } else {
+            __unguarded_linear_insert(last, val, comp);
+        }
+    }
+
+    template <class RandomAccessIterator>
+    void __insertion_sort(RandomAccessIterator first, RandomAccessIterator last) {
+        if (first != last) {
+            for (RandomAccessIterator it = first + 1; it != last; ++it) {
+                __linear_insert(first, it);
+            }
+        }
+    }
+
+    template <class RandomAccessIterator, class Compare>
+    void __insertion_sort(RandomAccessIterator first, RandomAccessIterator last, Compare comp) {
+        if (first != last) {
+            for (RandomAccessIterator it = first + 1; it != last; ++it) {
+                __linear_insert(first, it, comp);
+            }
+        }
+    }
+
+    template <class RandomAccessIterator>
+    void __unguarded_insertion_sort(RandomAccessIterator first, RandomAccessIterator last) {
+        for (RandomAccessIterator it = first; it != last; ++it) {
+            __unguarded_linear_insert(it, *it);
+        }
+    }
+
+    template <class RandomAccessIterator, class Compare>
+    void __unguarded_insertion_sort(RandomAccessIterator first, RandomAccessIterator last, Compare comp) {
+        for (RandomAccessIterator it = first; it != last; ++it) {
+            __unguarded_linear_insert(it, *it, comp);
+        }
+    }
+
+    template <class RandomAccessIterator>
+    void __final_insertion_sort(RandomAccessIterator first, RandomAccessIterator last) {
+        if (last - first > __introsort_threshold) {
+            __insertion_sort(first, first + __introsort_threshold);
+            __unguarded_insertion_sort(first + __introsort_threshold, last);
+        } else {
+            __insertion_sort(first, last);
+        }
+    }
+
+    template <class RandomAccessIterator, class Compare>
+    void __final_insertion_sort(RandomAccessIterator first, RandomAccessIterator last, Compare comp) {
+        if (last - first > __introsort_threshold) {
+            __insertion_sort(first, first + __introsort_threshold, comp);
+            __unguarded_insertion_sort(first + __introsort_threshold, last, comp);
+        } else {
+            __insertion_sort(first, last, comp);
+        }
+    }
+
+    template <class Size>
+    Size __lg(Size n) {
+        Size k = 0;
+        while (n != 0) {
+            ++k;
+            n >>= 1;
+        }
+        return k;
+    }
+
+    template <class RandomAccessIterator, class T>
+    RandomAccessIterator __pivot_parition(RandomAccessIterator first, RandomAccessIterator last, const T& pivot) {
+        while (true) {
+            while (*first < pivot) {
+                ++first;
+            }
+            --last;
+            while (pivot < *last) {
+                --last;
+            }
+            if (first < last) {
+                iter_swap(first, last);
+                ++first;
+            } else {
+                return first;
+            }
+        }
+    }
+
+    template <class RandomAccessIterator, class T, class Compare>
+    RandomAccessIterator __pivot_parition(RandomAccessIterator first, RandomAccessIterator last, 
+            const T& pivot, Compare comp) {
+        while (true) {
+            while (comp(*first, pivot)) {
+                ++first;
+            }
+            --last;
+            while (comp(pivot, *last)) {
+                --last;
+            }
+            if (first < last) {
+                iter_swap(first, last);
+                ++first;
+            } else {
+                return first;
+            }
+        }
+    }
+
+    template <class T>
+    const T& __median(const T& a, const T& b, const T& c) {
+        if (a < b) {
+            if (b < c) {
+                return b;
+            } else if (a < c) {
+                return c;
+            } else {
+                return a;
+            }
+        } else if (a < c) {
+            return a;
+        } else if (b < c) {
+            return c;
+        } else {
+            return b;
+        }
+    }
+
+    template <class T, class Compare>
+    const T& __median(const T& a, const T& b, const T& c, Compare comp) {
+        if (comp(a, b)) {
+            if (comp(b, c)) {
+                return b;
+            } else if (comp(a, c)) {
+                return c;
+            } else {
+                return a;
+            }
+        } else if (comp(a, c)) {
+            return a;
+        } else if (comp(b, c)) {
+            return c;
+        } else {
+            return b;
+        }
+    }
+
+    template <class RandomAccessIterator, class Size>
+    void __introsort(RandomAccessIterator first, RandomAccessIterator last, Size limit) {
+        typedef typename iterator_traits<RandomAccessIterator>::value_type value_type;
+        while (last - first > __introsort_threshold) {
+            if (limit == 0) {
+                make_heap(first, last);
+                sort_heap(first, last);
+                return;
+            }
+            --limit;
+
+            value_type pivot = __median(*first, *(first + (last - first) / 2), *(last - 1));
+            RandomAccessIterator middle = __pivot_parition(first, last, pivot);
+
+            __introsort(middle, last, limit);
+            last = middle;  // 左侧循环代替递归
+        }
+    }
+
+    template <class RandomAccessIterator, class Size, class Compare>
+    void __introsort(RandomAccessIterator first, RandomAccessIterator last, Size limit, Compare comp) {
+        typedef typename iterator_traits<RandomAccessIterator>::value_type value_type;
+        while (last - first > __introsort_threshold) {
+            if (limit == 0) {
+                make_heap(first, last, comp);
+                sort_heap(first, last, comp);
+                return;
+            }
+            --limit;
+
+            value_type pivot = __median(*first, *(first + (last - first) / 2), *(last - 1), comp);
+            RandomAccessIterator middle = __pivot_parition(first, last, pivot, comp);
+
+            __introsort(middle, last, limit, comp);
+            last = middle;
+        }
+    }
+
+    // sort
+
+    template <class RandomAccessIterator>
+    void sort(RandomAccessIterator first, RandomAccessIterator last) {
+        if (first != last) {
+            __introsort(first, last, __lg(last - first) * 2);
+            __final_insertion_sort(first, last);
+        }
+    }
+
+    template <class RandomAccessIterator, class Compare>
+    void sort(RandomAccessIterator first, RandomAccessIterator last, Compare comp) {
+        if (first != last) {
+            __introsort(first, last, __lg(last - first) * 2, comp);
+            __final_insertion_sort(first, last, comp);
+        }
+    }
+
+    // partial_sort
+
+    template <class RandomAccessIterator>
+    void partial_sort(RandomAccessIterator first, RandomAccessIterator middle, RandomAccessIterator last) {
+        typedef typename iterator_traits<RandomAccessIterator>::difference_type difference_type;
+        make_heap(first, middle);
+        for (RandomAccessIterator it = middle; it != last; ++it) {
+            if (*it < *first) {
+                iter_swap(first, it);
+                __maintain_heap(first, static_cast<difference_type>(0), middle - first);
+            }
+        }
+        sort_heap(first, middle);
+    }
+
+    template <class RandomAccessIterator, class Compare>
+    void partial_sort(RandomAccessIterator first, RandomAccessIterator middle, 
+            RandomAccessIterator last, Compare comp) {
+        typedef typename iterator_traits<RandomAccessIterator>::difference_type difference_type;
+        make_heap(first, middle);
+        for (RandomAccessIterator it = middle; it != last; ++it) {
+            if (comp(*it, *first)) {
+                iter_swap(first, it);
+                __maintain_heap(first, static_cast<difference_type>(0), middle - first);
+            }
+        }
+        sort_heap(first, middle);
+    }
+
+    /**
+     * Min/max
+     */
+
+    // min
+
+    template <class T>
+    const T& min(const T& a, const T& b) {
+        return b < a ? b : a;
+    }
+
+    template <class T, class Compare>
+    const T& min(const T& a, const T& b, Compare comp) {
+        return comp(b, a) ? a : b;
+    }
+
+    // max
+
+    template <class T>
+    const T& max(const T& a, const T& b) {
+        return b < a ? a : b;
+    }
+
+    template <class T, class Compare>
+    const T& max(const T& a, const T& b, Compare comp) {
+        return comp(a, b) ? a : b;
+    }
+
+    // min_element
+
+    template <class ForwardIterator>
+    ForwardIterator min_element(ForwardIterator first, ForwardIterator last) {
+        ForwardIterator result = first;
+        while (first != last) {
+            if (*first < *result) {
+                result = first;
+            }
+        }
+        return result;
+    }
+
+    template <class ForwardIterator, class Compare>
+    ForwardIterator min_element(ForwardIterator first, ForwardIterator last, Compare comp) {
+        ForwardIterator result = first;
+        while (first != last) {
+            if (comp(*first, *result)) {
+                result = first;
+            }
+        }
+        return result;
+    }
+
+    // max_element
+
+    template <class ForwardIterator>
+    ForwardIterator max_element(ForwardIterator first, ForwardIterator last) {
+        ForwardIterator result = first;
+        while (first != last) {
+            if (*result < *first) {
+                result = first;
+            }
+        }
+        return result;
+    }
+
+    template <class ForwardIterator, class Compare>
+    ForwardIterator max_element(ForwardIterator first, ForwardIterator last, Compare comp) {
+        ForwardIterator result = first;
+        while (first != last) {
+            if (comp(*result, *first)) {
+                result = first;
+            }
+        }
+        return result;
     }
 
 }
