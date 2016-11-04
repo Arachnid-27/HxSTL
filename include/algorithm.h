@@ -1126,6 +1126,242 @@ namespace HxSTL {
         return first;
     }
 
+    // partition_copy
+
+    template <class InputIterator, class OutputIterator1, class OutputIterator2, class UnaryPredicate>
+    pair<OutputIterator1, OutputIterator2> partition_copy(InputIterator first, InputIterator last, 
+            OutputIterator1 result_true, OutputIterator2 result_false, UnaryPredicate pred) {
+        while (first != last) {
+            typename iterator_traits<InputIterator>::value_type val = *first;
+            if (pred(val)) {
+                *result_true = val;
+                ++result_true;
+            } else {
+                *result_false = val;
+                ++result_false;
+            }
+            ++first;
+        }
+        return make_pair(result_true, result_false);
+    }
+
+    // partition_point
+
+    template <class ForwardIterator, class UnaryPredicate>
+    ForwardIterator partition_point(ForwardIterator first, ForwardIterator last, UnaryPredicate pred) {
+    }
+
+    /*
+     * Sorting
+     */
+
+    // sort
+
+    template <class RandomAccessIterator>
+    void sort(RandomAccessIterator first, RandomAccessIterator last) {
+    }
+
+    template <class RandomAccessIterator, class Compare>
+    void sort(RandomAccessIterator first, RandomAccessIterator last, Compare comp) {
+    }
+
+    // partial_sort
+
+    template <class RandomAccessIterator>
+    void partial_sort(RandomAccessIterator first, RandomAccessIterator middle, RandomAccessIterator last) {
+    }
+
+    template <class RandomAccessIterator, class Compare>
+    void partial_sort(RandomAccessIterator first, RandomAccessIterator middle, 
+            RandomAccessIterator last, Compare comp) {
+    }
+
+    /**
+     * Heap
+     */
+
+    template <class RandomAccessIterator>
+    void __adjust_heap(RandomAccessIterator first, RandomAccessIterator last) {
+        typename iterator_traits<RandomAccessIterator>::difference_type n = last - first - 1;
+        typename iterator_traits<RandomAccessIterator>::difference_type parent = (n - 1) / 2;
+        typename iterator_traits<RandomAccessIterator>::value_type val = *(first + n);
+        while (n > 0 && *(first + parent) < val) {
+            *(first + n) = *(first + parent);
+            n = parent;
+            parent = (parent - 1) / 2;
+        }
+        *(first + n) = val;
+    }
+
+    template <class RandomAccessIterator, class Compare>
+    void __adjust_heap(RandomAccessIterator first, RandomAccessIterator last, Compare comp) {
+        typename iterator_traits<RandomAccessIterator>::difference_type n = last - first - 1;
+        typename iterator_traits<RandomAccessIterator>::difference_type parent = (n - 1) / 2;
+        typename iterator_traits<RandomAccessIterator>::value_type val = *(first + n);
+        while (n > 0 && comp(*(first + parent) ,val)) {
+            *(first + n) = *(first + parent);
+            n = parent;
+            parent = (parent - 1) / 2;
+        }
+        *(first + n) = val;
+    }
+
+    template <class RandomAccessIterator, class Distance>
+    void __maintain_heap(RandomAccessIterator first, Distance index, Distance max) {
+        RandomAccessIterator cur = first + index;
+        RandomAccessIterator left, right;
+        typename iterator_traits<RandomAccessIterator>::value_type val = *cur;
+        while (index * 2 + 1 < max) {
+            left = first + (index * 2 + 1);
+            if (index * 2 + 2 < max) {
+                right = first + (index * 2 + 2);
+                if (*left < val) {
+                    if (val < *right) {
+                        *cur = *right;
+                        cur = right;
+                        index = index * 2 + 2;
+                    } else {
+                        break;
+                    }
+                } else if (*left < *right) {
+                    *cur = *right;
+                    cur = right;
+                    index = index * 2 + 2;
+                } else {
+                    *cur = *left;
+                    cur = left;
+                    index = index * 2 + 1;
+                }
+            } else if (val < *left) {
+                *cur = *left;
+                cur = left;
+                break;
+            } else {
+                break;
+            }
+        }
+        *cur = val;
+    }
+
+    template <class RandomAccessIterator, class Distance, class Compare>
+    void __maintain_heap(RandomAccessIterator first, Distance index, Distance max, Compare comp) {
+        RandomAccessIterator cur = first + index;
+        RandomAccessIterator left, right;
+        typename iterator_traits<RandomAccessIterator>::value_type val = *cur;
+        while (index * 2 + 1 < max) {
+            left = first + (index * 2 + 1);
+            if (index * 2 + 2 < max) {
+                right = first + (index * 2 + 2);
+                if (comp(*left, val)) {
+                    if (comp(val, *right)) {
+                        *cur = *right;
+                        cur = right;
+                        index = index * 2 + 2;
+                    } else {
+                        break;
+                    }
+                } else if (comp(*left, *right)) {
+                    *cur = *right;
+                    cur = right;
+                    index = index * 2 + 2;
+                } else {
+                    *cur = *left;
+                    cur = left;
+                    index = index * 2 + 1;
+                }
+            } else if (comp(val, *left)) {
+                *cur = *left;
+                cur = left;
+                break;
+            } else {
+                break;
+            }
+        }
+        *cur = val;
+    }
+
+    // push_heap
+
+    template <class RandomAccessIterator>
+    void push_heap(RandomAccessIterator first, RandomAccessIterator last) {
+        if (first != last) {
+            __adjust_heap(first, last);
+        }
+    }
+
+    template <class RandomAccessIterator, class Compare>
+    void push_heap(RandomAccessIterator first, RandomAccessIterator last, Compare comp) {
+        if (first != last) {
+            __adjust_heap(first, last, comp);
+        }
+    }
+
+    // pop_heap
+
+    template <class RandomAccessIterator>
+    void pop_heap(RandomAccessIterator first, RandomAccessIterator last) {
+        typedef typename iterator_traits<RandomAccessIterator>::difference_type difference_type;
+        if (first != last) {
+            iter_swap(first, last - 1);
+            __maintain_heap(first, static_cast<difference_type>(0), last - first - 1);
+        }
+    }
+
+    template <class RandomAccessIterator, class Compare>
+    void pop_heap(RandomAccessIterator first, RandomAccessIterator last, Compare comp) {
+        typedef typename iterator_traits<RandomAccessIterator>::difference_type difference_type;
+        if (first != last) {
+            iter_swap(first, last - 1);
+            __maintain_heap(first, static_cast<difference_type>(0), last - first - 1, comp);
+        }
+    }
+
+    // make_heap
+
+    template <class RandomAccessIterator>
+    void make_heap(RandomAccessIterator first, RandomAccessIterator last) {
+        typedef typename iterator_traits<RandomAccessIterator>::difference_type difference_type;
+        if (last - first > 1) {
+            difference_type max = last - first;
+            difference_type index = (max - 2) / 2;
+            while (index >= 0) {
+                __maintain_heap(first, index, max);
+                --index;
+            }
+        }
+    }
+
+    template <class RandomAccessIterator, class Compare>
+    void make_heap(RandomAccessIterator first, RandomAccessIterator last, Compare comp) {
+        typedef typename iterator_traits<RandomAccessIterator>::difference_type difference_type;
+        if (last - first > 1) {
+            difference_type max = last - first;
+            difference_type index = (max - 2) / 2;
+            while (index >= 0) {
+                __maintain_heap(first, index, max, comp);
+                --index;
+            }
+        }
+    }
+
+    // sort_heap
+
+    template <class RandomAccessIterator>
+    void sort_heap(RandomAccessIterator first, RandomAccessIterator last) {
+        while (last - first > 1) {
+            pop_heap(first, last);
+            --last;
+        }
+    }
+
+    template <class RandomAccessIterator, class Compare>
+    void sort_heap(RandomAccessIterator first, RandomAccessIterator last, Compare comp) {
+        while (last - first > 1) {
+            pop_heap(first, last, comp);
+            --last;
+        }
+    }
+
 }
 
 
