@@ -22,7 +22,7 @@ namespace HxSTL {
     template <class ForwardIterator>
     inline void destroy(ForwardIterator first, ForwardIterator last) {
         typedef typename iterator_traits<ForwardIterator>::value_type value_type;
-        __destroy(first, last, typename is_pod<value_type>::value());
+        __destroy(first, last, typename is_pod<value_type>::type());
     }
 
     template <class ForwardIterator>

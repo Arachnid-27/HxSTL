@@ -1,7 +1,7 @@
 CC=g++
 EXE=main.out
 HDR=include
-CPPFLAGS=-I $(HDR)
+CPPFLAGS=-I $(HDR) -std=c++11
 
 
 SRC=$(wildcard ./source/*.cpp) $(wildcard ./case/*.cpp) $(wildcard *.cpp)
@@ -10,7 +10,7 @@ DEP=$(patsubst %.o,%.d,$(OBJ))
 
 
 $(EXE): $(OBJ)
-	$(CC) $^ -o $@
+	$(CC) $^ -o $(CPPFLAGS) $@
 
 
 %.o: %.cpp

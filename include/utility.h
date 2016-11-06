@@ -7,6 +7,8 @@
 
 namespace HxSTL {
 
+    typedef decltype(nullptr) nullptr_t;
+
     template <class T>
     void swap(T& a, T& b) {
         T c(a);

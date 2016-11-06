@@ -464,14 +464,14 @@ namespace HxSTL {
     template <class T>
     struct __copy_dispath<T*, T*> {
         T* operator()(T* first, T* last, T* result) {
-            return __copy_ptr(first, last, result, typename is_pod<T>::value());
+            return __copy_ptr(first, last, result, typename is_pod<T>::type());
         }
     };
 
     template <class T>
     struct __copy_dispath<const T*, T*> {
         T* operator()(const T* first, const T* last, T* result) {
-            return __copy_ptr(first, last, result, typename is_pod<T>::value());
+            return __copy_ptr(first, last, result, typename is_pod<T>::type());
         }
     };
 
@@ -531,14 +531,14 @@ namespace HxSTL {
     template <class T, class Size>
     struct __copy_n_dispath<T*, Size, T*> {
         T* operator()(T* first, Size n, T* result) {
-            return __copy_n_ptr(first, n, result, typename is_pod<T>::value());
+            return __copy_n_ptr(first, n, result, typename is_pod<T>::type());
         }
     };
 
     template <class T, class Size>
     struct __copy_n_dispath<const T*, Size, T*> {
         T* operator()(const T* first, Size n, T* result) {
-            return __copy_n_ptr(first, n, result, typename is_pod<T>::value());
+            return __copy_n_ptr(first, n, result, typename is_pod<T>::type());
         }
     };
 
@@ -598,14 +598,14 @@ namespace HxSTL {
     template <class T>
     struct __copy_backward_dispath<T*, T*> {
         T* operator()(T* first, T* last, T* result) {
-            return __copy_backward_ptr(first, last, result, typename is_pod<T>::value());
+            return __copy_backward_ptr(first, last, result, typename is_pod<T>::type());
         }
     };
 
     template <class T>
     struct __copy_backward_dispath<const T*, T*> {
         T* operator()(const T* first, const T* last, T* result) {
-            return __copy_backward_ptr(first, last, result, typename is_pod<T>::value());
+            return __copy_backward_ptr(first, last, result, typename is_pod<T>::type());
         }
     };
 
@@ -1403,7 +1403,7 @@ namespace HxSTL {
     template <class RandomAccessIterator, class Compare>
     void __linear_insert(RandomAccessIterator first, RandomAccessIterator last, Compare comp) {
         typename iterator_traits<RandomAccessIterator>::value_type val = *last;
-        if (comp(val, *first)) {     // 边界最小
+        if (comp(val, *first)) {
             copy_backward(first, last, last + 1);
             *first = val;
         } else {
