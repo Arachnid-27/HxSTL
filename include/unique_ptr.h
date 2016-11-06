@@ -16,18 +16,28 @@ namespace HxSTL {
         typedef Deleter         deleter_type;
     protected:
         pointer _ptr;
-        deleter_type _deleter;
+        deleter_type _del;
     public:
-        unique_ptr(): _ptr(nullptr), _deleter(Deleter()) {}
+        unique_ptr(): _ptr(nullptr), _del(Deleter()) {}
 
-        explicit unique_ptr(pointer ptr): _ptr(ptr), _deleter(Deleter()) {}
+        explicit unique_ptr(pointer p): _ptr(p), _del(Deleter()) {}
 
-        unique_ptr(pointer ptr, const deleter_type& deleter)
-            :_ptr(ptr), _deleter(deleter) {}
+        unique_ptr(pointer p, const deleter_type& d):_ptr(p), _del(d) {}
+
+        unique_ptr(pointer p, deleter_type&& d): _ptr(p), _del(d) {}
+
+        unique_ptr(unique_ptr&& u): _ptr(u._ptr) { u._ptr = nullptr; }
 
         unique_ptr(const unique_ptr&) = delete;
 
-        ~unique_ptr() { _deleter(_ptr); }
+        ~unique_ptr() { _del(_ptr); }
+
+        unique_ptr& operator=(unique_ptr&& u) {
+            _ptr = u._ptr;
+            u._ptr = nullptr;
+        }
+
+        unique_ptr& operator=(nullptr_t) { _ptr = nullptr; }
 
         unique_ptr& operator=(const unique_ptr&) = delete;
 
@@ -36,10 +46,10 @@ namespace HxSTL {
         pointer operator->() const { return _ptr; }
 
         pointer get() const { return _ptr; }
-        deleter_type& get_deleter() { return _deleter; }
-        const deleter_type& get_deleter() const { return _deleter; }
+        deleter_type& get_deleter() { return _del; }
+        const deleter_type& get_deleter() const { return _del; }
         pointer release();
-        void reset(pointer ptr = pointer());
+        void reset(pointer p = pointer());
         void swap(unique_ptr& x) { HxSTL::swap(_ptr, x._ptr);; }
     };
     
@@ -51,10 +61,10 @@ namespace HxSTL {
     }
 
     template <class T, class Deleter>
-    void unique_ptr<T, Deleter>::reset(pointer ptr) {
+    void unique_ptr<T, Deleter>::reset(pointer p) {
         pointer tmp = _ptr;
-        _ptr = ptr;
-        _deleter(tmp);
+        _ptr = p;
+        _del(tmp);
     }
 
     template <class T, class Deleter>

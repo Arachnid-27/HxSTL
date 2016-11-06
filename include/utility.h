@@ -3,6 +3,7 @@
 
 
 #include "pair.h"
+#include "type_traits.h"
 
 
 namespace HxSTL {
@@ -19,6 +20,21 @@ namespace HxSTL {
     template <class T1, class T2>
     pair<T1, T2> make_pair(T1 x, T2 y) {
         return pair<T1, T2>(x, y);
+    }
+
+    template <class T>
+    T&& forward(typename remove_reference<T>::type& t) {
+        return static_cast<T&&>(t);
+    }
+
+    template <class T>
+    T&& forward(typename remove_reference<T>::type&& t) {
+        return static_cast<T&&>(t);
+    }
+
+    template <class T>
+    typename remove_reference<T>::type&& move(T&& t) {
+        return static_cast<typename remove_reference<T>::type&&>(t);
     }
 
 }

@@ -127,6 +127,31 @@ namespace HxSTL {
         typedef true_type       type;
     };
 
+    template <class T, class U>
+    struct is_same {
+        typedef false_type      type;
+    };
+
+    template <class T>
+    struct is_same<T, T> {
+        typedef true_type       type;
+    };
+
+    template <class T>
+    struct remove_reference {
+        typedef T       type;
+    };
+
+    template <class T>
+    struct remove_reference<T&> {
+        typedef T       type;
+    };
+
+    template <class T>
+    struct remove_reference<T&&> {
+        typedef T       type;
+    };
+
     template <bool Cond, class T, class F>
     struct conditional {};
 
