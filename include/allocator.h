@@ -25,49 +25,29 @@ namespace HxSTL {
             typedef allocator<U> other;
         };
     public:
-        pointer address(reference x) const;
-        const_pointer address(const_reference x) const; 
-        pointer allocate(size_type n);
-        void deallocate(pointer p, size_type n);
-        size_type max_size() const;
-        void construct(pointer p, const_reference val);
-        void destroy(pointer p);
+        allocator() = default;
+
+        allocator(const allocator&) {}
+
+        template <class U>
+        allocator(const allocator<U>&) {}
+
+        pointer address(reference x) const { return static_cast<pointer>(&x); }
+
+        const_pointer address(const_reference x) const { return static_cast<const_pointer>(&x); }
+
+        pointer allocate(size_type n) { return static_cast<pointer>(alloc::allocate(n * sizeof(T))); }
+
+        void deallocate(pointer p, size_type n) { return alloc::deallocate(p, n * sizeof(T)); }
+
+        size_type max_size() const { return size_type(-1) / sizeof(T); }
+
+        template <class U, class... Args>
+        void construct(U* p, Args&&... args) { construct(p, args...); }
+
+        template <class U>
+        void destroy(U* p) { destroy(p); }
     };
- 
-    template <class T>
-    inline typename allocator<T>::pointer allocator<T>::address(reference x) const {
-        return static_cast<pointer>(&x);
-    }
-
-    template <class T>
-    inline typename allocator<T>::const_pointer allocator<T>::address(const_reference x) const {
-        return static_cast<const_pointer>(&x);
-    }
-
-    template <class T>
-    inline typename allocator<T>::pointer allocator<T>::allocate(size_type n) {
-        return static_cast<pointer>(alloc::allocate(n * sizeof(T)));
-    }
-
-    template <class T>
-    inline void allocator<T>::deallocate(pointer p, size_type n) {
-        return alloc::deallocate(p, n * sizeof(T));
-    }
-
-    template <class T>
-    inline typename allocator<T>::size_type allocator<T>::max_size() const {
-        return size_type(-1) / sizeof(T);
-    }
-
-    template <class T>
-    inline void allocator<T>::construct(pointer p, const_reference val) {
-        construct(p, val);
-    }
-
-    template <class T>
-    inline void allocator<T>::destroy(pointer p) {
-        destroy(p);
-    }
 
 }
 

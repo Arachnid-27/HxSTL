@@ -41,31 +41,32 @@ namespace HxSTL {
 
         unique_ptr& operator=(const unique_ptr&) = delete;
 
-        explicit operator bool() const { return _ptr != nullptr; }
-        element_type& operator*() const { return *_ptr; }
-        pointer operator->() const { return _ptr; }
+        pointer release() {
+            pointer tmp = _ptr;
+            _ptr = nullptr;
+            return tmp;
+        }
+
+        void reset(pointer p = pointer()) {
+            pointer tmp = _ptr;
+            _ptr = p;
+            _del(tmp);
+        }
+
+        void swap(unique_ptr& x) { HxSTL::swap(_ptr, x._ptr);; }
 
         pointer get() const { return _ptr; }
-        deleter_type& get_deleter() { return _del; }
-        const deleter_type& get_deleter() const { return _del; }
-        pointer release();
-        void reset(pointer p = pointer());
-        void swap(unique_ptr& x) { HxSTL::swap(_ptr, x._ptr);; }
-    };
-    
-    template <class T, class Deleter>
-    typename unique_ptr<T, Deleter>::pointer unique_ptr<T, Deleter>::release() {
-        pointer tmp = _ptr;
-        _ptr = nullptr;
-        return tmp;
-    }
 
-    template <class T, class Deleter>
-    void unique_ptr<T, Deleter>::reset(pointer p) {
-        pointer tmp = _ptr;
-        _ptr = p;
-        _del(tmp);
-    }
+        deleter_type& get_deleter() { return _del; }
+
+        const deleter_type& get_deleter() const { return _del; }
+
+        explicit operator bool() const { return _ptr != nullptr; }
+
+        element_type& operator*() const { return *_ptr; }
+
+        pointer operator->() const { return _ptr; }
+    };
 
     template <class T, class Deleter>
     class unique_ptr<T[], Deleter> {

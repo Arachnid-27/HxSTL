@@ -4,14 +4,14 @@
 
 #include <new>
 #include "type_traits.h"
-#include "iterator.h"
+#include "algorithm.h"
 
 
 namespace HxSTL {
 
-    template <class T1, class T2>
-    inline void construct(T1 *p, const T2 &val) {
-        new (p) T1(val);
+    template <class U, class... Args>
+    void construct(U* p, Args&&... args) {
+        new(p) U(forward<Args>(args)...);
     }
 
     template <class T>
