@@ -1,0 +1,5 @@
+# Catch https://github.com/philsquared/Catch
+catch.hpp
+
+# Executable
+*.o

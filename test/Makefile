@@ -1,16 +1,16 @@
 CC=g++
 EXE=main.out
-HDR=include
+HDR=../include
 CPPFLAGS=-I $(HDR) -std=c++11
 
 
-SRC=$(wildcard ./source/*.cpp) $(wildcard ./case/*.cpp) $(wildcard *.cpp)
+SRC=$(wildcard ../source/*.cpp) $(wildcard *.cpp)
 OBJ=$(patsubst %.cpp,%.o,$(SRC))
 DEP=$(patsubst %.o,%.d,$(OBJ))
 
 
 $(EXE): $(OBJ)
-	$(CC) $^ -o $(CPPFLAGS) $@
+	$(CC) $^ $(CPPFLAGS) -o $@
 
 
 %.o: %.cpp
