@@ -101,9 +101,9 @@ namespace HxSTL {
         element_type* _ptr;
         ref_count_base* _cnt;
     public:
-        shared_ptr(): _ptr(nullptr), _cnt(new ref_count<T>(_ptr)) {}
+        shared_ptr() = default;
 
-        shared_ptr(nullptr_t): _ptr(nullptr), _cnt(new ref_count<T>(_ptr)) {}
+        shared_ptr(nullptr_t) : shared_ptr() {}
 
         template <class Y>
         shared_ptr(Y* p): _ptr(p), _cnt(new ref_count<T>(_ptr)) {}
@@ -136,16 +136,10 @@ namespace HxSTL {
         template <class Y>
         shared_ptr(const shared_ptr<Y>& r): _ptr(r._ptr), _cnt(r._cnt) { _cnt -> inc_ref(); }
 
-        shared_ptr(shared_ptr&& r): _ptr(r._ptr), _cnt(r._cnt) {
-            r._ptr = nullptr;
-            r._cnt = nullptr;
-        }
+        shared_ptr(shared_ptr&& r): _ptr(r._ptr), _cnt(r._cnt) { r._ptr = r.cnt = nullptr; }
 
         template <class Y>
-        shared_ptr(shared_ptr&& r): _ptr(r._ptr), _cnt(r._cnt) {
-            r._ptr = nullptr;
-            r._cnt = nullptr;
-        }
+        shared_ptr(shared_ptr&& r): _ptr(r._ptr), _cnt(r._cnt) { r._ptr = r._cnt = nullptr; }
 
         template <class Y>
         explicit shared_ptr(const weak_ptr<Y>& r): _ptr(r._ptr), _cnt(r._cnt) { _cnt -> inc_ref(); }
@@ -156,16 +150,44 @@ namespace HxSTL {
 
         ~shared_ptr() { _cnt -> dec_ref(); }
 
-        void reset() { shared_ptr().swap(*this); }
+        shared_ptr& operator=(const shared_ptr& r) {
+            shared_ptr<T>(r).swap(*this);
+            return *this;
+        }
+
+        template <class Y>
+        shared_ptr& operator=(const shared_ptr<Y>& r) {
+            shared_ptr<T>(r).swap(*this);
+            return *this;
+        }
+
+        shared_ptr& operator=(shared_ptr&& r) {
+            shared_ptr<T>(move(r)).swap(*this);
+            return *this;
+        }
+
+        template <class Y>
+        shared_ptr& operator=(shared_ptr<Y>&& r) {
+            shared_ptr<T>(move(r)).swap(*this);
+            return *this;
+        }
+
+        template <class Y, class Deleter>
+        shared_ptr& operator=(unique_ptr<Y, Deleter>&& r) {
+            shared_ptr<T>(move(r)).swap(*this);
+            return *this;
+        }
+
+        void reset() { shared_ptr<T>().swap(*this); }
 
         template <class Y>
         void reset(Y* p) { shared_ptr<T>(p).swap(*this); }
 
         template <class Y, class Deleter>
-        void reset(Y* p, Deleter d) { shared_ptr<Y>(p, d).swap(*this); }
+        void reset(Y* p, Deleter d) { shared_ptr<T>(p, d).swap(*this); }
 
         template <class Y, class Deleter, class Alloc>
-        void reset(Y* p, Deleter d, Alloc alloc) { shared_ptr<Y>(p, d, alloc).swap(*this); }
+        void reset(Y* p, Deleter d, Alloc alloc) { shared_ptr<T>(p, d, alloc).swap(*this); }
 
         void swap(shared_ptr& r) {
             HxSTL::swap(_ptr, r._ptr);
@@ -180,7 +202,7 @@ namespace HxSTL {
 
         element_type& operator[](ptrdiff_t idx) const { return get()[idx]; }
 
-        long use_count() const { return _cnt -> use_count(); }
+        long use_count() const { return _cnt ? 0 : _cnt -> use_count(); }
 
         bool unique() const { return use_count() == 1; }
 
@@ -192,8 +214,6 @@ namespace HxSTL {
         template <class Y>
         bool owner_before(const weak_ptr<Y>& other) const { return _cnt < other._cnt; }
     public:
-        template <class Y>
-        friend class shared_ptr;
         template <class Deleter, class Y>
         friend Deleter* get_deleter(const shared_ptr<Y>& p);
     };
@@ -209,8 +229,105 @@ namespace HxSTL {
     }
 
     template <class Deleter, class T>
-    Deleter* get_deleter(const shared_ptr<T>& p) {
-        return p._cnt.get_deleter();
+    Deleter* get_deleter(const shared_ptr<T>& r) {
+        return r._cnt ? nullptr : static_cast<Deleter*>(r._cnt.get_deleter());
+    }
+
+    template <class T, class U>
+    bool operator==(const shared_ptr<T>& lhs, const shared_ptr<U>& rhs) {
+        return lhs.get() == rhs.get();
+    }
+
+    template <class T, class U>
+    bool operator!=(const shared_ptr<T>& lhs, const shared_ptr<U>& rhs) {
+        return !(lhs == rhs);
+    }
+
+    template <class T, class U>
+    bool operator< (const shared_ptr<T>& lhs, const shared_ptr<U>& rhs) {
+        return lhs.get() < rhs.get();
+    }
+
+    template <class T, class U>
+    bool operator> (const shared_ptr<T>& lhs, const shared_ptr<U>& rhs) {
+        return rhs < lhs;
+    }
+
+    template <class T, class U>
+    bool operator<=(const shared_ptr<T>& lhs, const shared_ptr<U>& rhs) {
+        return !(rhs < lhs);
+    }
+
+    template <class T, class U>
+    bool operator>=(const shared_ptr<T>& lhs, const shared_ptr<U>& rhs) {
+        return !(lhs < rhs);
+    }
+
+    template <class T>
+    bool operator==(const shared_ptr<T>& lhs, std::nullptr_t) {
+        return !lhs;
+    }
+    template <class T>
+    bool operator==(std::nullptr_t, const shared_ptr<T>& rhs) {
+        return !rhs;
+    }
+
+    template <class T>
+    bool operator!=(const shared_ptr<T>& lhs, std::nullptr_t) {
+        return (bool) lhs;
+    }
+
+    template <class T>
+    bool operator!=(std::nullptr_t, const shared_ptr<T>& rhs) {
+        return (bool) rhs;
+    }
+
+    template <class T>
+    bool operator< (const shared_ptr<T>& lhs, std::nullptr_t) {
+        return lhs.get() < nullptr;
+    }
+
+    template <class T>
+    bool operator< (std::nullptr_t, const shared_ptr<T>& rhs) {
+        return nullptr < rhs.get();
+    }
+
+    template <class T>
+    bool operator> (const shared_ptr<T>& lhs, std::nullptr_t) {
+        return nullptr < lhs;
+    }
+
+    template <class T>
+    bool operator> (std::nullptr_t, const shared_ptr<T>& rhs) {
+        return rhs < nullptr;
+    }
+
+    template <class T>
+    bool operator<=(const shared_ptr<T>& lhs, std::nullptr_t) {
+        return !(nullptr < lhs);
+    }
+
+    template <class T>
+    bool operator<=(std::nullptr_t, const shared_ptr<T>& rhs) {
+        return !(rhs < nullptr);
+    }
+
+    template <class T>
+    bool operator>=(const shared_ptr<T>& lhs, std::nullptr_t) {
+        return !(lhs < nullptr);
+    }
+
+    template <class T>
+    bool operator>=(std::nullptr_t, const shared_ptr<T>& rhs) {
+        return !(nullptr < rhs);
+    }
+
+//    template <class T, class U, class V>
+//    basic_ostream<U, V>& operator<<(basic_ostream<U, V>& os, const shared_ptr<T>& ptr);
+
+    template <class T>
+    void swap(shared_ptr<T>& lhs, shared_ptr<T>& rhs) {
+        lhs.swap(rhs);
     }
 
 }
