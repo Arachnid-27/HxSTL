@@ -3,8 +3,8 @@
 
 
 #include <cstddef>
+#include "allocator.h"
 #include "type_traits.h"
-#include "default_delete.h"
 #include "utility.h"
 #include "unique_ptr.h"
 
@@ -24,7 +24,7 @@ namespace HxSTL {
     public:
         virtual ~ref_count_base() {}
 
-        virtual void* get_deleter() { return 0; }
+        virtual void* get_deleter() { return static_cast<void*>(0); }
 
         void inc_ref() { ++_use; }
 
@@ -44,15 +44,14 @@ namespace HxSTL {
         }
 
         long use_count() const { return _use; }
-
-        bool expired() const { return _use == 0; }
     };
 
     template <class T>
     class ref_count: public ref_count_base {
     private:
-        virtual void destroy_object() { delete _ptr; }
-        virtual void destory_this() { delete this; }
+        void destroy_object() { if (_ptr) delete _ptr; }
+
+        void destory_this() { delete this; }
     protected:
         T* _ptr;
     public:
@@ -62,25 +61,39 @@ namespace HxSTL {
     template <class T, class Deleter>
     class ref_count_del: public ref_count_base {
     private:
-        virtual void destroy_object() { _del ? _del( _ptr) : delete _ptr; }
-        virtual void destory_this() { delete this; }
+        void destroy_object() {
+            if (_del) {
+                _del(_ptr);
+            } else if (_ptr) {
+                delete _ptr;
+            }
+        }
+
+        void destory_this() { delete this; }
     protected:
         T* _ptr;
         Deleter _del;
     public:
         ref_count_del(T* p, Deleter d): _ptr(p), _del(d) {}
 
-        virtual void* get_deleter() { return &_del; }
+        void* get_deleter() { return &_del; }
     };
 
     template <class T, class Deleter, class Alloc>
     class ref_count_del_alloc: public ref_count_base {
     private:
-        virtual void destroy_object() { _del ? _del(_ptr) : delete _ptr; }
-        virtual void destory_this() {
-            typename Alloc::template rebind<ref_count_del_alloc>::other tmp_alloc(_alloc);
-            tmp_alloc.destroy(this);
-            tmp_alloc.deallocate(this, 1);
+        void destroy_object() {
+            if (_del) {
+                _del(_ptr);
+            } else if (_ptr) {
+                delete _ptr;
+            }
+        }
+
+        void destory_this() {
+            typename Alloc::template rebind<ref_count_del_alloc<T, Deleter, Alloc>>::other bind_alloc(_alloc);
+            bind_alloc.destroy(this);
+            bind_alloc.deallocate(this, 1);
         }
     protected:
         T* _ptr;
@@ -89,7 +102,27 @@ namespace HxSTL {
     public:
         ref_count_del_alloc(T* p, Deleter d, const Alloc& alloc): _ptr(p), _del(d), _alloc(alloc) {}
 
-        virtual void* get_deleter() { return &_del; }
+        void* get_deleter() { return &_del; }
+    };
+
+    template <class T, class Alloc>
+    class ref_count_alloc_obj: public ref_count_base {
+    private:
+        void destroy_object() {
+            _alloc.destroy(_ptr);
+            _alloc.deallocate(_ptr, 1);
+        }
+
+        void destory_this() {
+            typename Alloc::template rebind<ref_count_alloc_obj<T, Alloc>>::other bind_alloc(_alloc);
+            bind_alloc.destroy(this);
+            bind_alloc.deallocate(this, 1);
+        }
+    protected:
+        T* _ptr;
+        Alloc _alloc;
+    public:
+        ref_count_alloc_obj(T* p, const Alloc& alloc): _ptr(p), _alloc(alloc) {}
     };
 
     template <class T>
@@ -103,7 +136,7 @@ namespace HxSTL {
         element_type* _ptr;
         ref_count_base* _cnt;
     public:
-        shared_ptr() = default;
+        shared_ptr(): _ptr(nullptr), _cnt(nullptr) {}
 
         shared_ptr(nullptr_t): _ptr(nullptr), _cnt(nullptr) {}
 
@@ -118,16 +151,17 @@ namespace HxSTL {
 
         template <class Y, class Deleter, class Alloc>
         shared_ptr(Y* p, Deleter d, Alloc alloc): _ptr(p) {
-            typename Alloc::template rebind<ref_count_del_alloc<T, Deleter, Alloc>>::other tmp_alloc(alloc);
-            _cnt = tmp_alloc.allocate(1);
-            tmp_alloc.construct(_cnt, _ptr, d, alloc);
+            typename Alloc::template rebind<ref_count_del_alloc<T, Deleter, Alloc>>::other bind_alloc(alloc);
+            _cnt = bind_alloc.allocate(1);
+            // 如果最后一个参数传 bind_alloc 为什么 destroy_this 还是要 rebind ?
+            bind_alloc.construct(static_cast<ref_count_del_alloc<T, Deleter, Alloc>*>(_cnt), _ptr, d, alloc);
         }
 
         template <class Deleter, class Alloc>
         shared_ptr(nullptr_t p, Deleter d, Alloc alloc): _ptr(p) {
-            typename Alloc::template rebind<ref_count_del_alloc<T, Deleter, Alloc>>::other tmp_alloc(alloc);
-            _cnt = tmp_alloc.allocate(1);
-            tmp_alloc.construct(_cnt, _ptr, d, alloc);
+            typename Alloc::template rebind<ref_count_del_alloc<T, Deleter, Alloc>>::other bind_alloc(alloc);
+            _cnt = bind_alloc.allocate(1);
+            bind_alloc.construct(static_cast<ref_count_del_alloc<T, Deleter, Alloc>*>(_cnt), _ptr, d, alloc);
         }
 
         template <class Y>
@@ -156,14 +190,10 @@ namespace HxSTL {
         shared_ptr(unique_ptr<Y, Deleter>&& r)
         : _ptr(r.release()), _cnt(new ref_count_del<T, Deleter>(_ptr, r.get_deleter())) {}
 
-        ~shared_ptr() {
-            if (_cnt) {
-                _cnt -> dec_ref();
-            }
-        }
+        ~shared_ptr() { if (_cnt) _cnt -> dec_ref(); }
 
         shared_ptr& operator=(const shared_ptr& r) {
-            shared_ptr<T>(r).swap(*this);
+            shared_ptr(r).swap(*this);
             return *this;
         }
 
@@ -174,19 +204,19 @@ namespace HxSTL {
         }
 
         shared_ptr& operator=(shared_ptr&& r) {
-            shared_ptr<T>(move(r)).swap(*this);
+            shared_ptr<T>(HxSTL::move(r)).swap(*this);
             return *this;
         }
 
         template <class Y>
         shared_ptr& operator=(shared_ptr<Y>&& r) {
-            shared_ptr<T>(move(r)).swap(*this);
+            shared_ptr<T>(HxSTL::move(r)).swap(*this);
             return *this;
         }
 
         template <class Y, class Deleter>
         shared_ptr& operator=(unique_ptr<Y, Deleter>&& r) {
-            shared_ptr<T>(move(r)).swap(*this);
+            shared_ptr<T>(HxSTL::move(r)).swap(*this);
             return *this;
         }
 
@@ -225,9 +255,18 @@ namespace HxSTL {
 
         template <class Y>
         bool owner_before(const weak_ptr<Y>& other) const { return _cnt < other._cnt; }
+    private:
+        template <class Alloc>
+        shared_ptr(T* p, const Alloc& alloc, allocator_arg_t): _ptr(p) {
+            typename Alloc::template rebind<ref_count_alloc_obj<T, Alloc>>::other bind_alloc(alloc);
+            _cnt = bind_alloc.allocate(1);
+            bind_alloc.construct(static_cast<ref_count_alloc_obj<T, Alloc>*>(_cnt), _ptr, alloc);
+        }
     public:
         template <class Deleter, class Y>
         friend Deleter* get_deleter(const shared_ptr<Y>& p);
+        template <class Y, class Alloc, class... Args>
+        friend shared_ptr<Y> allocate_shared(const Alloc& alloc, Args&&... args); 
         template <class Y>
         friend class shared_ptr;
         template <class Y>
@@ -241,12 +280,15 @@ namespace HxSTL {
 
     template <class T, class Alloc, class... Args>
     shared_ptr<T> allocate_shared(const Alloc& alloc, Args&&... args) {
-        return shared_ptr<T>(new T(args...), 0, alloc);
+        typename Alloc::template rebind<T>::other bind_alloc(alloc);
+        T* p = bind_alloc.allocate(1);
+        bind_alloc.construct(p, args...);
+        return shared_ptr<T>(p, alloc, allocator_arg);
     }
 
     template <class Deleter, class T>
     Deleter* get_deleter(const shared_ptr<T>& r) {
-        return r._cnt ? static_cast<Deleter*>(r._cnt.get_deleter()) : nullptr;
+        return r._cnt ? reinterpret_cast<Deleter*>(r._cnt.get_deleter()) : nullptr;
     }
 
     template <class T, class U>
@@ -369,7 +411,7 @@ namespace HxSTL {
         template <class Y>
         weak_ptr(weak_ptr<Y>&& r): _ptr(r._ptr), _cnt(r._cnt) { r._ptr = r._cnt = nullptr; }
 
-        ~weak_ptr() { _cnt -> dec_wref(); }
+        ~weak_ptr() { if (_cnt) _cnt -> dec_wref(); }
 
         weak_ptr& operator=(const weak_ptr& r) { weak_ptr<T>(r).swap(*this); }
         
@@ -379,10 +421,10 @@ namespace HxSTL {
         template <class Y>
         weak_ptr& operator=(const shared_ptr<Y>& r) { weak_ptr<T>(r).swap(*this); }
 
-        weak_ptr& operator=(weak_ptr&& r) { weak_ptr<T>(move(r)).swap(*this); }
+        weak_ptr& operator=(weak_ptr&& r) { weak_ptr<T>(HxSTL::move(r)).swap(*this); }
 
         template <class Y>
-        weak_ptr& operator=(weak_ptr<Y>&& r) { weak_ptr<T>(move(r)).swap(*this); }
+        weak_ptr& operator=(weak_ptr<Y>&& r) { weak_ptr<T>(HxSTL::move(r)).swap(*this); }
 
         void reset() { weak_ptr().swap(*this); }
 

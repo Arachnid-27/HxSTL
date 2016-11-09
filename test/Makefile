@@ -1,7 +1,7 @@
 CC=g++
 EXE=main.out
 HDR=../include
-CPPFLAGS=-I $(HDR) -std=c++11
+CPPFLAGS=-g -I $(HDR) -std=c++11
 
 
 SRC=$(wildcard ../source/*.cpp) $(wildcard *.cpp)

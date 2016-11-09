@@ -43,11 +43,15 @@ namespace HxSTL {
         size_type max_size() const { return size_type(-1) / sizeof(T); }
 
         template <class U, class... Args>
-        void construct(U* p, Args&&... args) { construct(p, args...); }
+        void construct(U* p, Args&&... args) { HxSTL::construct(p, args...); }
 
         template <class U>
-        void destroy(U* p) { destroy(p); }
+        void destroy(U* p) { HxSTL::destroy(p); }
     };
+
+    struct allocator_arg_t {};
+
+    constexpr allocator_arg_t allocator_arg = allocator_arg_t();
 
 }
 

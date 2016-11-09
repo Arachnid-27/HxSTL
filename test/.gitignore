@@ -2,4 +2,4 @@
 catch.hpp
 
 # Executable
-*.o
+*.out

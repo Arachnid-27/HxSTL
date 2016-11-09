@@ -3,10 +3,23 @@
 
 
 #include "algorithm.h"
-#include "default_delete.h"
 
 
 namespace HxSTL {
+
+    template <class T>
+    struct default_delete {
+        default_delete() = default;
+
+        void operator()(T* ptr) const { delete ptr; }
+    };
+
+    template <class T>
+    struct default_delete<T[]> {
+        default_delete() = default;
+
+        void operator()(T* ptr) const { delete[] ptr; }
+    };
 
     template <class T, class Deleter = default_delete<T>>
     class unique_ptr {
@@ -18,19 +31,22 @@ namespace HxSTL {
         pointer _ptr;
         deleter_type _del;
     public:
-        unique_ptr(): _ptr(nullptr), _del(Deleter()) {}
+        unique_ptr(): _ptr(nullptr) {}
+
+        unique_ptr(nullptr_t): _ptr(nullptr) {}
 
         explicit unique_ptr(pointer p): _ptr(p), _del(Deleter()) {}
 
-        unique_ptr(pointer p, const deleter_type& d):_ptr(p), _del(d) {}
+        unique_ptr(pointer p, typename conditional<is_reference<Deleter>::value, 
+                Deleter, const Deleter&>::type d):_ptr(p), _del(d) {}
 
-        unique_ptr(pointer p, deleter_type&& d): _ptr(p), _del(d) {}
+        unique_ptr(pointer p, typename remove_reference<Deleter>::type&& d): _ptr(p), _del(move(d)) {}
 
         unique_ptr(unique_ptr&& u): _ptr(u._ptr) { u._ptr = nullptr; }
 
         unique_ptr(const unique_ptr&) = delete;
 
-        ~unique_ptr() { _del(_ptr); }
+        ~unique_ptr() { if(_ptr) _del(_ptr); }
 
         unique_ptr& operator=(unique_ptr&& u) {
             _ptr = u._ptr;
@@ -42,15 +58,15 @@ namespace HxSTL {
         unique_ptr& operator=(const unique_ptr&) = delete;
 
         pointer release() {
-            pointer tmp = _ptr;
+            pointer old_ptr = _ptr;
             _ptr = nullptr;
-            return tmp;
+            return old_ptr;
         }
 
         void reset(pointer p = pointer()) {
-            pointer tmp = _ptr;
+            pointer old_ptr = _ptr;
             _ptr = p;
-            _del(tmp);
+            if (old_ptr != nullptr) _del(old_ptr);
         }
 
         void swap(unique_ptr& x) { HxSTL::swap(_ptr, x._ptr);; }

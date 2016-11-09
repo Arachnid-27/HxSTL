@@ -9,7 +9,7 @@ struct Derived: public Base {
     Derived(int a, int b): n1(a), n2(b) {}
 };
 
-TEST_CASE("constructor") {
+TEST_CASE("shared_ptr constructor") {
 
     SECTION("default constructor") {
         HxSTL::shared_ptr<int> sp1;
@@ -43,9 +43,9 @@ TEST_CASE("constructor") {
     }
 
     SECTION("constructor with pointer, deleter and allocator") {
-//        HxSTL::shared_ptr<int> sp(new int, [](void*) {}, HxSTL::allocator<int>());
-//
-//        REQUIRE(sp.use_count() == 1);
+        HxSTL::shared_ptr<int> sp1(new int, [](void*) {}, HxSTL::allocator<int>());
+
+        REQUIRE(sp1.use_count() == 1);
     }
 
     SECTION("aliasing constructor") {
@@ -53,7 +53,7 @@ TEST_CASE("constructor") {
     }
 
     SECTION("copy constructor") {
-        HxSTL::shared_ptr<Derived> sp1(new Derived());
+        HxSTL::shared_ptr<Derived> sp1(new Derived);
         HxSTL::shared_ptr<Derived> sp2(sp1);
 
         REQUIRE(sp1 == sp2);
@@ -82,7 +82,7 @@ TEST_CASE("constructor") {
     }
 
     SECTION("move constructor") {
-        HxSTL::shared_ptr<Derived> sp1(new Derived());
+        HxSTL::shared_ptr<Derived> sp1(new Derived);
         HxSTL::shared_ptr<Derived> sp2(HxSTL::move(sp1));
 
         REQUIRE(sp1 == nullptr);
@@ -99,11 +99,12 @@ TEST_CASE("constructor") {
 
 }
 
-TEST_CASE("assignment") {
+TEST_CASE("shared_ptr assignment") {
 
     SECTION("copy assignment") {
-        HxSTL::shared_ptr<Derived> sp1(new Derived());
-        HxSTL::shared_ptr<Derived> sp2 = sp1;
+        HxSTL::shared_ptr<Derived> sp1(new Derived);
+        HxSTL::shared_ptr<Derived> sp2(new Derived);
+        sp2 = sp1;
 
         REQUIRE(sp1 == sp2);
         REQUIRE(sp1.use_count() == 2);
@@ -111,7 +112,8 @@ TEST_CASE("assignment") {
         REQUIRE(!sp1.unique());
         REQUIRE(!sp2.unique());
 
-        HxSTL::shared_ptr<Base> sp3 = sp2;
+        HxSTL::shared_ptr<Base> sp3(new Base);
+        sp3 = sp2;
 
         REQUIRE(sp2 == sp3);
         REQUIRE(sp1.use_count() == 3);
@@ -120,13 +122,15 @@ TEST_CASE("assignment") {
     }
 
     SECTION("move assignment") {
-        HxSTL::shared_ptr<Derived> sp1(new Derived());
-        HxSTL::shared_ptr<Derived> sp2 = HxSTL::move(sp1);
+        HxSTL::shared_ptr<Derived> sp1(new Derived);
+        HxSTL::shared_ptr<Derived> sp2(new Derived);
+        sp2 = HxSTL::move(sp1);
 
         REQUIRE(sp1 == nullptr);
         REQUIRE(sp2.use_count() == 1);
 
-        HxSTL::shared_ptr<Base> sp3 = HxSTL::move(sp2);
+        HxSTL::shared_ptr<Base> sp3(new Base);
+        sp3 = HxSTL::move(sp2);
 
         REQUIRE(sp2 == nullptr);
         REQUIRE(sp3.use_count() == 1);
@@ -137,7 +141,15 @@ TEST_CASE("assignment") {
 
 }
 
-TEST_CASE("member operator") {
+TEST_CASE("shared_ptr member operator") {
+
+    SECTION("operator bool") {
+        HxSTL::shared_ptr<int> sp1;
+        HxSTL::shared_ptr<int> sp2(new int);
+
+        REQUIRE(!sp1);
+        REQUIRE((bool) sp2);
+    }
 
     SECTION("operator*") {
         HxSTL::shared_ptr<int> sp1(new int(10));
@@ -164,7 +176,7 @@ TEST_CASE("member operator") {
 
 }
 
-TEST_CASE("member funciton") {
+TEST_CASE("shared_ptr member funciton") {
 
     SECTION("reset") {
         HxSTL::shared_ptr<int> sp1(new int);
@@ -243,7 +255,7 @@ TEST_CASE("member funciton") {
 
 }
 
-TEST_CASE("non-member operator") {
+TEST_CASE("shared_ptr non-member operator") {
 
     SECTION("relational operators") {
         HxSTL::shared_ptr<int> sp1(new int);
@@ -253,10 +265,6 @@ TEST_CASE("non-member operator") {
 
         REQUIRE(sp1 == sp2);
         REQUIRE(sp1 != sp3);
-        REQUIRE(sp1 < sp3);
-        REQUIRE(sp3 > sp1);
-        REQUIRE(!(sp3 <= sp1));
-        REQUIRE(!(sp1 >= sp3));
         REQUIRE(sp4 == nullptr);
         REQUIRE(sp1 != nullptr);
     }
@@ -266,19 +274,26 @@ TEST_CASE("non-member operator") {
 
 }
 
-TEST_CASE("non-member function") {
+TEST_CASE("shared_ptr non-member function") {
 
     SECTION("make_shared") {
         auto sp1 = HxSTL::make_shared<int>();
         auto sp2 = HxSTL::make_shared<int>(100);
         auto sp3 = HxSTL::make_shared<Derived>(200, 300);
 
+        REQUIRE(sp1.use_count() == 1);
         REQUIRE(*sp2 == 100);
         REQUIRE(sp3 -> n1 == 200);
         REQUIRE(sp3 -> n2 == 300);
     }
 
     SECTION("allocate_shared") {
+        auto sp1 = HxSTL::allocate_shared<int>(HxSTL::allocator<int>(), 100);
+        auto sp2 = HxSTL::allocate_shared<Derived>(HxSTL::allocator<Derived>(), 200, 300);
+
+        REQUIRE(*sp1 == 100);
+        REQUIRE(sp2 -> n1 == 200);
+        REQUIRE(sp2 -> n2 == 300);
     }
 
     SECTION("swap") {
@@ -295,4 +310,3 @@ TEST_CASE("non-member function") {
     }
 
 }
-

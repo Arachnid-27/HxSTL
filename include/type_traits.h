@@ -4,137 +4,117 @@
 
 namespace HxSTL {
 
-    struct true_type {};
-    struct false_type {};
+    template <class T, T v>
+    struct integeral_constant {
+        static constexpr T value = v;
+        typedef integeral_constant<T, v> type;
+    };
+
+    typedef integeral_constant<bool, true>      true_type;
+    typedef integeral_constant<bool, false>     false_type;
 
     template <class T>
-    struct is_pod {
-        typedef false_type      type;
-    };
+    struct is_pod: public integeral_constant<bool, false> {};
 
     template <>
-    struct is_pod<char> {
-        typedef true_type       type;
-    };
+    struct is_pod<char>: public integeral_constant<bool, true> {};
 
     template <>
-    struct is_pod<signed char> {
-        typedef true_type       type;
-    };
+    struct is_pod<signed char>: public integeral_constant<bool, true> {};
 
     template <>
-    struct is_pod<unsigned char> {
-        typedef true_type       type;
-    };
+    struct is_pod<unsigned char>: public integeral_constant<bool, true> {};
 
     template <>
-    struct is_pod<short> {
-        typedef true_type       type;
-    };
+    struct is_pod<short>: public integeral_constant<bool, true> {}; 
 
     template <>
-    struct is_pod<unsigned short> {
-        typedef true_type       type;
-    };
+    struct is_pod<unsigned short>: public integeral_constant<bool, true> {};
 
     template <>
-    struct is_pod<int> {
-        typedef true_type       type;
-    };
+    struct is_pod<int>: public integeral_constant<bool, true> {};
 
     template <>
-    struct is_pod<unsigned int> {
-        typedef true_type       type;
-    };
+    struct is_pod<unsigned int>: public integeral_constant<bool, true> {};
 
     template <>
-    struct is_pod<long> {
-        typedef true_type       type;
-    };
+    struct is_pod<long>: public integeral_constant<bool, true> {};
 
     template <>
-    struct is_pod<unsigned long> {
-        typedef true_type       type;
-    };
+    struct is_pod<unsigned long>: public integeral_constant<bool, true> {};
 
     template <>
-    struct is_pod<float> {
-        typedef true_type       type;
-    };
+    struct is_pod<float>: public integeral_constant<bool, true> {};
 
     template <>
-    struct is_pod<double> {
-        typedef true_type       type;
-    };
+    struct is_pod<double>: public integeral_constant<bool, true> {};
 
     template <>
-    struct is_pod<long double> {
-        typedef true_type       type;
-    };
+    struct is_pod<long double>: public integeral_constant<bool, true> {};
 
     template <class T>
-    struct is_pod<T*> {
-        typedef true_type       type;
-    };
+    struct is_pod<T*>: public integeral_constant<bool, true> {};
 
     template <class T>
-    struct is_integer {
-        typedef false_type      type;
-    };
+    struct is_integer: public integeral_constant<bool, false> {};
 
     template <>
-    struct is_integer<char> {
-        typedef true_type       type;
-    };
+    struct is_integer<char>: public integeral_constant<bool, true> {};
 
     template <>
-    struct is_integer<signed char> {
-        typedef true_type       type;
-    };
+    struct is_integer<signed char>: public integeral_constant<bool, true> {};
 
     template <>
-    struct is_integer<unsigned char> {
-        typedef true_type       type;
-    };
+    struct is_integer<unsigned char>: public integeral_constant<bool, true> {};
 
     template <>
-    struct is_integer<short> {
-        typedef true_type       type;
-    };
+    struct is_integer<short>: public integeral_constant<bool, true> {};
 
     template <>
-    struct is_integer<unsigned short> {
-        typedef true_type       type;
-    };
+    struct is_integer<unsigned short>: public integeral_constant<bool, true> {};
 
     template <>
-    struct is_integer<int> {
-        typedef true_type       type;
-    };
+    struct is_integer<int>: public integeral_constant<bool, true> {};
 
     template <>
-    struct is_integer<unsigned int> {
-        typedef true_type       type;
-    };
+    struct is_integer<unsigned int>: public integeral_constant<bool, true> {};
 
     template <>
-    struct is_integer<long> {
-        typedef true_type       type;
-    };
+    struct is_integer<long>: public integeral_constant<bool, true> {};
 
     template <>
-    struct is_integer<unsigned long> {
-        typedef true_type       type;
-    };
+    struct is_integer<unsigned long>: public integeral_constant<bool, true> {};
 
     template <class T, class U>
-    struct is_same {
-        typedef false_type      type;
+    struct is_same: public integeral_constant<bool, false> {};
+
+    template <class T>
+    struct is_same<T, T>: public integeral_constant<bool, true> {};
+
+    template <class T>
+    struct is_lvalue_reference: public integeral_constant<bool, false> {};
+
+    template <class T>
+    struct is_lvalue_reference<T&>: public integeral_constant<bool, true> {};
+
+    template <class T>
+    struct is_rvalue_reference: public integeral_constant<bool, false> {};
+
+    template <class T>
+    struct is_rvalue_reference<T&&>: public integeral_constant<bool, true> {};
+
+    template <class T>
+    struct is_reference: public integeral_constant<bool, 
+            is_lvalue_reference<T>::value || is_rvalue_reference<T>::value> {};
+
+    template <class T>
+    struct remove_const {
+        typedef T       type;
     };
 
     template <class T>
-    struct is_same<T, T> {
-        typedef true_type       type;
+    struct remove_const<const T> {
+        typedef T       type;
     };
 
     template <class T>
