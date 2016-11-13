@@ -26,7 +26,7 @@ namespace HxSTL {
     protected:
         iterator _start;
         iterator _finish;
-        iterator _end;
+        iterator _end_of_storage;
         allocator_type _alloc;
     protected:
         template <class InputIterator>
@@ -39,10 +39,10 @@ namespace HxSTL {
         void assign_aux(InputIterator first, InputIterator last, false_type);
         void assign_aux(size_type n, const T& x, true_type);
         void allocate_and_single_insert(iterator position, const T& x);
-        void destroy_and_initialize(iterator new_start, iterator new_finish, iterator new_end);
+        void destroy_and_initialize(iterator new_start, iterator new_finish, iterator new_end_of_storage);
     public:
         explicit vector(const allocator_type& alloc = allocator_type())
-            : _start(0), _finish(0), _end(0), _alloc(alloc) {}
+            : _start(0), _finish(0), _end_of_storage(0), _alloc(alloc) {}
 
         explicit vector(size_type n, const value_type& val = value_type(), 
                 const allocator_type& alloc = allocator_type())
@@ -73,7 +73,7 @@ namespace HxSTL {
         size_type size() const { return _finish - _start; }
         size_type max_size() const { return _alloc.max_size(); }
         void resize(size_type n, value_type val = value_type());
-        size_type capacity() const { return _end - _start; }
+        size_type capacity() const { return _end_of_storage - _start; }
         bool empty() const { return _start == _finish; }
         void reserve(size_type n); 
 
@@ -123,7 +123,7 @@ namespace HxSTL {
     vector<T, Alloc>::vector(const vector& x): _alloc(x._alloc) {
         _start = _alloc.allocate(x.capacity());
         _finish = uninitialized_copy(x.begin(), x.end(), _start);
-        _end = _start + x.capacity();
+        _end_of_storage = _start + x.capacity();
     }
 
     template <class T, class Alloc>
@@ -131,14 +131,14 @@ namespace HxSTL {
     void vector<T, Alloc>::initialize_aux(InputIterator first, InputIterator last, false_type) {
         _start = _alloc.allocate(last - first);
         _finish = uninitialized_copy(first, last, _start);
-        _end = _finish;
+        _end_of_storage = _finish;
     }
 
     template <class T, class Alloc>
     void vector<T, Alloc>::initialize_aux(size_type n, const value_type& val, true_type) {
         _start = _alloc.allocate(n);
         _finish = uninitialized_fill_n(_start, n, val);
-        _end = _start + n;
+        _end_of_storage = _start + n;
     }
 
     template <class T, class Alloc>
@@ -257,7 +257,7 @@ namespace HxSTL {
 
     template <class T, class Alloc>
     void vector<T, Alloc>::push_back(const value_type& val) {
-        if (_finish != _end) {
+        if (_finish != _end_of_storage) {
             construct(_finish, val);
             ++_finish;
         } else {
@@ -273,7 +273,7 @@ namespace HxSTL {
 
     template <class T, class Alloc>
     typename vector<T, Alloc>::iterator vector<T, Alloc>::insert(iterator position, const value_type& val) {
-        if (_finish != _end) {
+        if (_finish != _end_of_storage) {
             ++_finish;
             copy_backward(position, _finish - 1, _finish);
             *position = val;
@@ -300,7 +300,7 @@ namespace HxSTL {
     inline void vector<T, Alloc>::insert_aux(iterator position, InputIterator first, InputIterator last, false_type) {
         size_type n = last - first;
 
-        if (_end - _finish >= n) {
+        if (_end_of_storage - _finish >= n) {
             size_type element_after = _finish - position;
 
             iterator old_finish = _finish;
@@ -335,7 +335,7 @@ namespace HxSTL {
 
     template <class T, class Alloc>
     inline void vector<T, Alloc>::insert_aux(iterator position, size_type n, const value_type& val, true_type) {
-        if (_end - _finish >= n) {
+        if (_end_of_storage - _finish >= n) {
             size_type element_after = _finish - position;
 
             iterator old_finish = _finish;
@@ -387,19 +387,9 @@ namespace HxSTL {
 
     template <class T, class Alloc>
     void vector<T, Alloc>::swap(vector& x) {
-        iterator tmp;
-        
-        tmp = _start;
-        _start = x._start;
-        x._start = tmp;
-
-        tmp = _finish;
-        _finish = x._finish;
-        x._finish = tmp;
-
-        tmp = _end;
-        _end = x._end;
-        x._end = tmp;
+        HxSTL::swap(_start, x._start);
+        HxSTL::swap(_finish, x._finish);
+        HxSTL::swap(_end_of_storage, x._end_of_storage);
     }
 
     template <class T, class Alloc>
@@ -425,7 +415,7 @@ namespace HxSTL {
 
     template <class T, class Alloc>
     inline void vector<T, Alloc>::destroy_and_initialize(iterator new_start, 
-            iterator new_finish, iterator new_end) {
+            iterator new_finish, iterator new_end_of_storage) {
         if (_start) {
             destroy(_start, _finish);
             _alloc.deallocate(_start, capacity());
@@ -433,12 +423,8 @@ namespace HxSTL {
 
         _start = new_start;
         _finish = new_finish;
-        _end = new_end;
+        _end_of_storage = new_end_of_storage;
     }
-
-    /*
-     * friend
-     */
 
     template<class U, class A>
     bool operator==(const vector<U, A>& lhs, const vector<U, A>& rhs) {

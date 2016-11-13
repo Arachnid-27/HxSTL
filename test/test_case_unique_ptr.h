@@ -35,7 +35,8 @@ TEST_CASE("unique_ptr assignment") {
 
     SECTION("move assignment") {
         HxSTL::unique_ptr<int> up1(new int(100));
-        HxSTL::unique_ptr<int> up2 = move(up1);
+        HxSTL::unique_ptr<int> up2;
+        up2 = HxSTL::move(up1);
 
         REQUIRE(!up1);
         REQUIRE(*up2 == 100);

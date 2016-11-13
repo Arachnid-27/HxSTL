@@ -57,21 +57,15 @@ namespace HxSTL {
 
     template <class InputIterator, class Distance>
     inline void __advance(InputIterator& it, Distance n, input_iterator_tag) {
-        while (n--) {
-            ++it;
-        }
+        while (n--) ++it;
     }
 
     template <class BidirectionalIterator, class Distance>
     inline void __advance(BidirectionalIterator& it, Distance n, bidirectional_iterator_tag) {
         if (n >= 0) {
-            while (n--) {
-                ++it;
-            }
+            while (n--) ++it;
         } else {
-            while (n++) {
-                --it;
-            }
+            while (n++) --it;
         }
     }
 
