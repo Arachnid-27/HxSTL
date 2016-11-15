@@ -651,6 +651,18 @@ namespace HxSTL {
         return __copy_backward_dispath<BidirectionalIterator1, BidirectionalIterator2>()(first, last, result);
     }
 
+    // move
+    
+    template <class InputIterator, class OutputIterator>
+    OutputIterator move(InputIterator first, InputIterator last, OutputIterator result) {
+        while (first != last) {
+            *result = HxSTL::move(*first);
+            ++first;
+            ++result;
+        }
+        return result;
+    }
+
     // swap_range
 
     template <class ForwardIterator1, class ForwardIterator2>

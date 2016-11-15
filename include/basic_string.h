@@ -36,6 +36,7 @@ namespace HxSTL {
         void initialize_copy_aux(InputIterator first, InputIterator last);
         template <class InputIterator>
         void initialize_copy_n_aux(InputIterator first, size_type count, size_type sz);
+        void insert_char_string_aux(size_type index, iterator first, iterator last);
         void reallocate_and_copy(size_type sz);
         void copy_before_write();
     public:
@@ -68,7 +69,7 @@ namespace HxSTL {
         basic_string(const charT* s, const Alloc& alloc = allocator_type())
             :_ref_count(new long(1)), _alloc(alloc) {
                 const charT* t = s;
-                while (t) ++t;
+                while (*t) ++t;
                 initialize_copy_aux(s, t);
             }
 
@@ -290,6 +291,34 @@ namespace HxSTL {
     }
 
     template <class charT, class Alloc>
+    void basic_string<charT, Alloc>::insert_char_string_aux(size_type index, iterator first, iterator last) {
+        size_type count = last - first;
+        iterator old_finish = _finish;
+        if (count > _end_of_storage - _finish) {
+            size_type sz = count + size() > 2 * capacity() ? count + size() : 2 * capacity();
+            iterator new_start = _alloc.allocate(sz + 1);
+            _finish = uninitialized_move(_start, _start + index, new_start);
+            _finish = uninitialized_copy_n(first, count, _finish);
+            _finish = uninitialized_move(_start + index, old_finish, _finish);
+            _start = new_start;
+            _end_of_storage = new_start + sz;
+        } else {
+            size_type element_after = size() - index;
+
+            if (count > element_after) {
+                _finish = uninitialized_copy(first + element_after, last, _finish);
+                _finish = uninitialized_copy(_start + index, old_finish, _finish);
+                HxSTL::copy_n(first, element_after, _start + index);
+            } else {
+                _finish = uninitialized_move(_finish - count, _finish, _finish);
+                HxSTL::copy_backward(_start + index, old_finish - count, old_finish);
+                HxSTL::copy(first, last, _start + index);
+            }
+        }
+        *_finish = 0;
+    }
+
+    template <class charT, class Alloc>
     void basic_string<charT, Alloc>::reallocate_and_copy(size_type sz) {
         iterator new_start = _alloc.allocate(sz + 1);
         _finish = HxSTL::uninitialized_copy(_start, _finish, new_start);
@@ -309,14 +338,108 @@ namespace HxSTL {
 
     template <class charT, class Alloc>
     void basic_string<charT, Alloc>::reserve(size_type new_cap) {
+        copy_before_write();
         if (new_cap > capacity()) {
+            copy_before_write();
             reallocate_and_copy(new_cap);
         } else if (new_cap < size()) {
+            size_type del = size() - new_cap;
+            HxSTL::__destroy(_finish - del + 1, _finish + 1);
+            _finish = _finish - del;
+            *_finish = 0;
             shrink_to_fit();
         } else {
+            size_type unuse = capacity() - new_cap;
             _end_of_storage = _start + new_cap;
-            *_end_of_storage = 0;
+            _alloc.deallocate(_end_of_storage + 1, unuse);
         }
+    }
+
+    template <class charT, class Alloc>
+    void basic_string<charT, Alloc>::shrink_to_fit() {
+        copy_before_write();
+        int unuse = _end_of_storage - _finish;
+        if (unuse) {
+            _alloc.deallocate(_finish + 1, unuse);
+            _end_of_storage = _finish;
+        }
+    }
+
+    template <class charT, class Alloc>
+    basic_string<charT, Alloc>& basic_string<charT, Alloc>::insert(size_type index, size_type count, charT ch) {
+        iterator old_finish = _finish;
+        if (count > _end_of_storage - _finish) {
+            size_type sz = count + size() > 2 * capacity() ? count + size() : 2 * capacity();
+            iterator new_start = _alloc.allocate(sz + 1);
+            _finish = uninitialized_move(_start, _start + index, new_start);
+            _finish = uninitialized_fill_n(_finish, count, ch);
+            _finish = uninitialized_move(_start + index, old_finish, _finish);
+            *_finish = 0;
+            _start = new_start;
+            _end_of_storage = new_start + sz;
+        } else {
+            size_type element_after = size() - index;
+
+            if (count > element_after) {
+                _finish = uninitialized_fill_n(_finish, count - element_after, ch);
+                _finish = uninitialized_move(_start + index, old_finish, _finish);
+                *_finish = 0;
+                HxSTL::fill_n(_start + index, element_after, ch);
+            } else {
+                _finish = uninitialized_move(_finish - count, _finish, _finish);
+                *_finish = 0;
+                HxSTL::copy_backward(_start + index, old_finish - count, old_finish);
+                HxSTL::fill_n(_start + index, count, ch);
+            }
+        }
+        return *this;
+    }
+
+    template <class charT, class Alloc>
+    basic_string<charT, Alloc>& basic_string<charT, Alloc>::insert(size_type index, const charT* s) {
+        charT *t = s;
+        while (*t) ++t;
+        insert_char_string_aux(index, s, t);
+        return *this;
+    }
+
+    template <class charT, class Alloc>
+    basic_string<charT, Alloc>& basic_string<charT, Alloc>::insert(size_type index, const charT* s, size_type count) {
+        insert_char_string_aux(index, s, s + count);
+        return *this;
+    }
+
+    template <class charT, class Alloc>
+    basic_string<charT, Alloc>& basic_string<charT, Alloc>::insert(size_type index, const basic_string<charT, Alloc>& str) {
+        insert_char_string_aux(index, str.cbegin(), str.cend());
+        return *this;
+    }
+
+    template <class charT, class Alloc>
+    basic_string<charT, Alloc>& basic_string<charT, Alloc>::insert(size_type index, const basic_string<charT, Alloc>& str, 
+            size_type index_str, size_type count) {
+        if (count == npos) {
+            insert_char_string_aux(index, str.cbegin() + index_str, str.cend());
+        } else {
+            insert_char_string_aux(index, str.cbegin() + index_str, str.cbegin() + index_str + count);
+        }
+        return *this;
+    }
+
+    template <class charT, class Alloc>
+    typename basic_string<charT, Alloc>::iterator
+    basic_string<charT, Alloc>::insert(const_iterator pos, charT ch) {
+    }
+
+    template <class charT, class Alloc>
+    typename basic_string<charT, Alloc>::iterator
+    basic_string<charT, Alloc>::insert(const_iterator pos, size_type count, charT ch) {
+    }
+
+    template <class charT, class Alloc>
+    template <class InputIterator>
+    typename basic_string<charT, Alloc>::iterator
+    basic_string<charT, Alloc>::insert(const_iterator pos, InputIterator first, InputIterator last) {
     }
 
 }

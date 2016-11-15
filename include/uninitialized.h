@@ -9,6 +9,8 @@
 
 namespace HxSTL {
 
+    // uninitialized_copy
+
     template <class InputIterator, class ForwardIterator>
     inline ForwardIterator uninitialized_copy(InputIterator first, InputIterator last,
             ForwardIterator result) {
@@ -16,7 +18,6 @@ namespace HxSTL {
         return __uninitialized_copy(first, last, result, typename is_pod<value_type>::type());
     }
 
-    // 为什么不是 pod 类型都用 memmove
     inline char* uninitialized_copy(const char* first, const char *last, char* result) {
         memmove(result, first, last - first);
         return result + (last - first);
@@ -36,16 +37,56 @@ namespace HxSTL {
     template <class InputIterator, class ForwardIterator>
     inline ForwardIterator __uninitialized_copy(InputIterator first, InputIterator last,
             ForwardIterator result, false_type) {
-        for (; first != last; ++first, ++result) {
-            construct(&*result, *first);
+        while (first != last) {
+            construct(result, *first);
+            ++first;
+            ++result;
         }
         return result;
     }
 
+    // uninitialized_move
+
+    template <class InputIterator, class ForwardIterator>
+    inline ForwardIterator uninitialized_move(InputIterator first, InputIterator last,
+            ForwardIterator result) {
+        typedef typename iterator_traits<ForwardIterator>::value_type value_type;
+        return __uninitialized_move(first, last, result, typename is_pod<value_type>::type());
+    }
+
+    inline char* uninitialized_move(const char* first, const char *last, char* result) {
+        memmove(result, first, last - first);
+        return result + (last - first);
+    }
+
+    inline char* uninitialized_move(const wchar_t* first, const wchar_t* last, char* result) {
+        memmove(result, first, last - first);
+        return result + (last - first);
+    }
+
+    template <class InputIterator, class ForwardIterator>
+    inline ForwardIterator __uninitialized_move(InputIterator first, InputIterator last,
+            ForwardIterator result, true_type) {
+        return move(first, last, result);
+    }
+
+    template <class InputIterator, class ForwardIterator>
+    inline ForwardIterator __uninitialized_move(InputIterator first, InputIterator last,
+            ForwardIterator result, false_type) {
+        while (first != last) {
+            construct(result, HxSTL::move(*first));
+            ++first;
+            ++result;
+        }
+        return result;
+    }
+
+    // uninitialized_copy_n
+
     template <class InputIterator, class Size, class ForwardIterator>
     inline ForwardIterator uninitialized_copy_n(InputIterator first, Size n, ForwardIterator result) {
         typedef typename iterator_traits<ForwardIterator>::value_type value_type;
-        return __uninitialized_copy(first, n, result, typename is_pod<value_type>::type());
+        return __uninitialized_copy_n(first, n, result, typename is_pod<value_type>::type());
     }
 
     template <class InputIterator, class Size, class ForwardIterator>
@@ -58,13 +99,15 @@ namespace HxSTL {
     inline ForwardIterator __uninitialized_copy_n(InputIterator first, Size n,
             ForwardIterator result, false_type) {
         while (n > 0) {
-            construct(&*result, *first);
+            construct(result, *first);
             --n;
             ++first;
             ++result;
         }
         return result;
     }
+
+    // uninitialized_fill
 
     template <class ForwardIterator, class T>
     inline void uninitialized_fill(ForwardIterator first, ForwardIterator last, 
@@ -83,10 +126,12 @@ namespace HxSTL {
     inline void __uninitialized_fill(ForwardIterator first, ForwardIterator last, 
             const T& x, false_type) {
         while (first != last) {
-            construct(&*first, x);
+            construct(first, x);
             ++first;
         }
     }
+
+    // uninitialized_fill_n
 
     template <class ForwardIterator, class Size, class T>
     inline ForwardIterator uninitialized_fill_n(ForwardIterator first, Size n, const T& x) {
@@ -102,7 +147,7 @@ namespace HxSTL {
     template <class ForwardIterator, class Size, class T>
     inline ForwardIterator __uninitialized_fill_n(ForwardIterator first, Size n, const T& x, false_type) {
         while (n > 0) {
-            construct(&*first, x);
+            construct(first, x);
             --n;
             ++first;
         }
