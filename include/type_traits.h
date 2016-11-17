@@ -2,7 +2,15 @@
 #define _TYPE_TRAITS_H_
 
 
+#include <cstddef>
+
+
 namespace HxSTL {
+
+    typedef decltype(nullptr) nullptr_t;
+
+    typedef char __one;
+    typedef struct{ char c[2]; } __two;
 
     template <class T, T v>
     struct integeral_constant {
@@ -13,99 +21,15 @@ namespace HxSTL {
     typedef integeral_constant<bool, true>      true_type;
     typedef integeral_constant<bool, false>     false_type;
 
-    template <class T>
-    struct is_pod: public integeral_constant<bool, false> {};
+    template <bool Cond, class T, class F>
+    struct conditional {
+        typedef F       type;
+    };
 
-    template <>
-    struct is_pod<char>: public integeral_constant<bool, true> {};
-
-    template <>
-    struct is_pod<signed char>: public integeral_constant<bool, true> {};
-
-    template <>
-    struct is_pod<unsigned char>: public integeral_constant<bool, true> {};
-
-    template <>
-    struct is_pod<short>: public integeral_constant<bool, true> {}; 
-
-    template <>
-    struct is_pod<unsigned short>: public integeral_constant<bool, true> {};
-
-    template <>
-    struct is_pod<int>: public integeral_constant<bool, true> {};
-
-    template <>
-    struct is_pod<unsigned int>: public integeral_constant<bool, true> {};
-
-    template <>
-    struct is_pod<long>: public integeral_constant<bool, true> {};
-
-    template <>
-    struct is_pod<unsigned long>: public integeral_constant<bool, true> {};
-
-    template <>
-    struct is_pod<float>: public integeral_constant<bool, true> {};
-
-    template <>
-    struct is_pod<double>: public integeral_constant<bool, true> {};
-
-    template <>
-    struct is_pod<long double>: public integeral_constant<bool, true> {};
-
-    template <class T>
-    struct is_pod<T*>: public integeral_constant<bool, true> {};
-
-    template <class T>
-    struct is_integer: public integeral_constant<bool, false> {};
-
-    template <>
-    struct is_integer<char>: public integeral_constant<bool, true> {};
-
-    template <>
-    struct is_integer<signed char>: public integeral_constant<bool, true> {};
-
-    template <>
-    struct is_integer<unsigned char>: public integeral_constant<bool, true> {};
-
-    template <>
-    struct is_integer<short>: public integeral_constant<bool, true> {};
-
-    template <>
-    struct is_integer<unsigned short>: public integeral_constant<bool, true> {};
-
-    template <>
-    struct is_integer<int>: public integeral_constant<bool, true> {};
-
-    template <>
-    struct is_integer<unsigned int>: public integeral_constant<bool, true> {};
-
-    template <>
-    struct is_integer<long>: public integeral_constant<bool, true> {};
-
-    template <>
-    struct is_integer<unsigned long>: public integeral_constant<bool, true> {};
-
-    template <class T, class U>
-    struct is_same: public integeral_constant<bool, false> {};
-
-    template <class T>
-    struct is_same<T, T>: public integeral_constant<bool, true> {};
-
-    template <class T>
-    struct is_lvalue_reference: public integeral_constant<bool, false> {};
-
-    template <class T>
-    struct is_lvalue_reference<T&>: public integeral_constant<bool, true> {};
-
-    template <class T>
-    struct is_rvalue_reference: public integeral_constant<bool, false> {};
-
-    template <class T>
-    struct is_rvalue_reference<T&&>: public integeral_constant<bool, true> {};
-
-    template <class T>
-    struct is_reference: public integeral_constant<bool, 
-            is_lvalue_reference<T>::value || is_rvalue_reference<T>::value> {};
+    template <class T, class F>
+    struct conditional<true, T, F> {
+        typedef T       type;
+    };
 
     template <class T>
     struct remove_const {
@@ -115,6 +39,21 @@ namespace HxSTL {
     template <class T>
     struct remove_const<const T> {
         typedef T       type;
+    };
+
+    template <class T>
+    struct remove_volatile {
+        typedef T       type;
+    };
+
+    template <class T>
+    struct remove_volatile<volatile T> {
+        typedef T       type;
+    };
+
+    template <class T>
+    struct remove_cv {
+        typedef typename remove_volatile<typename remove_const<T>::type>::type      type;
     };
 
     template <class T>
@@ -132,19 +71,240 @@ namespace HxSTL {
         typedef T       type;
     };
 
-    template <bool Cond, class T, class F>
-    struct conditional {};
+    template <class T, class U>
+    struct is_same: public false_type {};
 
-    template <class T, class F>
-    struct conditional<true, T, F> {
+    template <class T>
+    struct is_same<T, T>: public true_type {};
+
+    template <class T>
+    struct is_pod: public false_type {};
+
+    template <>
+    struct is_pod<char>: public true_type {};
+
+    template <>
+    struct is_pod<signed char>: public true_type {};
+
+    template <>
+    struct is_pod<unsigned char>: public true_type {};
+
+    template <>
+    struct is_pod<short>: public true_type {}; 
+
+    template <>
+    struct is_pod<unsigned short>: public true_type {};
+
+    template <>
+    struct is_pod<int>: public true_type {};
+
+    template <>
+    struct is_pod<unsigned int>: public true_type {};
+
+    template <>
+    struct is_pod<long>: public true_type {};
+
+    template <>
+    struct is_pod<unsigned long>: public true_type {};
+
+    template <>
+    struct is_pod<float>: public true_type {};
+
+    template <>
+    struct is_pod<double>: public true_type {};
+
+    template <>
+    struct is_pod<long double>: public true_type {};
+
+    template <class T>
+    struct is_pod<T*>: public true_type {};
+
+    template <class T>
+    struct is_integer: 
+        public integeral_constant<bool, 
+        is_same<char, typename remove_cv<T>::type>::value || 
+        is_same<signed char, typename remove_cv<T>::type>::value || 
+        is_same<unsigned char, typename remove_cv<T>::type>::value || 
+        is_same<short, typename remove_cv<T>::type>::value || 
+        is_same<unsigned short, typename remove_cv<T>::type>::value || 
+        is_same<int, typename remove_cv<T>::type>::value || 
+        is_same<unsigned int, typename remove_cv<T>::type>::value || 
+        is_same<long, typename remove_cv<T>::type>::value || 
+        is_same<unsigned long, typename remove_cv<T>::type>::value> {};
+
+    template <class T>
+    struct is_floating_point: 
+        public integeral_constant<bool, 
+        is_same<float, typename remove_cv<T>::type>::value || 
+        is_same<double, typename remove_cv<T>::type>::value || 
+        is_same<long double, typename remove_cv<T>::type>::value> {};
+
+    template <class T>
+    struct is_arithmetic: 
+        public integeral_constant<bool, 
+        is_integer<T>::value || 
+        is_floating_point<T>::value> {};
+
+    template <class T>
+    struct is_enum: public integeral_constant<bool, __is_enum(T)> {};
+
+    template <class T>
+    struct is_pointer: public false_type {};
+
+    template <class T>
+    struct is_pointer<T*>: public true_type {};
+
+    template <class T>
+    struct is_member_pointer: public false_type {};
+
+    template <class T, class U>
+    struct is_member_pointer<T U::*>: public true_type {};
+
+    template <class T>
+    struct is_null_pointer: 
+        public integeral_constant<bool, 
+        is_same<nullptr_t, typename remove_cv<T>::type>::value> {};
+
+    template <class T>
+    struct is_scalar: 
+        public integeral_constant<bool, 
+        is_arithmetic<T>::value || 
+        is_enum<T>::value || 
+        is_pointer<T>::value || 
+        is_member_pointer<T>::value || 
+        is_null_pointer<T>::value> {};
+
+    template <class T>
+    struct is_array: public false_type {};
+
+    template <class T>
+    struct is_array<T[]>: public true_type {};
+
+    template <class T, size_t N>
+    struct is_array<T[N]>: public true_type {};
+
+    template <class T>
+    struct is_union: public integeral_constant<bool, __is_union(T)> {};
+
+    template <class T>
+    static __one __is_class_test(int T::*);
+
+    template <class>
+    static __two __is_class_test(...);
+
+    template <class T>
+    struct is_class: 
+        public integeral_constant<bool, 
+        sizeof(__is_class_test<T>(0)) == sizeof(__one) || 
+        !is_union<T>::value> {};
+
+    template <class T>
+    struct is_object: 
+        public integeral_constant<bool, 
+        is_scalar<T>::value || 
+        is_array<T>::value || 
+        is_union<T>::value || 
+        is_class<T>::value> {};
+
+    template <class T>
+    struct is_lvalue_reference: public false_type {};
+
+    template <class T>
+    struct is_lvalue_reference<T&>: public true_type {};
+
+    template <class T>
+    struct is_rvalue_reference: public false_type {};
+
+    template <class T>
+    struct is_rvalue_reference<T&&>: public true_type {};
+
+    template <class T>
+    struct is_reference: 
+        public integeral_constant<bool, 
+        is_lvalue_reference<T>::value || 
+        is_rvalue_reference<T>::value> {};
+
+    template <class T>
+    struct __is_no_qualified_function: public false_type {};
+
+    template <class R, class... Args>
+    struct __is_no_qualified_function<R(Args...)>: public true_type {};
+
+    template <class R, class... Args>
+    struct __is_no_qualified_function<R(Args......)>: public true_type {};
+
+    // 为什么要是 no-qualified function
+    template <class T>
+    struct __is_referenable: 
+        public integeral_constant<bool, 
+        __is_no_qualified_function<T>::value || 
+        is_object<T>::value> {};
+
+    template <class T, bool = __is_referenable<T>::value>
+    struct add_lvalue_reference {
         typedef T       type;
     };
 
-    template <class T, class F>
-    struct conditional<false, T, F> {
-        typedef F       type;
+    template <class T>
+    struct add_lvalue_reference<T, true> {
+        typedef T&      type;
     };
 
+    template <class T, bool = __is_referenable<T>::value>
+    struct add_rvalue_reference {
+        typedef T       type;
+    };
+
+    template <class T>
+    struct add_rvalue_reference<T, true> {
+        typedef T&&     type;
+    };
+
+    // add_lvalue_reference 可行吗
+    template <class T>
+    typename add_rvalue_reference<T>::type declval();
+
+    template <class T, class U, class = decltype(declval<T>() = declval<U>())>
+    static __one __test_is_assignable(int);
+
+    template <class T, class U>
+    static __two __test_is_assignable(...);
+
+    template <class T, class U>
+    struct is_assignable: 
+        public integeral_constant<bool, 
+        sizeof(__test_is_assignable<T, U>) == sizeof(__one)> {};
+
+    template <class T, class U>
+    struct is_trivially_assignable: 
+        public integeral_constant<bool, 
+        is_assignable<T, U>::value && 
+        __is_trivially_assignable(T, U)> {};
+
+    template <class T, bool = __is_referenable<T>::value>
+    struct is_copy_assignable: public false_type {};
+
+    template <class T>
+    struct is_copy_assignable<T, true>: public is_assignable<T&, const T&> {};
+
+    template <class T, bool = __is_referenable<T>::value>
+    struct is_trivially_copy_assignable: public false_type {};
+
+    template <class T>
+    struct is_trivially_copy_assignable<T, true>: public is_trivially_assignable<T&, const T&> {};
+
+    template <class T, bool = __is_referenable<T>::value>
+    struct is_move_assignable: public false_type {};
+    
+    template <class T>
+    struct is_move_assignable<T, true>: public is_assignable<T&, T&&> {};
+    
+    template <class T, bool = __is_referenable<T>::value>
+    struct is_trivially_move_assignable: public false_type {};
+    
+    template <class T>
+    struct is_trivially_move_assignable<T, true>: public is_trivially_assignable<T&, T&&> {};
+    
 }
 
 

@@ -8,8 +8,6 @@
 
 namespace HxSTL {
 
-    typedef decltype(nullptr) nullptr_t;
-
     template <class T>
     void swap(T& a, T& b) {
         T c(a);
@@ -36,6 +34,7 @@ namespace HxSTL {
     typename remove_reference<T>::type&& move(T&& t) {
         return static_cast<typename remove_reference<T>::type&&>(t);
     }
+
 
 }
 
