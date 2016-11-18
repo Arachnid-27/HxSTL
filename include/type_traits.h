@@ -10,7 +10,7 @@ namespace HxSTL {
     typedef decltype(nullptr) nullptr_t;
 
     typedef char __one;
-    typedef struct{ char c[2]; } __two;
+    typedef struct { char c[2]; } __two;
 
     template <class T, T v>
     struct integeral_constant {
@@ -71,6 +71,21 @@ namespace HxSTL {
         typedef T       type;
     };
 
+    template <class T>
+    struct remove_all_extents {
+        typedef T       type;
+    };
+
+    template <class T>
+    struct remove_all_extents<T[]> {
+        typedef typename remove_all_extents<T>::type        type;
+    };
+
+    template <class T, size_t N>
+    struct remove_all_extents<T[N]> {
+        typedef typename remove_all_extents<T>::type        type;
+    };
+
     template <class T, class U>
     struct is_same: public false_type {};
 
@@ -120,17 +135,102 @@ namespace HxSTL {
     struct is_pod<T*>: public true_type {};
 
     template <class T>
-    struct is_integer: 
+    struct is_function: public false_type {};
+
+    template <class R, class... Args>
+    struct is_function<R(Args...)>: public true_type {};
+
+    template <class R, class... Args>
+    struct is_function<R(Args......)>: public true_type {};
+
+    template <class R, class... Args>
+    struct is_function<R(Args...) const>: public true_type {};
+
+    template <class R, class... Args>
+    struct is_function<R(Args......) const>: public true_type {};
+
+    template <class R, class... Args>
+    struct is_function<R(Args...) volatile>: public true_type {};
+
+    template <class R, class... Args>
+    struct is_function<R(Args......) volatile>: public true_type {};
+
+    template <class R, class... Args>
+    struct is_function<R(Args...) &>: public true_type {};
+
+    template <class R, class... Args>
+    struct is_function<R(Args......) &>: public true_type {};
+
+    template <class R, class... Args>
+    struct is_function<R(Args...) &&>: public true_type {};
+
+    template <class R, class... Args>
+    struct is_function<R(Args......) &&>: public true_type {};
+
+    template <class R, class... Args>
+    struct is_function<R(Args...) const volatile>: public true_type {};
+
+    template <class R, class... Args>
+    struct is_function<R(Args......) const volatile>: public true_type {};
+
+    template <class R, class... Args>
+    struct is_function<R(Args...) const &>: public true_type {};
+
+    template <class R, class... Args>
+    struct is_function<R(Args......) const &>: public true_type {};
+
+    template <class R, class... Args>
+    struct is_function<R(Args...) const &&>: public true_type {};
+
+    template <class R, class... Args>
+    struct is_function<R(Args......) const &&>: public true_type {};
+
+    template <class R, class... Args>
+    struct is_function<R(Args...) volatile &>: public true_type {};
+
+    template <class R, class... Args>
+    struct is_function<R(Args......) volatile &>: public true_type {};
+
+    template <class R, class... Args>
+    struct is_function<R(Args...) volatile &&>: public true_type {};
+
+    template <class R, class... Args>
+    struct is_function<R(Args......) volatile &&>: public true_type {};
+
+    template <class R, class... Args>
+    struct is_function<R(Args...) const volatile &>: public true_type {};
+
+    template <class R, class... Args>
+    struct is_function<R(Args......) const volatile &>: public true_type {};
+
+    template <class R, class... Args>
+    struct is_function<R(Args...) const volatile &&>: public true_type {};
+
+    template <class R, class... Args>
+    struct is_function<R(Args......) const volatile &&>: public true_type {};
+
+    template <class T>
+    struct is_integeral: 
         public integeral_constant<bool, 
+        is_same<bool, typename remove_cv<T>::type>::value || 
         is_same<char, typename remove_cv<T>::type>::value || 
         is_same<signed char, typename remove_cv<T>::type>::value || 
         is_same<unsigned char, typename remove_cv<T>::type>::value || 
+        is_same<char16_t, typename remove_cv<T>::type>::value || 
+        is_same<char32_t, typename remove_cv<T>::type>::value || 
+        is_same<wchar_t, typename remove_cv<T>::type>::value || 
         is_same<short, typename remove_cv<T>::type>::value || 
+        is_same<signed short, typename remove_cv<T>::type>::value || 
         is_same<unsigned short, typename remove_cv<T>::type>::value || 
         is_same<int, typename remove_cv<T>::type>::value || 
+        is_same<signed int, typename remove_cv<T>::type>::value || 
         is_same<unsigned int, typename remove_cv<T>::type>::value || 
         is_same<long, typename remove_cv<T>::type>::value || 
-        is_same<unsigned long, typename remove_cv<T>::type>::value> {};
+        is_same<signed long, typename remove_cv<T>::type>::value || 
+        is_same<unsigned long, typename remove_cv<T>::type>::value ||
+        is_same<long long, typename remove_cv<T>::type>::value || 
+        is_same<signed long long, typename remove_cv<T>::type>::value || 
+        is_same<unsigned long long, typename remove_cv<T>::type>::value> {};  
 
     template <class T>
     struct is_floating_point: 
@@ -142,7 +242,7 @@ namespace HxSTL {
     template <class T>
     struct is_arithmetic: 
         public integeral_constant<bool, 
-        is_integer<T>::value || 
+        is_integeral<T>::value || 
         is_floating_point<T>::value> {};
 
     template <class T>
@@ -195,7 +295,7 @@ namespace HxSTL {
     template <class T>
     struct is_class: 
         public integeral_constant<bool, 
-        sizeof(__is_class_test<T>(0)) == sizeof(__one) || 
+        sizeof(__is_class_test<T>(0)) == sizeof(__one) && 
         !is_union<T>::value> {};
 
     template <class T>
@@ -281,30 +381,50 @@ namespace HxSTL {
         is_assignable<T, U>::value && 
         __is_trivially_assignable(T, U)> {};
 
-    template <class T, bool = __is_referenable<T>::value>
-    struct is_copy_assignable: public false_type {};
+    template <class T>
+    struct is_copy_assignable: 
+        public integeral_constant<bool, 
+        !__is_referenable<T>::value && 
+        is_assignable<T&, const T&>::value> {};
 
     template <class T>
-    struct is_copy_assignable<T, true>: public is_assignable<T&, const T&> {};
-
-    template <class T, bool = __is_referenable<T>::value>
-    struct is_trivially_copy_assignable: public false_type {};
+    struct is_trivially_copy_assignable: 
+        public integeral_constant<bool, 
+        !__is_referenable<T>::value && 
+        is_trivially_assignable<T&, const T&>::value> {};
 
     template <class T>
-    struct is_trivially_copy_assignable<T, true>: public is_trivially_assignable<T&, const T&> {};
+    struct is_move_assignable: 
+        public integeral_constant<bool, 
+        !__is_referenable<T>::value && 
+        is_assignable<T&, T&&>::value> {};
+    
+    template <class T>
+    struct is_trivially_move_assignable: 
+        public integeral_constant<bool, 
+        !__is_referenable<T>::value && 
+        is_trivially_assignable<T&, T&&>::value> {};
 
-    template <class T, bool = __is_referenable<T>::value>
-    struct is_move_assignable: public false_type {};
-    
+    template <class T, class = decltype(declval<T&>().~T())>
+    static __one __test_is_destructible(int);
+
     template <class T>
-    struct is_move_assignable<T, true>: public is_assignable<T&, T&&> {};
-    
-    template <class T, bool = __is_referenable<T>::value>
-    struct is_trivially_move_assignable: public false_type {};
-    
+    static __two __test_is_destructible(...);
+
     template <class T>
-    struct is_trivially_move_assignable<T, true>: public is_trivially_assignable<T&, T&&> {};
-    
+    struct is_destructible: 
+        public integeral_constant<bool, 
+        !is_same<void, T>::value && 
+        !is_function<T>::value && 
+        (is_reference<T>::value || 
+        sizeof(__test_is_destructible<typename remove_all_extents<T>::type>(0)) == sizeof(__one))> {}; 
+
+    template <class T>
+    struct is_trivially_destructible: 
+        public integeral_constant<bool, 
+        is_destructible<T>::value && 
+        __has_trivial_destructor(T)> {};
+
 }
 
 
