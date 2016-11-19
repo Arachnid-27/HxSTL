@@ -19,7 +19,7 @@ namespace HxSTL {
         }
 
         // 在 freelist 寻找
-        my_free_list = free_list + FREEELIST_INDEX(n);
+        my_free_list = free_list + FREELIST_INDEX(n);
         result = *my_free_list;
         // 没找到则重新填充
         if (result == 0) {
@@ -38,7 +38,7 @@ namespace HxSTL {
         if (n > __MAX_BYTES) {
             free(p);
         } else {
-            my_free_list = free_list + FREEELIST_INDEX(n);
+            my_free_list = free_list + FREELIST_INDEX(n);
             q -> free_list_link = *my_free_list;
             *my_free_list = q;
         }
@@ -53,7 +53,7 @@ namespace HxSTL {
         obj *current_obj;
 
         if (nobjs != 1) {
-            free_list[FREEELIST_INDEX(n)] = current_obj = (obj*) (chunk + n);
+            free_list[FREELIST_INDEX(n)] = current_obj = (obj*) (chunk + n);
             for (int i = 2; i != nobjs; ++i) {
                 current_obj -> free_list_link = (obj*) ((char*) current_obj + n);
                 current_obj = current_obj -> free_list_link;
@@ -86,7 +86,7 @@ namespace HxSTL {
 
             if (left_bytes > 0) {
                 // left_bytes 对齐的 所以可以直接加入
-                obj **my_free_list = free_list + FREEELIST_INDEX(left_bytes);
+                obj **my_free_list = free_list + FREELIST_INDEX(left_bytes);
                 ((obj*) start_free) -> free_list_link = *my_free_list;
                 *my_free_list = (obj*) start_free; 
             } 
@@ -97,7 +97,7 @@ namespace HxSTL {
                 obj *p;
                 // 查找空闲链表中是否存在足够大的区块
                 for (int i = 0; i != __MAX_BYTES; i += __ALIGN) {
-                    my_free_list = free_list + FREEELIST_INDEX(i);
+                    my_free_list = free_list + FREELIST_INDEX(i);
                     p = *my_free_list;
                     if (p != 0) {
                         // 释放区块

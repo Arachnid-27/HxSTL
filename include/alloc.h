@@ -18,8 +18,8 @@ namespace HxSTL {
             return ((bytes + __ALIGN - 1) & ~(__ALIGN - 1)); 
         }
 
-        static size_t FREEELIST_INDEX(size_t bytes) {
-            return ((bytes + __ALIGN - 1) / (__ALIGN - 1));
+        static size_t FREELIST_INDEX(size_t bytes) {
+            return ((bytes + __ALIGN - 1) / __ALIGN - 1);
         }
     private:
         union obj {

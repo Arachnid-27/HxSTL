@@ -373,7 +373,7 @@ namespace HxSTL {
     template <class T, class U>
     struct is_assignable: 
         public integeral_constant<bool, 
-        sizeof(__test_is_assignable<T, U>) == sizeof(__one)> {};
+        sizeof(__test_is_assignable<T, U>(0)) == sizeof(__one)> {};
 
     template <class T, class U>
     struct is_trivially_assignable: 
@@ -384,25 +384,25 @@ namespace HxSTL {
     template <class T>
     struct is_copy_assignable: 
         public integeral_constant<bool, 
-        !__is_referenable<T>::value && 
+        __is_referenable<T>::value && 
         is_assignable<T&, const T&>::value> {};
 
     template <class T>
     struct is_trivially_copy_assignable: 
         public integeral_constant<bool, 
-        !__is_referenable<T>::value && 
+        __is_referenable<T>::value && 
         is_trivially_assignable<T&, const T&>::value> {};
 
     template <class T>
     struct is_move_assignable: 
         public integeral_constant<bool, 
-        !__is_referenable<T>::value && 
+        __is_referenable<T>::value && 
         is_assignable<T&, T&&>::value> {};
     
     template <class T>
     struct is_trivially_move_assignable: 
         public integeral_constant<bool, 
-        !__is_referenable<T>::value && 
+        __is_referenable<T>::value && 
         is_trivially_assignable<T&, T&&>::value> {};
 
     template <class T, class = decltype(declval<T&>().~T())>
