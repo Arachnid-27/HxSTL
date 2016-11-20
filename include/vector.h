@@ -38,11 +38,16 @@ namespace HxSTL {
         template <class InputIt>
         iterator insert_aux(iterator pos, InputIt first, InputIt last, false_type);
         iterator insert_aux(iterator pos, size_type count, const T& value, true_type);
-        iterator insert_aux(iterator pos, T&& value);
+        template <class U>
+        iterator insert_aux(iterator pos, U&& value);
+        template <class... Args>
+        iterator emplace_aux(iterator pos, Args&&... args);
+        iterator erase_aux(iterator pos);
+        iterator erase_aux(iterator first, iterator last);
         template <class InputIt>
         void assign_aux(InputIt first, InputIt last, false_type);
         void assign_aux(size_type count, const T& value, true_type);
-        iterator allocate_and_single_insert(iterator pos, T&& value);
+        void resize_aux(size_type count, const T& value);
         void destroy_and_reset(iterator new_start, iterator new_finish, iterator new_end_of_storage);
     public:
         vector(): _start(nullptr), _finish(nullptr), _end_of_storage(nullptr), _alloc(Alloc()) {}
@@ -154,59 +159,58 @@ namespace HxSTL {
 
         void shrink_to_fit();
 
-        void clear() { erase(begin(), end()); }
+        void clear() { erase_aux(begin(), end()); }
 
-        iterator insert(const_iterator pos, const value_type& value) {
-            return insert_aux(pos, value);
+        iterator insert(const_iterator pos, const T& value) {
+            return insert_aux(begin() + (pos - cbegin()), value);
         }
 
-        iterator insert(const_iterator pos, const value_type&& value) {
-            return insert_aux(pos, HxSTL::move(value));
+        iterator insert(const_iterator pos, T&& value) {
+            return insert_aux(begin() + (pos - cbegin()), HxSTL::move(value));
         }
 
-        iterator insert(const_iterator pos, size_type count, const value_type& value) {
-            if (count > 0) return insert_aux(pos, count, value, HxSTL::true_type());
-            return pos;
+        iterator insert(const_iterator pos, size_type count, const T& value) {
+            return insert_aux(begin() + (pos - cbegin()), count, value, HxSTL::true_type());
         }
 
         template <class InputIt>
         iterator insert(const_iterator pos, InputIt first, InputIt last) {
-            if (first != last) return insert_aux(pos, first, last, typename HxSTL::is_integeral<InputIt>::type());
-            return pos;
+            return insert_aux(begin() + (pos - cbegin()), first, last, typename HxSTL::is_integeral<InputIt>::type());
         }
 
         template <class... Args>
-        iterator emplace(const_iterator pos, Args&&... args);
+        iterator emplace(const_iterator pos, Args&&... args) {
+            return emplace_aux(begin() + (pos - cbegin()), HxSTL::forward<Args>(args)...);
+        }
 
-        iterator erase(iterator pos);
+        iterator erase(const_iterator pos) {
+            return erase_aux(begin() + (pos - cbegin()));
+        }
 
-        iterator erase(iterator first, iterator last);
+        iterator erase(const_iterator first, const_iterator last) {
+            return erase_aux(begin() + (first - cbegin()), begin() + (last - cbegin()));
+        }
 
-        void push_back(const value_type& value) { insert_aux(_finish, value); }
+        void push_back(const T& value) {
+            insert_aux(end(), value);
+        }
 
-        void push_back(value_type&& value) { insert_aux(_finish, HxSTL::move(value)); }
+        void push_back(T&& value) {
+            insert_aux(end(), HxSTL::move(value));
+        }
 
         template <class... Args>
-        void emplace_back(Args&&... args);
+        void emplace_back(Args&&... args) {
+            emplace_aux(end(), HxSTL::forward<Args>(args)...);
+        }
 
         void pop_back() { destroy(--_finish); }
 
-        void resize(size_type count, value_type value = value_type());
+        void resize(size_type count) { resize_aux(count, T()); }
+
+        void resize(size_type count, const T& value) { resize_aux(count, value); }
         
         void swap(vector& other);
-    public:
-        template<class U, class A>
-        friend bool operator==(const vector<U, A>& lhs, const vector<U, A>& rhs);
-        template<class U, class A>
-        friend bool operator!=(const vector<U, A>& lhs, const vector<U, A>& rhs);
-        template<class U, class A>
-        friend bool operator< (const vector<U, A>& lhs, const vector<U, A>& rhs);
-        template<class U, class A>
-        friend bool operator<=(const vector<U, A>& lhs, const vector<U, A>& rhs);
-        template<class U, class A>
-        friend bool operator> (const vector<U, A>& lhs, const vector<U, A>& rhs);
-        template<class U, class A>
-        friend bool operator>=(const vector<U, A>& lhs, const vector<U, A>& rhs);
     };
 
     template<class T, class Alloc>
@@ -245,19 +249,20 @@ namespace HxSTL {
     }
 
     template <class T, class Alloc>
-    void vector<T, Alloc>::resize(size_type n, value_type value) {
-        if (n < size()) {
-            destroy(_start + n, _finish);
-            _finish = _start + n;
-        } else if (n < capacity()) {
-            _finish = uninitialized_fill_n(_finish, n - size(), value);
+    void vector<T, Alloc>::resize_aux(size_type count, const T& value) {
+        if (count <= size()) {
+            // 删除多余元素
+            destroy(_start + count, _finish);
+            _finish = _start + count;
+        } else if (count <= capacity()) {
+            // 填充元素
+            _finish = uninitialized_fill_n(_finish, count - size(), value);
         } else {
-            iterator new_start = _alloc.allocate(n);
+            // Todo 异常处理
+            iterator new_start = _alloc.allocate(count);
             iterator new_finish = new_start;
-
             new_finish = uninitialized_copy(_start, _finish, new_start);
-            new_finish = uninitialized_fill_n(new_finish, n - size(), value);
-
+            new_finish = uninitialized_fill_n(new_finish, count - size(), value);
             destroy_and_reset(new_start, new_finish, new_finish);
         }
     }
@@ -269,7 +274,7 @@ namespace HxSTL {
         } else if (new_cap > capacity()) {
             // Todo 处理异常
             iterator new_start = _alloc.allocate(new_cap);
-            iterator new_finish = uninitialized_copy(_start, _finish, new_start);
+            iterator new_finish = HxSTL::uninitialized_copy(_start, _finish, new_start);
             destroy_and_reset(new_start, new_finish, new_start + new_cap);
         }
     }
@@ -279,7 +284,7 @@ namespace HxSTL {
         if (_end_of_storage != _finish) {
             // Todo 处理异常
             iterator new_start = _alloc.allocate(size());
-            iterator new_finish = uninitialized_copy(_start, _finish, new_start);
+            iterator new_finish = HxSTL::uninitialized_copy(_start, _finish, new_start);
             destroy_and_reset(new_start, new_finish, new_start + size());
         }
     }
@@ -328,20 +333,63 @@ namespace HxSTL {
     }
 
     template <class T, class Alloc>
+    template <class U>
     typename vector<T, Alloc>::iterator 
-    vector<T, Alloc>::insert_aux(iterator pos, T&& value) {
+    vector<T, Alloc>::insert_aux(iterator pos, U&& value) {
         if (_finish != _end_of_storage) {
+            // 预留空间足够
             if (pos == _finish) {
-                _alloc.construct(_finish, HxSTL::forward<T>(value));
+                // 末尾插入
+                _alloc.construct(_finish, HxSTL::forward<U>(value));
             } else {
-                _alloc.construct(_finish, HxSTL::move(back()));
-                copy_backward(pos, _finish - 1, _finish);
-                *pos = HxSTL::forward<T>(value);
+                // 非末尾插入
+                _alloc.construct(_finish, back());
+                HxSTL::copy_backward(pos, _finish - 1, _finish);
+                *pos = HxSTL::forward<U>(value);
             }
             ++_finish;
             return pos;
         } else {
-            allocate_and_single_insert(pos, HxSTL::forward<T>(value));
+            // Todo 处理异常
+            size_type new_sz = size() ? 2 * size() : 1;
+            iterator new_start = _alloc.allocate(new_sz);
+            iterator new_finish = HxSTL::uninitialized_copy(_start, pos, new_start);
+            iterator result = new_finish;
+            _alloc.construct(new_finish++, HxSTL::forward<U>(value));
+            new_finish = HxSTL::uninitialized_copy(pos, _finish, new_finish);
+            destroy_and_reset(new_start, new_finish, new_start + new_sz);
+            return result;
+        }
+    }
+
+    template <class T, class Alloc>
+    template <class... Args>
+    typename vector<T, Alloc>::iterator 
+    vector<T, Alloc>::emplace_aux(iterator pos, Args&&... args) {
+        if (_finish != _end_of_storage) {
+            // 预留空间足够
+            if (pos == _finish) {
+                // 末尾插入
+                _alloc.construct(_finish, HxSTL::forward<Args>(args)...);
+            } else {
+                // 非末尾插入
+                _alloc.construct(_finish, back());
+                HxSTL::copy_backward(pos, _finish - 1, _finish);
+                _alloc.destroy(pos);
+                _alloc.construct(pos, HxSTL::forward<Args>(args)...);
+            }
+            ++_finish;
+            return pos;
+        } else {
+            // Todo 处理异常
+            size_type new_sz = size() ? 2 * size() : 1;
+            iterator new_start = _alloc.allocate(new_sz);
+            iterator new_finish = HxSTL::uninitialized_copy(_start, pos, new_start);
+            iterator result = new_finish;
+            _alloc.construct(new_finish++, HxSTL::forward<Args>(args)...);
+            new_finish = HxSTL::uninitialized_copy(pos, _finish, new_finish);
+            destroy_and_reset(new_start, new_finish, new_start + new_sz);
+            return result;
         }
     }
 
@@ -349,35 +397,35 @@ namespace HxSTL {
     template <class InputIt>
     typename vector<T, Alloc>::iterator 
     vector<T, Alloc>::insert_aux(iterator pos, InputIt first, InputIt last, false_type) {
-        size_type count = last - first;
+        if (first == last) return pos;
 
+        size_type count = HxSTL::distance(first, last);
         if (_end_of_storage - _finish >= count) {
+            // 预留空间足够
             size_type element_after = _finish - pos;
             iterator old_finish = _finish;
-
             if (count > element_after) {
-                _finish = uninitialized_copy(first + element_after, last, _finish);
-                _finish = uninitialized_copy(pos, old_finish, _finish);
+                // 插入点之后元素少于待插入元素
+                _finish = HxSTL::uninitialized_copy(pos, _finish, _finish + (count - element_after));
                 copy_n(first, element_after, pos);
+                HxSTL::advance(first, element_after);
+                HxSTL::uninitialized_copy(first, last, old_finish);
             } else {
-                _finish = uninitialized_copy(_finish - count, _finish, _finish);
-                copy_backward(pos, old_finish - count, old_finish);
-                copy(first, last, pos);
+                // 插入点之后元素不少于待插入元素
+                _finish = HxSTL::uninitialized_copy(_finish - count, _finish, _finish);
+                HxSTL::copy_backward(pos, old_finish - count, old_finish);
+                HxSTL::copy(first, last, pos);
             }
-
             return pos;
         } else {
-            size_type new_sz = 2 * capacity() > count ? 2 * capacity() : count;
+            // Todo 异常处理
+            size_type new_sz = 2 * capacity() > size() + count ? 2 * capacity() : size() + count;
             iterator new_start = _alloc.allocate(new_sz);
-            iterator new_finish = new_start;
-
-            new_finish = uninitialized_copy(_start, pos, new_start);
+            iterator new_finish = HxSTL::uninitialized_copy(_start, pos, new_start);
             iterator result = new_finish;
-            new_finish = uninitialized_copy(first, last, new_finish);
-            new_finish = uninitialized_copy(pos, _finish, new_finish);
-
+            new_finish = HxSTL::uninitialized_copy(first, last, new_finish);
+            new_finish = HxSTL::uninitialized_copy(pos, _finish, new_finish);
             destroy_and_reset(new_start, new_finish, new_start + new_sz);
-
             return result;
         }
     }
@@ -385,49 +433,48 @@ namespace HxSTL {
     template <class T, class Alloc>
     typename vector<T, Alloc>::iterator 
     vector<T, Alloc>::insert_aux(iterator pos, size_type count, const value_type& value, HxSTL::true_type) {
+        if (count == 0) return pos;
+
         if (_end_of_storage - _finish >= count) {
+            // 预留空间足够
             size_type element_after = _finish - pos;
             iterator old_finish = _finish;
-
             if (count > element_after) {
-                _finish = uninitialized_fill_n(_finish, count - element_after, value);
-                _finish = uninitialized_copy(pos, old_finish, _finish);
-                fill_n(pos, element_after, value);
+                // 插入点之后元素少于待插入元素
+                _finish = HxSTL::uninitialized_fill_n(_finish, count - element_after, value);
+                _finish = HxSTL::uninitialized_copy(pos, old_finish, _finish);
+                HxSTL::fill_n(pos, element_after, value);
             } else {
-                _finish = uninitialized_copy(_finish - count, _finish, _finish);
-                copy_backward(pos, old_finish - count, old_finish);
-                fill_n(pos, count, value);
+                // 插入点之后元素不少于待插入元素
+                _finish = HxSTL::uninitialized_copy(_finish - count, _finish, _finish);
+                _finish = HxSTL::copy_backward(pos, old_finish - count, old_finish);
+                HxSTL::fill_n(pos, count, value);
             }
-
             return pos;
         } else {
-            size_type new_sz = 2 * capacity() > count ? 2 * capacity(): count;
-
+            // Todo 异常处理
+            size_type new_sz = 2 * capacity() > count + size() ? 2 * capacity(): count + size();
             iterator new_start = _alloc.allocate(new_sz);
-            iterator new_finish = new_start;
-
-            new_finish = uninitialized_copy(_start, pos, new_start);
+            iterator new_finish = HxSTL::uninitialized_copy(_start, pos, new_start);
             iterator result = new_finish;
-            new_finish = uninitialized_fill_n(new_finish, count, value);
-            new_finish = uninitialized_copy(pos, _finish, new_finish);
-
+            new_finish = HxSTL::uninitialized_fill_n(new_finish, count, value);
+            new_finish = HxSTL::uninitialized_copy(pos, _finish, new_finish);
             destroy_and_reset(new_start, new_finish, new_start + new_sz);
-
             return result;
         }
     }
 
     template <class T, class Alloc>
-    typename vector<T, Alloc>::iterator vector<T, Alloc>::erase(iterator pos) {
-        _finish = move(pos + 1, _finish, pos);
+    typename vector<T, Alloc>::iterator vector<T, Alloc>::erase_aux(iterator pos) {
+        _finish = copy(pos + 1, _finish, pos);
         _alloc.destroy(_finish);
         return pos;
     }
 
     template <class T, class Alloc>
-    typename vector<T, Alloc>::iterator vector<T, Alloc>::erase(iterator first, iterator last) {
+    typename vector<T, Alloc>::iterator vector<T, Alloc>::erase_aux(iterator first, iterator last) {
         iterator old_finish = _finish;
-        _finish = move(last, _finish, first);
+        _finish = copy(last, _finish, first);
         HxSTL::destroy(_finish, old_finish);
         return first;
     }
@@ -437,24 +484,6 @@ namespace HxSTL {
         HxSTL::swap(_start, other._start);
         HxSTL::swap(_finish, other._finish);
         HxSTL::swap(_end_of_storage, other._end_of_storage);
-    }
-
-    template <class T, class Alloc>
-    typename vector<T, Alloc>::iterator 
-    vector<T, Alloc>::allocate_and_single_insert(iterator pos, T&& value) {
-        size_type new_sz = size() ? 2 * size() : 1;
-
-        iterator new_start = _alloc.allocate(new_sz);
-        iterator new_finish = new_start;
-
-        new_finish = uninitialized_copy(_start, pos, new_start);
-        iterator result = new_finish;
-        _alloc.construct(new_finish++, HxSTL::forward<T>(value));
-        new_finish = uninitialized_copy(pos, _finish, new_finish);
-
-        destroy_and_reset(new_start, new_finish, new_start + new_sz);
-
-        return result;
     }
 
     template <class T, class Alloc>
@@ -472,7 +501,18 @@ namespace HxSTL {
 
     template<class U, class A>
     bool operator==(const vector<U, A>& lhs, const vector<U, A>& rhs) {
-        // Todo
+        if (lhs.size() != rhs.size()) return false;
+
+        auto first1 = lhs.cbegin();
+        auto last1 = lhs.cend();
+        auto first2 = rhs.cbegin();
+        auto last2 = rhs.cend();
+        while (first1 != last1) {
+            if (first1 != first2) return false; 
+            ++first1;
+            ++first2;
+        }
+        return true;
     }
 
     template<class U, class A>

@@ -11,7 +11,7 @@ namespace HxSTL {
 
     template <class U, class... Args>
     void construct(U* p, Args&&... args) {
-        new(p) U(forward<Args>(args)...);
+        new(p) U(HxSTL::forward<Args>(args)...);
     }
 
     template <class T>
@@ -28,7 +28,7 @@ namespace HxSTL {
     template <class ForwardIterator>
     inline void __destroy(ForwardIterator first, ForwardIterator last, false_type) {
         for (; first != last; ++first) {
-            destroy(&*first);
+            HxSTL::destroy(&*first);
         }
     }
 

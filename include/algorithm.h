@@ -17,8 +17,8 @@ namespace HxSTL {
 
     // all_of
 
-    template <class InputIterator, class UnaryPredicate>
-    bool all_of(InputIterator first, InputIterator last, UnaryPredicate pred) {
+    template <class InputIt, class UnaryPredicate>
+    bool all_of(InputIt first, InputIt last, UnaryPredicate pred) {
         while (first != last) {
             if (!pred(*first)) {
                 return false;
@@ -30,8 +30,8 @@ namespace HxSTL {
 
     // any_of
 
-    template <class InputIterator, class UnaryPredicate>
-    bool any_of(InputIterator first, InputIterator last, UnaryPredicate pred) {
+    template <class InputIt, class UnaryPredicate>
+    bool any_of(InputIt first, InputIt last, UnaryPredicate pred) {
         while (first != last) {
             if (pred(*first)) {
                 return true;
@@ -43,8 +43,8 @@ namespace HxSTL {
 
     // none_of
 
-    template <class InputIterator, class UnaryPredicate>
-    bool none_of(InputIterator first, InputIterator last, UnaryPredicate pred) {
+    template <class InputIt, class UnaryPredicate>
+    bool none_of(InputIt first, InputIt last, UnaryPredicate pred) {
         while (first != last) {
             if (pred(*first)) {
                 return false;
@@ -56,8 +56,8 @@ namespace HxSTL {
 
     // for_each
 
-    template <class InputIterator, class Function>
-    Function for_each(InputIterator first, InputIterator last, Function fn) {
+    template <class InputIt, class Function>
+    Function for_each(InputIt first, InputIt last, Function fn) {
         while (first != last) {
             fn(*first);
             ++first;
@@ -67,8 +67,8 @@ namespace HxSTL {
 
     // find
 
-    template <class InputIterator, class T>
-    InputIterator find(InputIterator first, InputIterator last, const T& val) {
+    template <class InputIt, class T>
+    InputIt find(InputIt first, InputIt last, const T& val) {
         while (first != last && *first != val) {
             ++first;
         }
@@ -77,8 +77,8 @@ namespace HxSTL {
 
     // find_if
 
-    template <class InputIterator, class UnaryPredicate>
-    InputIterator find_if(InputIterator first, InputIterator last, UnaryPredicate pred) {
+    template <class InputIt, class UnaryPredicate>
+    InputIt find_if(InputIt first, InputIt last, UnaryPredicate pred) {
         while (first != last && !pred(*first)) {
             ++first;
         }
@@ -87,8 +87,8 @@ namespace HxSTL {
 
     // find_if_not
 
-    template <class InputIterator, class UnaryPredicate>
-    InputIterator find_if_not(InputIterator first, InputIterator last, UnaryPredicate pred) {
+    template <class InputIt, class UnaryPredicate>
+    InputIt find_if_not(InputIt first, InputIt last, UnaryPredicate pred) {
         while (first != last && pred(*first)) {
             ++first;
         }
@@ -149,14 +149,14 @@ namespace HxSTL {
         return first;
     }
 
-    template <class BidirectionalIterator1, class BidirectionalIterator2>
-    BidirectionalIterator1 __find_end(BidirectionalIterator1 first1, BidirectionalIterator1 last1, 
-            BidirectionalIterator2 first2, BidirectionalIterator2 last2, 
+    template <class BidirIt1, class BidirIt2>
+    BidirIt1 __find_end(BidirIt1 first1, BidirIt1 last1, 
+            BidirIt2 first2, BidirIt2 last2, 
             bidirectional_iterator_tag, bidirectional_iterator_tag) {
-        BidirectionalIterator1 tmp = last1;
+        BidirIt1 tmp = last1;
         while (first1 != last1) {
-            BidirectionalIterator1 it1 = last1;
-            BidirectionalIterator2 it2 = last2;
+            BidirIt1 it1 = last1;
+            BidirIt2 it2 = last2;
             while (it2 != first2 && *it2 == *it1) {
                 --it1;
                 --it2;
@@ -172,14 +172,14 @@ namespace HxSTL {
         return tmp;
     } 
 
-    template <class BidirectionalIterator1, class BidirectionalIterator2, class BinaryPredicate>
-    BidirectionalIterator1 __find_end(BidirectionalIterator1 first1, BidirectionalIterator1 last1, 
-            BidirectionalIterator2 first2, BidirectionalIterator2 last2, BinaryPredicate pred,
+    template <class BidirIt1, class BidirIt2, class BinaryPredicate>
+    BidirIt1 __find_end(BidirIt1 first1, BidirIt1 last1, 
+            BidirIt2 first2, BidirIt2 last2, BinaryPredicate pred,
             bidirectional_iterator_tag, bidirectional_iterator_tag) {
-        BidirectionalIterator1 tmp = last1;
+        BidirIt1 tmp = last1;
         while (first1 != last1) {
-            BidirectionalIterator1 it1 = last1;
-            BidirectionalIterator2 it2 = last2;
+            BidirIt1 it1 = last1;
+            BidirIt2 it2 = last2;
             while (it2 != first2 && pred(*it1, *it2)) {
                 --it1;
                 --it2;
@@ -197,8 +197,8 @@ namespace HxSTL {
 
     // find_first_of
 
-    template <class InputIterator, class ForwardIterator>
-    InputIterator find_first_of(InputIterator first1, InputIterator last1, 
+    template <class InputIt, class ForwardIterator>
+    InputIt find_first_of(InputIt first1, InputIt last1, 
             ForwardIterator first2, ForwardIterator last2) {
         while (first1 != last1) {
             for (ForwardIterator it = first2; it != last2; ++it) {
@@ -211,8 +211,8 @@ namespace HxSTL {
         return last1;
     }
 
-    template <class InputIterator, class ForwardIterator, class BinaryPredicate>
-    InputIterator find_first_of(InputIterator first1, InputIterator last1, 
+    template <class InputIt, class ForwardIterator, class BinaryPredicate>
+    InputIt find_first_of(InputIt first1, InputIt last1, 
             ForwardIterator first2, ForwardIterator last2, BinaryPredicate pred) {
         while (first1 != last1) {
             for (ForwardIterator it = first2; it != last2; ++it) {
@@ -255,10 +255,10 @@ namespace HxSTL {
 
     // count
 
-    template <class InputIterator, class T>
-    typename iterator_traits<InputIterator>::difference_type
-    count(InputIterator first, InputIterator last, const T& val) {
-        typename iterator_traits<InputIterator>::difference_type result = 0;
+    template <class InputIt, class T>
+    typename iterator_traits<InputIt>::difference_type
+    count(InputIt first, InputIt last, const T& val) {
+        typename iterator_traits<InputIt>::difference_type result = 0;
         while (first != last) {
             if (*first == val) {
                 ++result;
@@ -270,10 +270,10 @@ namespace HxSTL {
 
     // count_if
 
-    template <class InputIterator, class UnaryPredicate>
-    typename iterator_traits<InputIterator>::difference_type
-    count_if(InputIterator first, InputIterator last, UnaryPredicate pred) {
-        typename iterator_traits<InputIterator>::difference_type result = 0;
+    template <class InputIt, class UnaryPredicate>
+    typename iterator_traits<InputIt>::difference_type
+    count_if(InputIt first, InputIt last, UnaryPredicate pred) {
+        typename iterator_traits<InputIt>::difference_type result = 0;
         while (first != last) {
             if (pred(*first)) {
                 ++result;
@@ -285,10 +285,10 @@ namespace HxSTL {
 
     // mismatch
 
-    template <class InputIterator1, class InputIterator2>
-    pair<InputIterator1, InputIterator2>
-    mismatch(InputIterator1 first1, InputIterator1 last1, 
-            InputIterator2 first2) {
+    template <class InputIt1, class InputIt2>
+    pair<InputIt1, InputIt2>
+    mismatch(InputIt1 first1, InputIt1 last1, 
+            InputIt2 first2) {
         while (first1 != last1 && *first1 == *first2) {
             ++first1;
             ++first2;
@@ -296,10 +296,10 @@ namespace HxSTL {
         return make_pair(first1, first2);
     }
 
-    template <class InputIterator1, class InputIterator2, class BinaryPredicate>
-    pair<InputIterator1, InputIterator2>
-    mismatch(InputIterator1 first1, InputIterator1 last1, 
-            InputIterator2 first2, BinaryPredicate pred) {
+    template <class InputIt1, class InputIt2, class BinaryPredicate>
+    pair<InputIt1, InputIt2>
+    mismatch(InputIt1 first1, InputIt1 last1, 
+            InputIt2 first2, BinaryPredicate pred) {
         while (first1 != last1 && pred(*first1, *first2)) {
             ++first1;
             ++first2;
@@ -309,9 +309,9 @@ namespace HxSTL {
 
     // equal
 
-    template <class InputIterator1, class InputIterator2>
-    bool equal(InputIterator1 first1, InputIterator1 last1, 
-            InputIterator2 first2) {
+    template <class InputIt1, class InputIt2>
+    bool equal(InputIt1 first1, InputIt1 last1, 
+            InputIt2 first2) {
         while (first1 != last1) {
             if (*first1 != *first2) {
                 return false;
@@ -322,9 +322,9 @@ namespace HxSTL {
         return true;
     }
 
-    template <class InputIterator1, class InputIterator2, class BinaryPredicate>
-    bool equal(InputIterator1 first1, InputIterator1 last1, 
-            InputIterator2 first2, BinaryPredicate pred) {
+    template <class InputIt1, class InputIt2, class BinaryPredicate>
+    bool equal(InputIt1 first1, InputIt1 last1, 
+            InputIt2 first2, BinaryPredicate pred) {
         while (first1 != last1) {
             if (!pred(*first1, *first2)) {
                 return false;
@@ -453,11 +453,11 @@ namespace HxSTL {
 
     // copy
 
-    template <class InputIterator, class OutputIterator>
+    template <class InputIt, class OutputIterator>
     struct __copy_dispath {
-        OutputIterator operator()(InputIterator first, InputIterator last, OutputIterator result) {
+        OutputIterator operator()(InputIt first, InputIt last, OutputIterator result) {
             return __copy(first, last, result, 
-                    typename iterator_traits<InputIterator>::iterator_category());
+                    typename iterator_traits<InputIt>::iterator_category());
         }
     };
 
@@ -475,8 +475,8 @@ namespace HxSTL {
         }
     };
 
-    template <class InputIterator, class OutputIterator>
-    inline OutputIterator __copy(InputIterator first, InputIterator last, 
+    template <class InputIt, class OutputIterator>
+    inline OutputIterator __copy(InputIt first, InputIt last, 
             OutputIterator result, input_iterator_tag) {
         while (first != last) {
             *result = *first;
@@ -510,20 +510,20 @@ namespace HxSTL {
     
     template <class T>
     inline T* __copy_ptr(const T* first, const T* last, T* result, false_type) {
-        return __copy_rand(first, last, result, static_cast<ptrdiff_t*>(0));
+        return __copy_rand(first, last, result);
     }
 
-    template <class InputIterator, class OutputIterator>
-    OutputIterator copy(InputIterator first, InputIterator last, 
+    template <class InputIt, class OutputIterator>
+    OutputIterator copy(InputIt first, InputIt last, 
             OutputIterator result) {
-        return __copy_dispath<InputIterator, OutputIterator>()(first, last, result);
+        return __copy_dispath<InputIt, OutputIterator>()(first, last, result);
     }
 
     // copy_n
 
-    template <class InputIterator, class Size, class OutputIterator>
+    template <class InputIt, class Size, class OutputIterator>
     struct __copy_n_dispath {
-        OutputIterator operator()(InputIterator first, Size n, OutputIterator result) {
+        OutputIterator operator()(InputIt first, Size n, OutputIterator result) {
             return __copy_n(first, n, result);
         }
     };
@@ -553,8 +553,8 @@ namespace HxSTL {
         return __copy_n(first, n, result, static_cast<ptrdiff_t*>(0));
     }
 
-    template <class InputIterator, class Size, class OutputIterator>
-    inline OutputIterator __copy_n(InputIterator first, Size n, OutputIterator result) {
+    template <class InputIt, class Size, class OutputIterator>
+    inline OutputIterator __copy_n(InputIt first, Size n, OutputIterator result) {
         while (n > 0) {
             *result = *first;
             --n;
@@ -564,15 +564,15 @@ namespace HxSTL {
         return result;
     }
 
-    template <class InputIterator, class Size, class OutputIterator>
-    OutputIterator copy_n(InputIterator first, Size n, OutputIterator result) {
-        return __copy_n_dispath<InputIterator, Size, OutputIterator>()(first, n, result);
+    template <class InputIt, class Size, class OutputIterator>
+    OutputIterator copy_n(InputIt first, Size n, OutputIterator result) {
+        return __copy_n_dispath<InputIt, Size, OutputIterator>()(first, n, result);
     }
 
     // copy_if
 
-    template <class InputIterator, class OutputIterator, class UnaryPredicate>
-    OutputIterator copy_if(InputIterator first, InputIterator last, 
+    template <class InputIt, class OutputIterator, class UnaryPredicate>
+    OutputIterator copy_if(InputIt first, InputIt last, 
             OutputIterator result, UnaryPredicate pred) {
         while (first != last) {
             if (pred(*first)) {
@@ -586,12 +586,11 @@ namespace HxSTL {
 
     // copy_backward
 
-    template <class BidirectionalIterator1, class BidirectionalIterator2>
+    template <class BidirIt1, class BidirIt2>
     struct __copy_backward_dispath {
-        BidirectionalIterator2 operator()(BidirectionalIterator1 first, BidirectionalIterator1 last, 
-                BidirectionalIterator2 result) {
+        BidirIt2 operator()(BidirIt1 first, BidirIt1 last, BidirIt2 result) {
             return __copy_backward(first, last, result, 
-                    typename iterator_traits<BidirectionalIterator1>::iterator_category());
+                    typename iterator_traits<BidirIt1>::iterator_category());
         }
     };
 
@@ -609,24 +608,24 @@ namespace HxSTL {
         }
     };
 
-    template <class BidirectionalIterator1, class BidirectionalIterator2>
-    inline BidirectionalIterator2 __copy_backward(BidirectionalIterator1 first, BidirectionalIterator1 last, 
-            BidirectionalIterator2 result, bidirectional_iterator_tag) {
+    template <class BidirIt1, class BidirIt2>
+    inline BidirIt2 __copy_backward(BidirIt1 first, BidirIt1 last, 
+            BidirIt2 result, bidirectional_iterator_tag) {
         while (first != last) {
             *(--result) = *(--last);
         }
         return result;
     }
 
-    template <class RandomAccessIterator, class BidirectionalIterator>
-    inline BidirectionalIterator __copy_backward(RandomAccessIterator first, RandomAccessIterator last, 
-            BidirectionalIterator result, random_access_iterator_tag) {
+    template <class RandomAccessIterator, class BidirIt>
+    inline BidirIt __copy_backward(RandomAccessIterator first, RandomAccessIterator last, 
+            BidirIt result, random_access_iterator_tag) {
         return __copy_backward_rand(first, last, result);
     }
 
-    template <class RandomAccessIterator, class BidirectionalIterator>
-    inline BidirectionalIterator __copy_backward_rand(RandomAccessIterator first, RandomAccessIterator last, 
-            BidirectionalIterator result) {
+    template <class RandomAccessIterator, class BidirIt>
+    inline BidirIt __copy_backward_rand(RandomAccessIterator first, RandomAccessIterator last, 
+            BidirIt result) {
         typedef typename iterator_traits<RandomAccessIterator>::difference_type distance;
         for (distance n = last - first; n > 0; --n) {
             *(--result) = *(--last);
@@ -636,29 +635,38 @@ namespace HxSTL {
 
     template <class T>
     inline T* __copy_backward_ptr(const T* first, const T* last, T* result, true_type) {
-        memmove(result, first, sizeof(T) * (last - first));
-        return result + (last - first);
+        memmove(result - (last - first), first, sizeof(T) * (last - first));
+        return result - (last - first);
     }
     
     template <class T>
     inline T* __copy_backward_ptr(const T* first, const T* last, T* result, false_type) {
-        return __copy_rand(first, last, result, static_cast<ptrdiff_t*>(0));
+        return __copy_backward_rand(first, last, result);
     }
 
-    template <class BidirectionalIterator1, class BidirectionalIterator2>
-    BidirectionalIterator2 copy_backward(BidirectionalIterator1 first, 
-            BidirectionalIterator1 last, BidirectionalIterator2 result) {
-        return __copy_backward_dispath<BidirectionalIterator1, BidirectionalIterator2>()(first, last, result);
+    template <class BidirIt1, class BidirIt2>
+    BidirIt2 copy_backward(BidirIt1 first, BidirIt1 last, BidirIt2 result) {
+        return __copy_backward_dispath<BidirIt1, BidirIt2>()(first, last, result);
     }
 
     // move
     
-    template <class InputIterator, class OutputIterator>
-    OutputIterator move(InputIterator first, InputIterator last, OutputIterator result) {
+    template <class InputIt, class OutputIterator>
+    OutputIterator move(InputIt first, InputIt last, OutputIterator result) {
         while (first != last) {
             *result = HxSTL::move(*first);
             ++first;
             ++result;
+        }
+        return result;
+    }
+
+    // move_backward
+
+    template <class BidirIt1, class BidirIt2>
+    BidirIt2 move_backward(BidirIt1 first, BidirIt1 last, BidirIt2 result) {
+        while (first != last) {
+            *(--result) = HxSTL::move(*(--last));
         }
         return result;
     }
@@ -684,8 +692,8 @@ namespace HxSTL {
 
     // transform
 
-    template <class InputIterator, class OutputIterator, class UnaryPredicate>
-    OutputIterator transform(InputIterator first1, InputIterator last1, 
+    template <class InputIt, class OutputIterator, class UnaryPredicate>
+    OutputIterator transform(InputIt first1, InputIt last1, 
             OutputIterator result, UnaryPredicate op) {
         while (first1 != last1) {
             *result = op(first1);
@@ -695,9 +703,9 @@ namespace HxSTL {
         return result;
     }
 
-    template <class InputIterator1, class InputIterator2, class OutputIterator, class BinaryPredicate>
-    OutputIterator transform(InputIterator1 first1, InputIterator1 last1, 
-            InputIterator2 first2, OutputIterator result, BinaryPredicate op) {
+    template <class InputIt1, class InputIt2, class OutputIterator, class BinaryPredicate>
+    OutputIterator transform(InputIt1 first1, InputIt1 last1, 
+            InputIt2 first2, OutputIterator result, BinaryPredicate op) {
         while (first1 != last1) {
             *result = op(first1, first2);
             ++first1;
@@ -722,8 +730,8 @@ namespace HxSTL {
 
     // replace_if
 
-    template <class InputIterator, class OutputIterator, class UnaryPredicate>
-    void replace_if(InputIterator first, InputIterator last, 
+    template <class InputIt, class OutputIterator, class UnaryPredicate>
+    void replace_if(InputIt first, InputIt last, 
             OutputIterator result, UnaryPredicate pred) {
         while (first != last) {
             if (pred(*first)) {
@@ -736,8 +744,8 @@ namespace HxSTL {
 
     // replace_copy
     
-    template <class InputIterator, class OutputIterator, class T>
-    void replace_copy(InputIterator first, InputIterator last, 
+    template <class InputIt, class OutputIterator, class T>
+    void replace_copy(InputIt first, InputIt last, 
             OutputIterator result, const T& old_val, const T& new_val) {
         while (first != last) {
             *result = *first == old_val ? new_val : *first;
@@ -748,8 +756,8 @@ namespace HxSTL {
 
     // replace_copy_if
 
-    template <class InputIterator, class OutputIterator, class UnaryPredicate, class T>
-    OutputIterator replace_copy_if(InputIterator first, InputIterator last, 
+    template <class InputIt, class OutputIterator, class UnaryPredicate, class T>
+    OutputIterator replace_copy_if(InputIt first, InputIt last, 
             OutputIterator result, UnaryPredicate pred, const T& val) {
         while (first != last) {
             *result = pred(*first) ? val : *first;
@@ -835,8 +843,8 @@ namespace HxSTL {
 
     // remove_copy
     
-    template <class InputIterator, class OutputIterator, class T>
-    OutputIterator remove_copy(InputIterator first, InputIterator last, 
+    template <class InputIt, class OutputIterator, class T>
+    OutputIterator remove_copy(InputIt first, InputIt last, 
             OutputIterator result, const T& val) {
         while (first != last) {
             if (*first != val) {
@@ -850,8 +858,8 @@ namespace HxSTL {
 
     // remove_copy_if
 
-    template <class InputIterator, class OutputIterator, class BinaryPredicate>
-    OutputIterator remove_copy_if(InputIterator first, InputIterator last, 
+    template <class InputIt, class OutputIterator, class BinaryPredicate>
+    OutputIterator remove_copy_if(InputIt first, InputIt last, 
             OutputIterator result, BinaryPredicate pred) {
         while (first != last) {
             if (!pred(*first)) {
@@ -901,12 +909,12 @@ namespace HxSTL {
 
     // unique_copy
 
-    template <class InputIterator, class OutputIterator>
-    OutputIterator unique_copy(InputIterator first, InputIterator last, OutputIterator result) {
+    template <class InputIt, class OutputIterator>
+    OutputIterator unique_copy(InputIt first, InputIt last, OutputIterator result) {
         *result = *first;
         ++first;
         while (first != last) {
-            typename iterator_traits<InputIterator>::value_type val = *first;
+            typename iterator_traits<InputIt>::value_type val = *first;
             if (val != *result) {
                 ++result;
                 *result = val;
@@ -916,13 +924,13 @@ namespace HxSTL {
         return result;
     }
 
-    template <class InputIterator, class OutputIterator, class BinaryPredicate>
-    OutputIterator unique_copy(InputIterator first, InputIterator last, 
+    template <class InputIt, class OutputIterator, class BinaryPredicate>
+    OutputIterator unique_copy(InputIt first, InputIt last, 
             OutputIterator result, BinaryPredicate pred) {
         *result = *first;
         ++first;
         while (first != last) {
-            typename iterator_traits<InputIterator>::value_type val = *first;
+            typename iterator_traits<InputIt>::value_type val = *first;
             if (!pred(val, *result)) {
                 ++result;
                 *result = val;
@@ -934,13 +942,13 @@ namespace HxSTL {
 
     // reverse
 
-    template <class BidirectionalIterator>
-    void reverse(BidirectionalIterator first, BidirectionalIterator last) {
-        __reverse(first, last, typename iterator_traits<BidirectionalIterator>::iterator_category());
+    template <class BidirIt>
+    void reverse(BidirIt first, BidirIt last) {
+        __reverse(first, last, typename iterator_traits<BidirIt>::iterator_category());
     }
 
-    template <class BidirectionalIterator>
-    void __reverse(BidirectionalIterator first, BidirectionalIterator last, bidirectional_iterator_tag) {
+    template <class BidirIt>
+    void __reverse(BidirIt first, BidirIt last, bidirectional_iterator_tag) {
         while (first != last && first != --last) {
             iter_swap(first, last);
             ++first;
@@ -960,8 +968,8 @@ namespace HxSTL {
 
     // reverse_copy
 
-    template <class BidirectionalIterator, class OutputIterator>
-    OutputIterator reverse_copy(BidirectionalIterator first, BidirectionalIterator last, OutputIterator result) {
+    template <class BidirIt, class OutputIterator>
+    OutputIterator reverse_copy(BidirIt first, BidirIt last, OutputIterator result) {
         while (first != last) {
             --last;
             *result = *last;
@@ -997,9 +1005,9 @@ namespace HxSTL {
 
     }
 
-    template <class BidirectionalIterator>
-    void __rotate(BidirectionalIterator first, BidirectionalIterator middle, 
-            BidirectionalIterator last, bidirectional_iterator_tag) {
+    template <class BidirIt>
+    void __rotate(BidirIt first, BidirIt middle, 
+            BidirIt last, bidirectional_iterator_tag) {
         reverse(first, middle);
         reverse(middle, last);
         reverse(first, last);
@@ -1044,8 +1052,8 @@ namespace HxSTL {
 
     // is_partitioned
     
-    template <class InputIterator, class UnaryPredicate>
-    bool is_partitioned(InputIterator first, InputIterator last, UnaryPredicate pred) {
+    template <class InputIt, class UnaryPredicate>
+    bool is_partitioned(InputIt first, InputIt last, UnaryPredicate pred) {
         while (first != last && pred(*first)) {
             ++first;
         }
@@ -1088,8 +1096,8 @@ namespace HxSTL {
         return first;
     }
 
-    template <class BidirectionalIterator, class UnaryPredicate>
-    BidirectionalIterator __partition(BidirectionalIterator first, BidirectionalIterator last, 
+    template <class BidirIt, class UnaryPredicate>
+    BidirIt __partition(BidirIt first, BidirIt last, 
             UnaryPredicate pred, bidirectional_iterator_tag) {
         while (first != last) {
             while (pred(*first)) {
@@ -1112,15 +1120,15 @@ namespace HxSTL {
 
     // stable_partition**
 
-    template <class BidirectionalIterator, class UnaryPredicate>
-    BidirectionalIterator stable_partition(BidirectionalIterator first, BidirectionalIterator last, UnaryPredicate pred) {
+    template <class BidirIt, class UnaryPredicate>
+    BidirIt stable_partition(BidirIt first, BidirIt last, UnaryPredicate pred) {
         while (pred(*first)) {
             ++first;
             if (first == last) {
                 return first;
             }
         }
-        BidirectionalIterator tmp = first;
+        BidirIt tmp = first;
         while (first != last) {
             while (!pred(*tmp)) {
                 ++tmp;
@@ -1128,7 +1136,7 @@ namespace HxSTL {
                     return first;
                 }
             }
-            BidirectionalIterator middle = tmp;
+            BidirIt middle = tmp;
             while (tmp != last && pred(*tmp)) {
                 ++tmp;
             }
@@ -1140,11 +1148,11 @@ namespace HxSTL {
 
     // partition_copy
 
-    template <class InputIterator, class OutputIterator1, class OutputIterator2, class UnaryPredicate>
-    pair<OutputIterator1, OutputIterator2> partition_copy(InputIterator first, InputIterator last, 
+    template <class InputIt, class OutputIterator1, class OutputIterator2, class UnaryPredicate>
+    pair<OutputIterator1, OutputIterator2> partition_copy(InputIt first, InputIt last, 
             OutputIterator1 result_true, OutputIterator2 result_false, UnaryPredicate pred) {
         while (first != last) {
-            typename iterator_traits<InputIterator>::value_type val = *first;
+            typename iterator_traits<InputIt>::value_type val = *first;
             if (pred(val)) {
                 *result_true = val;
                 ++result_true;
