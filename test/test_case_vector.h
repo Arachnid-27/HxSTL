@@ -113,6 +113,14 @@ TEST_CASE("vector_member_assign_1") {
     REQUIRE(v1.front() == 5);
     REQUIRE(v1.back() == 5);
 
+    v1.reserve(20);
+
+    v1.assign(10, 10);
+
+    REQUIRE(v1.size() == 10);
+    REQUIRE(v1.front() == 10);
+    REQUIRE(v1.back() == 10);
+
 }
 
 TEST_CASE("vector_member_assign_2") {

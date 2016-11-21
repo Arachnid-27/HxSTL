@@ -110,7 +110,7 @@ namespace HxSTL {
         template <class InputIterator>
         list(InputIterator first, InputIterator last, 
                 const allocator_type& alloc = allocator_type())
-            :_alloc(alloc) { initialize_aux(first, last, typename is_integer<InputIterator>::value()); }
+            :_alloc(alloc) { initialize_aux(first, last, typename HxSTL::is_integeral<InputIterator>::value()); }
 
         list(const list& x):_alloc(x._alloc) { initialize_aux(x.begin(), x.end(), false_type()); }
 

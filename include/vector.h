@@ -300,9 +300,9 @@ namespace HxSTL {
             HxSTL::destroy(_finish, old_finish);
         } else if (count <= capacity()) {
             // 分开拷贝已初始化和未初始化区域
-            size_type use = _end_of_storage - _finish;
-            _finish = HxSTL::copy_n(first, use, _start);
-            HxSTL::advance(first, use);
+            size_type sz = size();
+            HxSTL::copy_n(first, sz, _start);
+            HxSTL::advance(first, sz);
             _finish = HxSTL::uninitialized_copy(first, last, _finish);
         } else {
             // Todo 处理异常
@@ -321,9 +321,9 @@ namespace HxSTL {
             HxSTL::destroy(_finish, old_finish);
         } else if (count <= capacity()) {
             // 分开填充已初始化和未初始化区域
-            size_type use = _end_of_storage - _finish;
-            _finish = HxSTL::fill_n(_start, use, value);
-            _finish = HxSTL::uninitialized_fill_n(_finish, count - use, value);
+            size_type sz = size();
+            HxSTL::fill_n(_start, sz, value);
+            _finish = HxSTL::uninitialized_fill_n(_finish, count - sz, value);
         } else {
             // Todo 处理异常
             _start = _alloc.allocate(count);

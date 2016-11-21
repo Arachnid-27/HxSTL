@@ -28,7 +28,7 @@ namespace HxSTL {
     template <class ForwardIterator>
     inline void __destroy(ForwardIterator first, ForwardIterator last, false_type) {
         for (; first != last; ++first) {
-            HxSTL::destroy(&*first);
+            destroy(&*first);
         }
     }
 
