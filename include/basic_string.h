@@ -44,6 +44,11 @@ namespace HxSTL {
         template <class InputIt>
         iterator insert_aux(iterator pos, InputIt first, InputIt last, false_type);
         void insert_aux(iterator pos, size_type count, CharT ch, true_type);
+        iterator erase_aux(iterator first, iterator last);
+        template <class InputIt>
+        void append_aux(InputIt first, InputIt last, false_type);
+        void append_aux(size_type count, CharT ch, true_type);
+        int compare_aux(const_iterator first1, const_iterator last1, const_iterator first2, const_iterator last2) const;
         void dec_ref();
         void copy_before_write();
         void destroy_and_reset(iterator new_start, iterator new_finish, iterator new_end_of_storage);
@@ -262,7 +267,7 @@ namespace HxSTL {
         }
 
         basic_string& insert(size_type index, const CharT* s) {
-            iterator last = s;
+            const CharT* last = s;
             while (*last) ++last;
             insert_aux(_start + index, s, last, HxSTL::false_type());
             return *this;
@@ -298,46 +303,129 @@ namespace HxSTL {
             return insert(_start + (pos - cbegin()), first, last, HxSTL::is_integeral<InputIt>::type());
         }
 
-        basic_string& erase(size_type index = 0, size_type count = npos);
+        basic_string& erase(size_type index = 0, size_type count = npos) {
+            if (count == npos) count = size() - index;
+            erase_aux(_start + index, _start + index + count);
+            return *this;
+        }
 
-        iterator erase(const_iterator position);
+        iterator erase(const_iterator position) {
+            return erase_aux(_start + (position - _start), _start + (position - _start) + 1);
+        }
 
-        iterator erase(const_iterator first, const_iterator last);
+        iterator erase(const_iterator first, const_iterator last) {
+            return erase_aux(_start + (first - _start), _start + (last - _start));
+        }
 
-        void push_back(CharT ch);
+        void push_back(CharT ch) { append(ch); }
 
-        void pop_back();
+        void pop_back() { erase(_finish); }
 
-        basic_string& append(size_type count, CharT ch);
+        basic_string& append(size_type count, CharT ch) {
+            append_aux(count, ch, HxSTL::true_type());
+            return *this;
+        }
 
-        basic_string& append(const basic_string& str);
+        basic_string& append(const basic_string& str) {
+            append_aux(str.cbegin(), str.cend(), HxSTL::false_type());
+            return *this;
+        }
 
-        basic_string& append(const basic_string& str, size_type pos, size_type count = npos);
+        basic_string& append(const basic_string& str, size_type pos, size_type count = npos) {
+            if (count == pos) count = str.size() - pos;
+            const_iterator first = str.cbegin() + pos;
+            append_aux(first, first + index, HxSTL::false_type());
+            return *this;
+        }
 
-        basic_string& append(const CharT* s, size_type count);
+        basic_string& append(const CharT* s, size_type count) {
+            append_aux(s, s + count, HxSTL::false_type());
+            return *this;
+        }
 
-        basic_string& append(const CharT* s);
+        basic_string& append(const CharT* s) {
+            const CharT* last = s;
+            while (*last) ++last;
+            append_aux(s, last, HxSTL::false_type());
+            return *this;
+        }
 
         template <class InputIt>
-        basic_string& append(InputIt first, InputIt last);
+        basic_string& append(InputIt first, InputIt last) {
+            append_aux(first, last, HxSTL::is_integeral<InputIt>::type());
+            return *this;
+        }
 
-        basic_string& operator+=(const basic_string& str);
+        basic_string& operator+=(const basic_string& str) {
+            return append(str);
+        }
 
-        basic_string& operator+=(CharT ch);
+        basic_string& operator+=(CharT ch) {
+            return append(1, ch);
+        }
 
-        basic_string& operator+=(const CharT* s);
+        basic_string& operator+=(const CharT* s) {
+            return append(s);
+        }
 
-        int compare(const basic_string& str) const;
+        int compare(const basic_string& str) const {
+            return compare_aux(cbegin(), cend(), str.cbegin(), str.cend());
+        }
 
-        int compare(size_type pos, size_type count, const basic_string& str) const;
+        int compare(size_type pos, size_type count, const basic_string& str) const {
+            return compare_aux(cbegin() + pos, cbegin() + pos + count, str.cbegin(), str.cend());
+        }
 
-        int compare(size_type pos1, size_type count1, const basic_string& str, size_type pos2, size_type count2) const;
+        int compare(size_type pos1, size_type count1, const basic_string& str, 
+                size_type pos2, size_type count2) const {
+            return compare_aux(cbegin() + pos1, cbegin() + pos1 + count1, 
+                    str.cbegin() + pos2, str.cend() + pos2 + count2);
+        }
 
-        int compare(const CharT* s) const;
+        int compare(const CharT* s) const {
+            const_iterator last = s;
+            while (*last) ++last;
+            return compare_aux(cbegin(), cend(), s, last);
+        }
 
-        int compare(size_type pos, size_type count, const CharT* s) const;
+        int compare(size_type pos, size_type count, const CharT* s) const {
+            const_iterator last = s;
+            while (*last) ++last;
+            return compare_aux(cbegin() + pos, cbegin() + pos + count, s, last);
+        }
 
-        int compare(size_type pos, size_type count, const CharT* s, size_type pos2, size_type count2) const;
+        int compare(size_type pos, size_type count, const CharT* s, size_type pos2, size_type count2) const {
+            return compare_aux(cbegin() + pos, cbegin() + pos + count, s + pos2, s + pos2 + count2);
+        }
+
+        basic_string& replace(size_type pos, size_type count, const basic_string& str);
+
+        basic_string& replace(const_iterator first, const_iterator last, const basic_string& str);
+
+        basic_string& replace(size_type pos, size_type count, const basic_string& str, size_type pos2, size_type count2 = npos);
+
+        template <class InputIt>
+        basic_string& replace(const_iterator first, const_iterator last, InputIt first2, InputIt last2);
+
+        basic_string& replace(size_type pos, size_type count, const CharT* cstr, size_type count2);
+
+        basic_string& replace(const_iterator first, const_iterator last, const CharT* cstr, size_type count2);
+
+        basic_string& replace(size_type pos, size_type count, const CharT* cstr);
+
+        basic_string& replace(const_iterator first, const_iterator last, const CharT* cstr);
+
+        basic_string& replace(size_type pos, size_type count, size_type count2, CharT ch);
+
+        basic_string& replace(const_iterator first, const_iterator last, size_type count2, CharT ch);
+
+        basic_string substr(size_type pos = 0, size_type count = npos) const;
+
+        size_type copy(CharT* dest, size_type count, size_type pos = 0) const;
+
+        void resize(size_type count);
+
+        void resize(size_type count, CharT ch);
 
         void swap(basic_string& other) {
             HxSTL::swap(_used, other._used);
@@ -345,6 +433,54 @@ namespace HxSTL {
             HxSTL::swap(_finish, other._finish);
             HxSTL::swap(_end_of_storage, other._end_of_storage);
         }
+
+        size_type find(const basic_string& str, size_type pos = 0) const;
+
+        size_type find(const CharT* s, size_type pos, size_type count) const;
+
+        size_type find(const CharT* s, size_type pos = 0) const;
+
+        size_type find(CharT ch, size_type pos = 0) const;
+
+        size_type rfind(const basic_string& str, size_type pos = npos) const;
+
+        size_type rfind(const CharT* s, size_type pos, size_type count) const;
+
+        size_type rfind(const CharT* s, size_type pos = npos) const;
+
+        size_type rfind(CharT ch, size_type pos = npos) const;
+
+        size_type find_first_of(const basic_string& str, size_type pos = 0) const;
+
+        size_type find_first_of(const CharT* s, size_type pos, size_type count) const;
+
+        size_type find_first_of(const CharT* s, size_type pos = 0) const;
+
+        size_type find_first_of(CharT ch, size_type pos = 0) const;
+
+        size_type find_first_not_of(const basic_string& str, size_type pos = 0) const;
+
+        size_type find_first_not_of(const CharT* s, size_type pos, size_type count) const;
+
+        size_type find_first_not_of(const CharT* s, size_type pos = 0) const;
+
+        size_type find_first_not_of(CharT ch, size_type pos = 0) const;
+
+        size_type find_last_of(const basic_string& str, size_type pos = npos) const;
+
+        size_type find_last_of(const CharT* s, size_type pos, size_type count) const;
+
+        size_type find_last_of(const CharT* s, size_type pos = npos) const;
+
+        size_type find_last_of(CharT ch, size_type pos = npos) const;
+
+        size_type find_last_not_of(const basic_string& str, size_type pos = npos) const;
+
+        size_type find_last_not_of(const CharT* s, size_type pos, size_type count) const;
+
+        size_type find_last_not_of(const CharT* s, size_type pos = npos) const;
+
+        size_type find_last_not_of(CharT ch, size_type pos = npos) const;
     };
 
     template <class CharT, class Alloc>
@@ -409,50 +545,60 @@ namespace HxSTL {
     template <class InputIt>
     void basic_string<CharT, Alloc>::assign_aux(InputIt first, InputIt last, false_type) {
         size_type count = HxSTL::distance(first, last);
-        if (count <= size()) {
+        if (count > capacity()) {
+            // 保留空间不足
+            size_type new_sz = count > 2 * capacity() ? count : 2 * capacity();
+            if (new_sz < DEFAULT_SIZE) new_sz = DEFAULT_SIZE;
+            iterator new_start = _alloc.allocate(new_sz + 1);
+            iterator new_finish = HxSTL::uninitialized_copy(first, last, new_start);
+            destroy_and_reset(new_start, new_finish, new_start + new_sz);
+        } else if (*_used > 1) {
+            // 写时拷贝
+            iterator new_start = _alloc.allocate(capacity() + 1);
+            iterator new_finish = HxSTL::uninitialized_copy(first, last, new_start);
+            destroy_and_reset(new_start, new_finish, new_start + count);
+        } else if (count <= size()) {
             // 拷贝并删除多余元素
             iterator old_finish = _finish;
             _finish = HxSTL::copy(first, last, _start);
             HxSTL::destroy(_finish, old_finish);
             *_finish = 0;
-        } else if (count <= capacity()) {
+        } else {
             // 分开拷贝已初始化和未初始化区域
             size_type sz = size();
             HxSTL::copy_n(first, sz, _start);
             HxSTL::advance(first, sz);
             _finish = HxSTL::uninitialized_copy(first, last, _finish);
             *_finish = 0;
-        } else {
-            // Todo 处理异常
-            size_type new_sz = count > 2 * capacity() ? count : 2 * capacity();
-            if (new_sz < DEFAULT_SIZE) new_sz = DEFAULT_SIZE;
-            iterator new_start = _alloc.allocate(new_sz + 1);
-            iterator new_finish = HxSTL::uninitialized_copy(first, last, new_start);
-            destroy_and_reset(new_start, new_finish, new_start + new_sz);
         }
     }
 
     template <class CharT, class Alloc>
     void basic_string<CharT, Alloc>::assign_aux(size_type count, CharT ch, true_type) {
-        if (count <= size()) {
-            // 填充并删除多余元素
-            iterator old_finish = _finish;
-            _finish = HxSTL::fill_n(_start, count, ch);
-            HxSTL::destroy(_finish, old_finish);
-            *_finish = 0;
-        } else if (count <= capacity()) {
-            // 分开填充已初始化和未初始化区域
-            size_type sz = size();
-            HxSTL::fill_n(_start, sz, ch);
-            _finish = HxSTL::uninitialized_fill_n(_finish, count - sz, ch);
-            *_finish = 0;
-        } else {
-            // Todo 处理异常
+        if (count > capacity()) {
+            // 保留空间不足
             size_type new_sz = count > 2 * capacity() ? count : 2 * capacity();
             if (new_sz < DEFAULT_SIZE) new_sz = DEFAULT_SIZE;
             iterator new_start = _alloc.allocate(new_sz + 1);
             iterator new_finish = HxSTL::uninitialized_fill_n(new_start, count, ch);
             destroy_and_reset(new_start, new_finish, new_start + new_sz);
+        } else if (*_used > 1) {
+            // 写时拷贝
+            iterator new_start = _alloc.allocate(capacity() + 1);
+            iterator new_finish = HxSTL::uninitialized_fill_n(new_start, count, ch);
+            destroy_and_reset(new_start, new_finish, new_start + count);
+        } else if (count <= size()) {
+            // 填充并删除多余元素
+            iterator old_finish = _finish;
+            _finish = HxSTL::fill_n(_start, count, ch);
+            HxSTL::destroy(_finish, old_finish);
+            *_finish = 0;
+        } else {
+            // 分开填充已初始化和未初始化区域
+            size_type sz = size();
+            HxSTL::fill_n(_start, sz, ch);
+            _finish = HxSTL::uninitialized_fill_n(_finish, count - sz, ch);
+            *_finish = 0;
         }
     }
 
@@ -462,13 +608,26 @@ namespace HxSTL {
     basic_string<CharT, Alloc>::insert_aux(iterator pos, InputIt first, InputIt last, false_type) {
         if (first == last) return pos;
 
+        size_type index = pos - _start;
         size_type count = HxSTL::distance(first, last);
-        iterator old_finish = _finish;
-        if (_end_of_storage - _finish >= count) {
-            // 预留空间足够
+        if (count < _end_of_storage - _finish) {
+            // 保留空间不足
+            size_type new_sz = 2 * capacity() > size() + count ? 2 * capacity() : size() + count;
+            iterator new_start = _alloc.allocate(new_sz + 1);
+            iterator new_finish = HxSTL::uninitialized_copy(_start, pos, new_start);
+            new_finish = HxSTL::uninitialized_copy(first, last, new_finish);
+            new_finish = HxSTL::uninitialized_copy(pos, _finish, new_finish);
+            destroy_and_reset(new_start, new_finish, new_start + new_sz);
+        } else if (*_used > 1) {
+            // 写时拷贝
+            iterator new_start = _alloc.allocate(capacity() + 1);
+            iterator new_finish = HxSTL::uninitialized_copy(_start, pos, new_start);
+            new_finish = HxSTL::uninitialized_copy(first, last, new_finish);
+            new_finish = HxSTL::uninitialized_copy(pos, _finish, new_finish);
+            destroy_and_reset(new_start, new_finish, new_start + capacity());
+        } else {
             size_type element_after = _finish - pos;
             iterator old_finish = _finish;
-            copy_before_write();
             if (count > element_after) {
                 // 插入点之后元素少于待插入元素
                 _finish = HxSTL::uninitialized_copy(pos, _finish, _finish + (count - element_after));
@@ -482,18 +641,85 @@ namespace HxSTL {
                 HxSTL::copy(first, last, pos);
             }
             *_finish = 0;
-            return pos;
+        }
+        return _start + index;
+    }
+
+    template <class CharT, class Alloc>
+    typename basic_string<CharT, Alloc>::iterator
+    basic_string<CharT, Alloc>::erase_aux(iterator first, iterator last) {
+        size_type index = first - _start;
+        if (*_used > 1) {
+            // 写时拷贝
+            iterator new_start = _alloc.allocate(capacity() + 1);
+            iterator new_finish = HxSTL::uninitialized_copy(_start, first);
+            new_finish = HxSTL::uninitialized_copy(last, _finish);
+            destroy_and_reset(new_start, new_finish, new_start + capacity());
         } else {
-            // Todo 异常处理
+            // 向前复制并移除多余元素
+            iterator old_finish = _finish;
+            _finish = HxSTL::copy(last, _finish, first);
+            HxSTL::destroy(_finish, old_finish);
+        } 
+        return _start + index;
+    }
+
+    template <class CharT, class Alloc>
+    void basic_string<CharT, Alloc>::append_aux(size_type count, CharT ch, true_type) {
+        if (count > _end_of_storage - _finish) {
+            // 保留空间不足
             size_type new_sz = 2 * capacity() > size() + count ? 2 * capacity() : size() + count;
             iterator new_start = _alloc.allocate(new_sz + 1);
-            iterator new_finish = HxSTL::uninitialized_copy(_start, pos, new_start);
-            iterator result = new_finish;
-            new_finish = HxSTL::uninitialized_copy(first, last, new_finish);
-            new_finish = HxSTL::uninitialized_copy(pos, _finish, new_finish);
+            iterator new_finish = HxSTL::uninitialized_copy(_start, _finish, new_start);
+            new_finish = HxSTL::uninitialized_fill_n(new_finish, count, ch);
             destroy_and_reset(new_start, new_finish, new_start + new_sz);
-            return result;
+        } else if (*_used > 1) {
+            // 写时拷贝
+            iterator new_start = _alloc.allocate(capacity() + 1);
+            iterator new_finish = HxSTL::uninitialized_copy(_start, _finish, new_start);
+            new_finish = HxSTL::uninitialized_fill_n(new_finish, count, ch);
+            destroy_and_reset(new_start, new_finish, new_finish + count);
+        } else {
+            // 直接填充到末尾
+            _finish = HxSTL::uninitialized_fill_n(_finish, count, ch);
+            *_finish = 0;
         }
+    }
+
+    template <class CharT, class Alloc>
+    template <class InputIt>
+    void basic_string<CharT, Alloc>::append_aux(InputIt first, InputIt last, false_type) {
+        if (count > _end_of_storage - _finish) {
+            // 保留空间不足
+            size_type new_sz = 2 * capacity() > size() + count ? 2 * capacity() : size() + count;
+            iterator new_start = _alloc.allocate(new_sz + 1);
+            iterator new_finish = HxSTL::uninitialized_copy(_start, _finish, new_start);
+            new_finish = HxSTL::uninitialized_copy(first, last, new_finish);
+            destroy_and_reset(new_start, new_finish, new_start + new_sz);
+        } else if (*_used > 1) {
+            // 写时拷贝
+            iterator new_start = _alloc.allocate(capacity() + 1);
+            iterator new_finish = HxSTL::uninitialized_copy(_start, _finish, new_start);
+            new_finish = HxSTL::uninitialized_copy(first, last, new_finish);
+            destroy_and_reset(new_start, new_finish, new_finish + count);
+        } else {
+            // 直接复制到末尾
+            _finish = HxSTL::uninitialized_copy(first, last, _finish);
+            *_finish = 0;
+        }
+    }
+
+    template <class CharT, class Alloc>
+    int basic_string<CharT, Alloc>::compare_aux(const_iterator first1, const_iterator last1, 
+            const_iterator first2, const_iterator last2) const {
+        while (first1 != last1 && first2 != last2) {
+            if (*first1 != *first2) {
+                return *first1 < *first2 ? -1 : 1;
+            }
+            ++first1;
+            ++first2;
+        }
+        return first1 == last1 ? first2 - last2 : last1 - first1;
     }
 
     template <class CharT, class Alloc>
@@ -505,6 +731,36 @@ namespace HxSTL {
         destroy_and_reset(new_start, new_finish, new_start + new_cap);
     }
 
+    template <class CharT, class Alloc>
+    bool operator==(const basic_string<CharT, Alloc>& lhs, const basic_string<CharT, Alloc>& rhs) {
+        return lhs.compare(rhs) == 0;
+    }
+
+    template <class CharT, class Alloc>
+    bool operator!=(const basic_string<CharT, Alloc>& lhs, const basic_string<CharT, Alloc>& rhs) {
+        return !(lhs == rhs);
+    }
+
+    template <class CharT, class Alloc>
+    bool operator< (const basic_string<CharT, Alloc>& lhs, const basic_string<CharT, Alloc>& rhs) {
+        return lhs.compare(rhs) < 0;
+    }
+
+    template <class CharT, class Alloc>
+    bool operator<=(const basic_string<CharT, Alloc>& lhs, const basic_string<CharT, Alloc>& rhs) {
+        return !(rhs < lhs);
+    }
+    template <class CharT, class Alloc>
+    bool operator> (const basic_string<CharT, Alloc>& lhs, const basic_string<CharT, Alloc>& rhs) {
+        return rhs < lhs;
+    }
+
+    template <class CharT, class Alloc>
+    bool operator>=(const basic_string<CharT, Alloc>& lhs, const basic_string<CharT, Alloc>& rhs) {
+        return !(lhs < rhs);
+    }
+
 }
+
 
 #endif

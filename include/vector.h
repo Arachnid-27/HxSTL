@@ -466,7 +466,7 @@ namespace HxSTL {
 
     template <class T, class Alloc>
     typename vector<T, Alloc>::iterator vector<T, Alloc>::erase_aux(iterator pos) {
-        _finish = copy(pos + 1, _finish, pos);
+        _finish = HxSTL::copy(pos + 1, _finish, pos);
         _alloc.destroy(_finish);
         return pos;
     }
@@ -474,7 +474,7 @@ namespace HxSTL {
     template <class T, class Alloc>
     typename vector<T, Alloc>::iterator vector<T, Alloc>::erase_aux(iterator first, iterator last) {
         iterator old_finish = _finish;
-        _finish = copy(last, _finish, first);
+        _finish = HxSTL::copy(last, _finish, first);
         HxSTL::destroy(_finish, old_finish);
         return first;
     }
