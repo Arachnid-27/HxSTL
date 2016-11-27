@@ -1,10 +1,10 @@
 CC=g++
 EXE=main.out
 HDR=../include
-CPPFLAGS=-g -I $(HDR) -std=c++11
+CPPFLAGS=-g -I $(HDR) -std=c++11 -D_USE_POOL_ALLOC
 
 
-SRC=$(wildcard *.cpp)
+SRC=$(wildcard ../source/*.cpp) $(wildcard *.cpp)
 OBJ=$(patsubst %.cpp,%.o,$(SRC))
 DEP=$(patsubst %.o,%.d,$(OBJ))
 

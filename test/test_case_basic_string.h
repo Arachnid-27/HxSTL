@@ -7,7 +7,7 @@ TEST_CASE("basic_string_default_constructor") {
     HxSTL::basic_string<char> s1;
 
     REQUIRE(s1.size() == 0);
-    REQUIRE(s1.capacity() == 0);
+    REQUIRE(s1.capacity() == 15);
     REQUIRE(*s1.data() == 0);
 
 }
@@ -32,14 +32,8 @@ TEST_CASE("basic_string_copy_n_constructor") {
 
     REQUIRE(s2.size() == 5);
     REQUIRE(s3.size() == 2);
-
-    for (auto it1 = s2.begin(), it2 = s2.end(); it1 != it2; ++it1) {
-        REQUIRE(*it1 == 'x');
-    }
-
-    for (auto it1 = s3.begin(), it2 = s3.end(); it1 != it2; ++it1) {
-        REQUIRE(*it1 == 'x');
-    }
+    REQUIRE(s2 == HxSTL::basic_string<char>(5, 'x'));
+    REQUIRE(s3 == HxSTL::basic_string<char>(2, 'x'));
 
 }
 
@@ -49,10 +43,7 @@ TEST_CASE("basic_string_c_str_n_constructor") {
     HxSTL::basic_string<char> s1(c1, 5);
 
     REQUIRE(s1.size() == 5);
-
-    for (decltype(s1.size()) i = 0; i != s1.size(); ++i) {
-        REQUIRE(s1[i] == c1[i]);
-    }
+    REQUIRE(s1 == HxSTL::basic_string<char>("HxSTL"));
 
 }
 
@@ -62,10 +53,7 @@ TEST_CASE("basic_string_c_str_constructor") {
     HxSTL::basic_string<char> s1(c1);
 
     REQUIRE(s1.size() == 5);
-
-    for (decltype(s1.size()) i = 0; i != s1.size(); ++i) {
-        REQUIRE(s1[i] == c1[i]);
-    }
+    REQUIRE(s1 == HxSTL::basic_string<char>("HxSTL"));
 
 }
 
@@ -83,17 +71,11 @@ TEST_CASE("basic_string_copy_constructor") {
 TEST_CASE("basic_string_move_constructor") {
 
     HxSTL::basic_string<char> s1(10, 'x');
-
-    auto t1 = s1.capacity();
-
     HxSTL::basic_string<char> s2(HxSTL::move(s1));
 
     REQUIRE(s2.size() == 10);
-    REQUIRE(s2.capacity() == t1);
-
-    for (auto it1 = s2.begin(), it2 = s2.end(); it1 != it2; ++it1) {
-        REQUIRE(*it1 == 'x');
-    }
+    REQUIRE(s2.capacity() == 15);
+    REQUIRE(s2 == HxSTL::basic_string<char>(10, 'x'));
 
 }
 
@@ -173,20 +155,6 @@ TEST_CASE("basic_string_member_assign_1") {
         REQUIRE(s1 == HxSTL::basic_string<char>(100, 'c'));
     }
 
-    SECTION("copy on write") {
-        HxSTL::basic_string<char> s1(10, 'a');
-        HxSTL::basic_string<char> s2(s1);
-
-        REQUIRE(s1.data() == s2.data());
-
-        s2.assign(20, 'b');
-
-        REQUIRE(s1.data() != s2.data());
-        REQUIRE(s2.size() == 20);
-        REQUIRE(s2.capacity() == 30);
-        REQUIRE(s2 == HxSTL::basic_string<char>(20, 'b'));
-    }
-
     SECTION("count <= size") {
         HxSTL::basic_string<char> s1(20, 'a');
 
@@ -218,7 +186,7 @@ TEST_CASE("basic_string_member_assign_2") {
 
     REQUIRE(s1.size() == s2.size());
     REQUIRE(s1.capacity() == s2.capacity());
-    REQUIRE(s1.data() == s2.data());
+    REQUIRE(s1 == s2);
 
 }
 
@@ -230,22 +198,22 @@ TEST_CASE("basic_string_member_assign_3") {
         HxSTL::basic_string<char> s1(10, 'a');
         HxSTL::basic_string<char> s2;
 
-        s1.assign(s1, 5);
+        s2.assign(s1, 5);
 
-        REQUIRE(s1.size() == 5);
-        REQUIRE(s1.capacity() == 15);
-        REQUIRE(s1 == HxSTL::basic_string<char>(5, 'a'));
+        REQUIRE(s2.size() == 5);
+        REQUIRE(s2.capacity() == 15);
+        REQUIRE(s2 == HxSTL::basic_string<char>(5, 'a'));
     }
 
     SECTION("count != npos") {
         HxSTL::basic_string<char> s1(10, 'a');
         HxSTL::basic_string<char> s2;
 
-        s1.assign(s1, 5, 2);
+        s2.assign(s1, 5, 2);
 
-        REQUIRE(s1.size() == 2);
-        REQUIRE(s1.capacity() == 15);
-        REQUIRE(s1 == HxSTL::basic_string<char>(2, 'a'));
+        REQUIRE(s2.size() == 2);
+        REQUIRE(s2.capacity() == 15);
+        REQUIRE(s2 == HxSTL::basic_string<char>(2, 'a'));
     }
 
 }
@@ -303,21 +271,6 @@ TEST_CASE("basic_string_member_assign_7") {
         REQUIRE(s1 == s2);
     }
 
-    SECTION("copy_on_write") {
-        HxSTL::basic_string<char> s1(20, 'a');
-        HxSTL::basic_string<char> s2(s1);
-        const char *s3 = "HxSTL";
-
-        REQUIRE(s1.data() == s2.data());
-
-        s2.assign(s3, s3 + 5);
-
-        REQUIRE(s2.size() == 5);
-        REQUIRE(s2.capacity() == 20);
-        REQUIRE(s1.data() != s2.data());
-        REQUIRE(s2 == HxSTL::basic_string<char>(s3));
-    }
-
     SECTION("count <= size") {
         HxSTL::basic_string<char> s1(10, 'a');
         HxSTL::basic_string<char> s2(20, 'b');
@@ -365,21 +318,6 @@ TEST_CASE("basic_string_member_at") {
         REQUIRE(!flag);
     }
 
-    SECTION("copy_on_write") {
-        HxSTL::basic_string<char> s1(10, 'a');
-        const HxSTL::basic_string<char> s2(s1);
-
-        REQUIRE(s1.data() == s2.data());
-
-        const char &c1 = s2.at(0);
-
-        REQUIRE(s1.data() == s2.data());
-
-        char &c2 = s1.at(0);
-
-        REQUIRE(s1.data() != s2.data());
-    }
-
     SECTION("pos < size") {
         HxSTL::basic_string<char> s1("HxSTL");
 
@@ -394,33 +332,171 @@ TEST_CASE("basic_string_member_at") {
 
 TEST_CASE("basic_string_member_operator[]") {
 
-    SECTION("copy_on_write") {
-        HxSTL::basic_string<char> s1(10, 'a');
-        const HxSTL::basic_string<char> s2(s1);
+    HxSTL::basic_string<char> s1("HxSTL");
 
-        REQUIRE(s1.data() == s2.data());
+    REQUIRE(s1[0] == 'H');
+    REQUIRE(s1[1] == 'x');
+    REQUIRE(s1[2] == 'S');
+    REQUIRE(s1[3] == 'T');
+    REQUIRE(s1[4] == 'L');
 
-        const char &c1 = s2[0];
+    s1[5];
+    s1[6];
 
-        REQUIRE(s1.data() == s2.data());
+}
 
-        char &c2 = s1[0];
+TEST_CASE("basic_string_member_front basic_string_member_back") {
 
-        REQUIRE(s1.data() != s2.data());
+    HxSTL::basic_string<char> s1("-HxSTL+");
+
+    REQUIRE(s1.front() == '-');
+    REQUIRE(s1.back() == '+');
+
+    s1.front() = '+';
+    s1.back() = '-';
+
+    REQUIRE(s1 == HxSTL::basic_string<char>("+HxSTL-"));
+    
+}
+
+TEST_CASE("basic_string_member_data basic_string_member_c_str") {
+
+    const char *s1 = "HxSTL";
+    HxSTL::basic_string<char> s2(s1);
+
+    REQUIRE(s2.data() == s2.c_str());
+    for (int i = 0; i != 5; ++i) {
+        REQUIRE(s1[i] == s2.data()[i]);
+        REQUIRE(s1[i] == s2.c_str()[i]);
     }
 
-    SECTION("value") {
-        HxSTL::basic_string<char> s1("HxSTL");
+}
 
-        REQUIRE(s1[0] == 'H');
-        REQUIRE(s1[1] == 'x');
-        REQUIRE(s1[2] == 'S');
-        REQUIRE(s1[3] == 'T');
-        REQUIRE(s1[4] == 'L');
+TEST_CASE("basic_string_member_begin basic_string_member_end") {
 
-        s1[5];
-        s1[6];
+    const char *s1 = "HxSTL";
+    HxSTL::basic_string<char> s2(s1);
+
+    REQUIRE(*s2.begin() == 'H');
+    REQUIRE(*s2.cbegin() == 'H');
+    REQUIRE(*(s2.end() - 1) == 'L');
+    REQUIRE(*(s2.cend() - 1) == 'L');
+
+}
+
+#include <cstdio>
+
+TEST_CASE("basic_string_member_empty") {
+
+    HxSTL::basic_string<char> s1(10, 'a');
+    HxSTL::basic_string<char> s2;
+
+    REQUIRE(!s1.empty());
+    REQUIRE(s2.empty());
+
+}
+
+TEST_CASE("basic_string_member_size basic_string_member_length") {
+
+    HxSTL::basic_string<char> s1(10, 'a');
+    HxSTL::basic_string<char> s2;
+
+    REQUIRE(s1.size() == 10);
+    REQUIRE(s1.length() == 10);
+    REQUIRE(s2.size() == 0);
+    REQUIRE(s2.length() == 0);
+
+}
+
+TEST_CASE("basic_string_member_reserve") {
+
+    SECTION("new_cap > capacity") {
+
+        HxSTL::basic_string<char> s1(10, 'x');
+
+        s1.reserve(20);
+
+        REQUIRE(s1.capacity() == 30);
+
+        s1.reserve(100);
+
+        REQUIRE(s1.capacity() == 100);
+
     }
+
+    SECTION("new_cap <= size") {
+
+        HxSTL::basic_string<char> s1(10, 'x');
+        HxSTL::basic_string<char> s2(20, 'x');
+
+        s1.reserve(5);
+        s2.reserve(50);
+        s2.reserve(10);
+
+        REQUIRE(s1.capacity() == 15);
+        REQUIRE(s2.capacity() == 20);
+
+    }
+
+    SECTION("size < new_cap <= capacity") {
+
+        HxSTL::basic_string<char> s1(10, 'x');
+
+        s1.resize(12);
+
+        REQUIRE(s1.capacity() == 15);
+
+        s1.reserve(30);
+        s1.reserve(20);
+
+        REQUIRE(s1.capacity() == 20);
+        
+    }
+
+}
+
+TEST_CASE("basic_string_member_capacity") {
+
+    HxSTL::basic_string<char> s1(20, 'a');
+    HxSTL::basic_string<char> s2(10, 'a');
+    HxSTL::basic_string<char> s3;
+
+    REQUIRE(s1.capacity() == 20);
+    REQUIRE(s2.capacity() == 15);
+    REQUIRE(s3.capacity() == 15);
+
+}
+
+TEST_CASE("basic_string_member_shrink_to_fit") {
+
+    HxSTL::basic_string<char> s1(10, 'a');
+    HxSTL::basic_string<char> s2(20, 'a');
+
+    s2.append("aaaaa");
+
+    REQUIRE(s1.size() == 10);
+    REQUIRE(s1.capacity() == 15);
+    REQUIRE(s2.size() == 25);
+    REQUIRE(s2.capacity() == 40);
+
+    s1.shrink_to_fit();
+    s2.shrink_to_fit();
+
+    REQUIRE(s1.size() == 10);
+    REQUIRE(s1.capacity() == 15);
+    REQUIRE(s2.size() == 25);
+    REQUIRE(s2.capacity() == 25);
+
+}
+
+TEST_CASE("basic_string_member_clear") {
+
+    HxSTL::basic_string<char> s1(20, 'a');
+
+    s1.clear();
+
+    REQUIRE(s1.size() == 0);
+    REQUIRE(s1.capacity() == 20);
 
 }
 

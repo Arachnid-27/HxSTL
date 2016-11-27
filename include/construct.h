@@ -10,7 +10,7 @@
 namespace HxSTL {
 
     template <class U, class... Args>
-    void construct(U* p, Args&&... args) {
+    inline void construct(U* p, Args&&... args) {
         new(p) U(HxSTL::forward<Args>(args)...);
     }
 

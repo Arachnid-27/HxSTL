@@ -3,14 +3,29 @@
 
 
 #include <cstddef>
-#include "alloc.h"
 #include "construct.h"
+#include "stdexcept.h"
+
+
+#ifdef _USE_POOL_ALLOC
+#include "pool_allocator.h"
+#else
+#include "new_allocator.h"
+#endif
 
 
 namespace HxSTL {
 
+#ifdef _USE_POOL_ALLOC
+template <class T>
+using base_allocator = HxSTL::pool_allocator<T>;
+#else
+template <class T>
+using base_allocator = HxSTL::new_allocator<T>;
+#endif
+
     template <class T>
-    class allocator {
+    class allocator:public base_allocator<T> {
     public:
         typedef T           value_type;
         typedef T*          pointer;
@@ -25,28 +40,12 @@ namespace HxSTL {
             typedef allocator<U> other;
         };
     public:
-        allocator() = default;
+        allocator() {} 
 
-        allocator(const allocator&) {}
-
-        template <class U>
-        allocator(const allocator<U>&) {}
-
-        pointer address(reference x) const { return static_cast<pointer>(&x); }
-
-        const_pointer address(const_reference x) const { return static_cast<const_pointer>(&x); }
-
-        pointer allocate(size_type n) { return static_cast<pointer>(alloc::allocate(n * sizeof(T))); }
-
-        void deallocate(pointer p, size_type n) { return alloc::deallocate(p, n * sizeof(T)); }
-
-        size_type max_size() const { return size_type(-1) / sizeof(T); }
-
-        template <class U, class... Args>
-        void construct(U* p, Args&&... args) { HxSTL::construct(p, args...); }
+        allocator(const allocator& alloc): base_allocator<T>(alloc) {}
 
         template <class U>
-        void destroy(U* p) { HxSTL::destroy(p); }
+        allocator(const allocator<U>& alloc): base_allocator<T>(alloc) {}
     };
 
     struct allocator_arg_t {};

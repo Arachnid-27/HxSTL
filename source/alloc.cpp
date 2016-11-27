@@ -50,9 +50,8 @@ namespace HxSTL {
         int nobjs = 20;
         char *chunk = chunk_alloc(n, nobjs);
 
-        obj *current_obj;
-
         if (nobjs != 1) {
+            obj *current_obj;
             free_list[FREELIST_INDEX(n)] = current_obj = (obj*) (chunk + n);
             for (int i = 2; i != nobjs; ++i) {
                 current_obj -> free_list_link = (obj*) ((char*) current_obj + n);
@@ -96,13 +95,13 @@ namespace HxSTL {
                 obj **my_free_list;
                 obj *p;
                 // 查找空闲链表中是否存在足够大的区块
-                for (int i = 0; i != __MAX_BYTES; i += __ALIGN) {
+                for (int i = size; i != __MAX_BYTES; i += __ALIGN) {
                     my_free_list = free_list + FREELIST_INDEX(i);
                     p = *my_free_list;
                     if (p != 0) {
                         // 释放区块
                         *my_free_list = p -> free_list_link;
-                        start_free = (char*) p;
+                        start_free = reinterpret_cast<char*>(p);
                         end_free = start_free + i;
                         return chunk_alloc(size, nobjs);
                     }
