@@ -1,7 +1,6 @@
+#define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 #include "type_traits.h"
-
-
 
 TEST_CASE("type_traits_is_integeral") {
 

@@ -1,8 +1,9 @@
 CC=g++
 HDR=../include
-CPPFLAGS=-std=c++11 -g -I $(HDR)
+CPPFLAGS=-std=c++11 -D_USE_POOL_ALLOC -g -I $(HDR)
 
 
+LDLIBS=$(wildcard ../source/*.o)
 SRC=$(wildcard *.cpp)
 EXE=$(patsubst %.cpp,%,$(SRC))
 
@@ -16,6 +17,6 @@ clean:
 
 
 echo:
+	@echo LDLIBS=$(LDLIBS)
 	@echo SRC=$(SRC)  
-	@echo EXE=$(EXE)  
 	@echo CPPFLAGS=$(CPPFLAGS) 

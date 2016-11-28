@@ -1,6 +1,6 @@
+#define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 #include "basic_string.h"
-#include <iostream>
 
 TEST_CASE("basic_string_default_constructor") {
 
@@ -383,8 +383,6 @@ TEST_CASE("basic_string_member_begin basic_string_member_end") {
     REQUIRE(*(s2.cend() - 1) == 'L');
 
 }
-
-#include <cstdio>
 
 TEST_CASE("basic_string_member_empty") {
 

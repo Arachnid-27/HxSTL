@@ -2,4 +2,5 @@
 catch.hpp
 
 # Executable
-*.out
+test_case_*
+!test_case_*.cpp
