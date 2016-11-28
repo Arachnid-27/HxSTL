@@ -8,3 +8,8 @@ OBJ=$(patsubst %.cpp,%.o,$(SRC))
 
 
 all: $(OBJ)
+
+
+.PHONY: clean
+clean:
+	rm -f $(OBJ)

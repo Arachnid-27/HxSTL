@@ -18,14 +18,14 @@ namespace HxSTL {
 
 #ifdef _USE_POOL_ALLOC
 template <class T>
-using base_allocator = HxSTL::pool_allocator<T>;
+using __base_allocator = HxSTL::pool_allocator<T>;
 #else
 template <class T>
-using base_allocator = HxSTL::new_allocator<T>;
+using __base_allocator = HxSTL::new_allocator<T>;
 #endif
 
     template <class T>
-    class allocator:public base_allocator<T> {
+    class allocator:public __base_allocator<T> {
     public:
         typedef T           value_type;
         typedef T*          pointer;
@@ -42,10 +42,10 @@ using base_allocator = HxSTL::new_allocator<T>;
     public:
         allocator() {} 
 
-        allocator(const allocator& alloc): base_allocator<T>(alloc) {}
+        allocator(const allocator& alloc): __base_allocator<T>(alloc) {}
 
         template <class U>
-        allocator(const allocator<U>& alloc): base_allocator<T>(alloc) {}
+        allocator(const allocator<U>& alloc): __base_allocator<T>(alloc) {}
     };
 
     struct allocator_arg_t {};

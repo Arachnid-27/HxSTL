@@ -409,7 +409,6 @@ TEST_CASE("basic_string_member_size basic_string_member_length") {
 TEST_CASE("basic_string_member_reserve") {
 
     SECTION("new_cap > capacity") {
-
         HxSTL::basic_string<char> s1(10, 'x');
 
         s1.reserve(20);
@@ -419,11 +418,9 @@ TEST_CASE("basic_string_member_reserve") {
         s1.reserve(100);
 
         REQUIRE(s1.capacity() == 100);
-
     }
 
     SECTION("new_cap <= size") {
-
         HxSTL::basic_string<char> s1(10, 'x');
         HxSTL::basic_string<char> s2(20, 'x');
 
@@ -433,11 +430,9 @@ TEST_CASE("basic_string_member_reserve") {
 
         REQUIRE(s1.capacity() == 15);
         REQUIRE(s2.capacity() == 20);
-
     }
 
     SECTION("size < new_cap <= capacity") {
-
         HxSTL::basic_string<char> s1(10, 'x');
 
         s1.resize(12);
@@ -448,7 +443,6 @@ TEST_CASE("basic_string_member_reserve") {
         s1.reserve(20);
 
         REQUIRE(s1.capacity() == 20);
-        
     }
 
 }
@@ -495,6 +489,171 @@ TEST_CASE("basic_string_member_clear") {
 
     REQUIRE(s1.size() == 0);
     REQUIRE(s1.capacity() == 20);
+
+}
+
+TEST_CASE("basic_string_member_insert_1") {
+
+    SECTION("count > capacity - size") {
+        HxSTL::basic_string<char> s1(10, 'a');
+
+        s1.insert(5, 10, 'b');
+
+        REQUIRE(s1.size() == 20);
+        REQUIRE(s1.capacity() == 30);
+        REQUIRE(s1 == HxSTL::basic_string<char>("aaaaabbbbbbbbbbaaaaa"));
+    }
+
+    SECTION("element_after < count <= capacity - size") {
+        HxSTL::basic_string<char> s1(5, 'a');
+
+        s1.insert(3, 5, 'b');
+
+        REQUIRE(s1.size() == 10);
+        REQUIRE(s1.capacity() == 15);
+        REQUIRE(s1 == HxSTL::basic_string<char>("aaabbbbbaa"));
+    }
+
+    SECTION("count <= element_after <= capacity - size") {
+        HxSTL::basic_string<char> s1(10, 'a');
+
+        s1.insert(5, 5, 'b');
+
+        REQUIRE(s1.size() == 15);
+        REQUIRE(s1.capacity() == 15);
+        REQUIRE(s1 == HxSTL::basic_string<char>("aaaaabbbbbaaaaa"));
+    }
+
+}
+
+TEST_CASE("basic_string_member_insert_2") {
+
+    // -> basic_string_member_insert_8
+
+    HxSTL::basic_string<char> s1(10, 'a');
+
+    s1.insert(2, "bbbbb");
+
+    REQUIRE(s1.size() == 15);
+    REQUIRE(s1.capacity() == 15);
+    REQUIRE(s1 == HxSTL::basic_string<char>("aabbbbbaaaaaaaa"));
+
+}
+
+TEST_CASE("basic_string_member_insert_3") {
+
+    // -> basic_string_member_insert_8
+
+    HxSTL::basic_string<char> s1(10, 'a');
+
+    s1.insert(2, "bbbbb", 2);
+
+    REQUIRE(s1.size() == 12);
+    REQUIRE(s1.capacity() == 15);
+    REQUIRE(s1 == HxSTL::basic_string<char>("aabbaaaaaaaa"));
+
+}
+
+TEST_CASE("basic_string_member_insert_4") {
+
+    // -> basic_string_member_insert_8
+
+    HxSTL::basic_string<char> s1(5, 'b');
+    HxSTL::basic_string<char> s2(10, 'a');
+
+    s2.insert(8, s1);
+
+    REQUIRE(s2.size() == 15);
+    REQUIRE(s2.capacity() == 15);
+    REQUIRE(s2 == HxSTL::basic_string<char>("aaaaaaaabbbbbaa"));
+
+}
+
+TEST_CASE("basic_string_member_insert_5") {
+
+    // -> basic_string_member_insert_8
+
+    SECTION("count == npos") {
+        HxSTL::basic_string<char> s1(5, 'b');
+        HxSTL::basic_string<char> s2(10, 'a');
+
+        s2.insert(3, s1, 2);
+
+        REQUIRE(s2.size() == 13);
+        REQUIRE(s2.capacity() == 15);
+        REQUIRE(s2 == HxSTL::basic_string<char>("aaabbbaaaaaaa"));
+    }
+
+    SECTION("count != npos") {
+        HxSTL::basic_string<char> s1(5, 'b');
+        HxSTL::basic_string<char> s2(10, 'a');
+
+        s2.insert(3, s1, 2, 2);
+
+        REQUIRE(s2.size() == 12);
+        REQUIRE(s2.capacity() == 15);
+        REQUIRE(s2 == HxSTL::basic_string<char>("aaabbaaaaaaa"));
+    }
+
+}
+
+TEST_CASE("basic_string_member_insert_6") {
+
+    // -> basic_string_member_insert_1
+
+    HxSTL::basic_string<char> s1(20, 'a');
+
+    REQUIRE(*(s1.insert(s1.begin() + 5, 'b')) == 'b');
+    REQUIRE(s1.size() == 21);
+    REQUIRE(s1.capacity() == 40);
+    REQUIRE(s1 == HxSTL::basic_string<char>("aaaaabaaaaaaaaaaaaaaa"));
+
+}
+
+TEST_CASE("basic_string_member_insert_7") {
+
+    // -> basic_string_member_insert_1
+
+    HxSTL::basic_string<char> s1(10, 'a');
+
+    REQUIRE(*(s1.insert(s1.begin() + 5, 5, 'b')) == 'b');
+    REQUIRE(s1.size() == 15);
+    REQUIRE(s1.capacity() == 15);
+    REQUIRE(s1 == HxSTL::basic_string<char>("aaaaabbbbbaaaaa"));
+
+}
+
+TEST_CASE("basic_string_member_insert_8") {
+
+    SECTION("count > capacity - size") {
+        const char *s1 = "bbbbbbbbbb";
+        HxSTL::basic_string<char> s2(10, 'a');
+
+        REQUIRE(*(s2.insert(s2.begin() + 5, s1, s1 + 10)) == 'b');
+        REQUIRE(s2.size() == 20);
+        REQUIRE(s2.capacity() == 30);
+        REQUIRE(s2 == HxSTL::basic_string<char>("aaaaabbbbbbbbbbaaaaa"));
+    }
+
+    SECTION("element_after < count <= capacity - size") {
+        HxSTL::basic_string<char> s1(5, 'b');
+        HxSTL::basic_string<char> s2(5, 'a');
+
+        REQUIRE(*(s2.insert(s2.begin() + 3, s1.begin(), s1.end())) == 'b');
+        REQUIRE(s2.size() == 10);
+        REQUIRE(s2.capacity() == 15);
+        REQUIRE(s2 == HxSTL::basic_string<char>("aaabbbbbaa"));
+    }
+
+    SECTION("count <= element_after <= capacity - size") {
+        const char *s1 = "bbbbbbbbbb";
+        HxSTL::basic_string<char> s2(10, 'a');
+
+        REQUIRE(*(s2.insert(s2.begin() + 5, s1, s1 + 5)));
+        REQUIRE(s2.size() == 15);
+        REQUIRE(s2.capacity() == 15);
+        REQUIRE(s2 == HxSTL::basic_string<char>("aaaaabbbbbaaaaa"));
+    }
 
 }
 
