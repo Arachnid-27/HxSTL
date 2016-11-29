@@ -1,6 +1,6 @@
 CC=g++
 HDR=../include
-CPPFLAGS=-std=c++11 -g -I $(HDR)
+CPPFLAGS=-std=c++11 -g -isystem $(HDR)
 
 
 SRC=$(wildcard *.cpp)

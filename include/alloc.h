@@ -2,7 +2,7 @@
 #define _ALLOC_H_
 
 
-#include <cstdlib>
+#include <stdlib.h>
 
 
 namespace HxSTL {

@@ -295,9 +295,9 @@ namespace HxSTL {
             return erase_aux(REMOVE_CONST(first), REMOVE_CONST(last));
         }
 
-        void push_back(CharT ch) { append(ch); }
+        void push_back(CharT ch) { append(1, ch); }
 
-        void pop_back() { erase(_finish); }
+        void pop_back() { erase(size() - 1, 1); }
 
         basic_string& append(size_type count, CharT ch) {
             append_aux(count, ch, HxSTL::true_type());
@@ -310,9 +310,9 @@ namespace HxSTL {
         }
 
         basic_string& append(const basic_string& str, size_type pos, size_type count = npos) {
-            if (count == pos) count = str.size() - pos;
+            if (count == npos) count = str.size() - pos;
             const_iterator first = str.cbegin() + pos;
-            append_aux(first, first + index, HxSTL::false_type());
+            append_aux(first, first + count, HxSTL::false_type());
             return *this;
         }
 

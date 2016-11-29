@@ -657,6 +657,258 @@ TEST_CASE("basic_string_member_insert_8") {
 
 }
 
+TEST_CASE("basic_string_member_erase_1") {
+
+    SECTION("count == npos") {
+        HxSTL::basic_string<char> s1(10, 'a');
+        HxSTL::basic_string<char> s2(10, 'a');
+
+        s1.erase();
+        s2.erase(5);
+
+        REQUIRE(s1.size() == 0);
+        REQUIRE(s1.capacity() == 15);
+        REQUIRE(s2.size() == 5);
+        REQUIRE(s2.capacity() == 15);
+    }
+
+    SECTION("count != npos") {
+        HxSTL::basic_string<char> s1(20, 'a');
+
+        s1.erase(1, 5);
+
+        REQUIRE(s1.size() == 15);
+        REQUIRE(s1.capacity() == 20);
+        REQUIRE(s1 == HxSTL::basic_string<char>(15, 'a'));
+    }
+
+}
+
+TEST_CASE("basic_string_member_erase_2") {
+
+    HxSTL::basic_string<char> s1("Hx-STL");
+
+    REQUIRE(*(s1.erase(s1.begin() + 2)) == 'S');
+    REQUIRE(s1.size() == 5);
+    REQUIRE(s1 == HxSTL::basic_string<char>("HxSTL"));
+    
+}
+
+TEST_CASE("basic_string_member_erase_3") {
+
+    HxSTL::basic_string<char> s1("Hx-----STL");
+
+    REQUIRE(*(s1.erase(s1.begin() + 2, s1.begin() + 7)) == 'S');
+    REQUIRE(s1.size() == 5);
+    REQUIRE(s1 == HxSTL::basic_string<char>("HxSTL"));
+
+}
+
+TEST_CASE("basic_string_member_push_back") {
+
+    HxSTL::basic_string<char> s1;
+    HxSTL::basic_string<char> s2(20, 'a');
+
+    s1.push_back('H');
+    s1.push_back('x');
+    s1.push_back('S');
+    s1.push_back('T');
+    s1.push_back('L');
+    s2.push_back('a');
+
+    REQUIRE(s1.size() == 5);
+    REQUIRE(s1.capacity() == 15);
+    REQUIRE(s1 == HxSTL::basic_string<char>("HxSTL"));
+    REQUIRE(s2.size() == 21);
+    REQUIRE(s2.capacity() == 40);
+    REQUIRE(s2 == HxSTL::basic_string<char>(21, 'a'));
+
+}
+
+TEST_CASE("basic_string_member_pop_back") {
+
+    HxSTL::basic_string<char> s1(20, 'a');
+
+    s1.pop_back();
+    s1.pop_back();
+    s1.pop_back();
+    s1.pop_back();
+    s1.pop_back();
+
+    REQUIRE(s1.size() == 15);
+    REQUIRE(s1.capacity() == 20);
+    REQUIRE(s1 == HxSTL::basic_string<char>(15, 'a'));
+    
+}
+
+TEST_CASE("basic_string_member_append_1") {
+
+    SECTION("count > capacity - size") {
+        HxSTL::basic_string<char> s1(10, 'a');
+
+        s1.append(10, 'b');
+
+        REQUIRE(s1.size() == 20);
+        REQUIRE(s1.capacity() == 30);
+        REQUIRE(s1 == HxSTL::basic_string<char>("aaaaaaaaaabbbbbbbbbb"));
+    }
+
+    SECTION("count <= capacity - size") {
+        HxSTL::basic_string<char> s1(10, 'a');
+
+        s1.append(5, 'b');
+
+        REQUIRE(s1.size() == 15);
+        REQUIRE(s1.capacity() == 15);
+        REQUIRE(s1 == HxSTL::basic_string<char>("aaaaaaaaaabbbbb"));
+    }
+
+}
+
+TEST_CASE("basic_string_member_append_2") {
+
+    // -> basic_string_member_append_6
+
+    HxSTL::basic_string<char> s1(5, 'b');
+    HxSTL::basic_string<char> s2(10, 'a');
+
+    s2.append(s1);
+
+    REQUIRE(s2.size() == 15);
+    REQUIRE(s2.capacity() == 15);
+    REQUIRE(s2 == HxSTL::basic_string<char>("aaaaaaaaaabbbbb"));
+
+}
+
+TEST_CASE("basic_string_member_append_3") {
+
+    // -> basic_string_member_append_6
+
+    SECTION("count == npos") {
+        HxSTL::basic_string<char> s1(5, 'b');
+        HxSTL::basic_string<char> s2(10, 'a');
+
+        s2.append(s1, 3);
+
+        REQUIRE(s2.size() == 12);
+        REQUIRE(s2.capacity() == 15);
+        REQUIRE(s2 == HxSTL::basic_string<char>("aaaaaaaaaabb"));
+    }
+
+    SECTION("count != npos") {
+        HxSTL::basic_string<char> s1(5, 'b');
+        HxSTL::basic_string<char> s2(10, 'a');
+
+        s2.append(s1, 1, 2);
+
+        REQUIRE(s2.size() == 12);
+        REQUIRE(s2.capacity() == 15);
+        REQUIRE(s2 == HxSTL::basic_string<char>("aaaaaaaaaabb"));
+    }
+
+}
+
+TEST_CASE("basic_string_member_append_4") {
+
+    // -> basic_string_member_append_6
+
+    const char *s1 = "bbbbbbbb";
+    HxSTL::basic_string<char> s2(10, 'a');
+
+    s2.append(s1);
+
+    REQUIRE(s2.size() == 18);
+    REQUIRE(s2.capacity() == 30);
+    REQUIRE(s2 == HxSTL::basic_string<char>("aaaaaaaaaabbbbbbbb"));
+
+}
+
+TEST_CASE("basic_string_member_append_5") {
+
+    // -> basic_string_member_append_6
+
+    const char *s1 = "bbbbbbbb";
+    HxSTL::basic_string<char> s2(10, 'a');
+
+    s2.append(s1, 5);
+
+    REQUIRE(s2.size() == 15);
+    REQUIRE(s2.capacity() == 15);
+    REQUIRE(s2 == HxSTL::basic_string<char>("aaaaaaaaaabbbbb"));
+
+}
+
+TEST_CASE("basic_string_member_append_6") {
+
+    SECTION("count > capacity - size") {
+        HxSTL::basic_string<char> s1(10, 'b');
+        HxSTL::basic_string<char> s2(10, 'a');
+
+        s2.append(s1.begin() + 2, s1.begin() + 7);
+
+        REQUIRE(s2.size() == 15);
+        REQUIRE(s2.capacity() == 15);
+        REQUIRE(s2 == HxSTL::basic_string<char>("aaaaaaaaaabbbbb"));
+    }
+
+    SECTION("count <= capacity - size") {
+        const char *s1 = "bbbbbbbbbb";
+        HxSTL::basic_string<char> s2(10, 'a');
+
+        s2.append(s1, s1 + 8);
+
+        REQUIRE(s2.size() == 18);
+        REQUIRE(s2.capacity() == 30);
+        REQUIRE(s2 == HxSTL::basic_string<char>("aaaaaaaaaabbbbbbbb"));
+    }
+
+}
+
+TEST_CASE("basic_string_member_operator+=_1") {
+
+    // -> basic_string_member_append_2
+
+    HxSTL::basic_string<char> s1(10, 'b');
+    HxSTL::basic_string<char> s2(10, 'a');
+
+    s2 += s1;
+
+    REQUIRE(s2.size() == 20);
+    REQUIRE(s2.capacity() == 30);
+    REQUIRE(s2 == HxSTL::basic_string<char>("aaaaaaaaaabbbbbbbbbb"));
+
+}
+
+TEST_CASE("basic_string_member_operator+=_2") {
+
+    // -> basic_string_member_append_1
+
+    HxSTL::basic_string<char> s1(10, 'a');
+
+    s1 += 'b';
+    s1 += 'b';
+
+    REQUIRE(s1.size() == 12);
+    REQUIRE(s1.capacity() == 15);
+    REQUIRE(s1 == HxSTL::basic_string<char>("aaaaaaaaaabb"));
+
+}
+
+TEST_CASE("basic_string_member_operator+=_3") {
+
+    // -> basic_string_member_append_4
+
+    const char *s1 = "bbbbb";
+    HxSTL::basic_string<char> s2(10, 'a');
+
+    s2 += s1;
+
+    REQUIRE(s2.size() == 15);
+    REQUIRE(s2.capacity() == 15);
+    REQUIRE(s2 == HxSTL::basic_string<char>("aaaaaaaaaabbbbb"));
+
+}
+
 TEST_CASE("basic_string_member_compare_1") {
 
     HxSTL::basic_string<char> s1(10, 'b');
@@ -672,4 +924,7 @@ TEST_CASE("basic_string_member_compare_1") {
     REQUIRE(s1.compare(s5) == 1);
     REQUIRE(s1.compare(s6) == -1);
 
+}
+
+TEST_CASE("basic_string_member_compare_2") {
 }

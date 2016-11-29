@@ -2,7 +2,7 @@
 #define _TYPE_TRAITS_H_
 
 
-#include <cstddef>
+#include <stddef.h>
 
 
 namespace HxSTL {

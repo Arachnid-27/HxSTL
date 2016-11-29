@@ -2,8 +2,8 @@
 #define _ALGORITHM_H_
 
 
-#include <cstring>
-#include <cstdlib>
+#include <string.h>
+#include <stdlib.h>
 #include "utility.h"
 #include "type_traits.h"
 #include "iterator.h"
