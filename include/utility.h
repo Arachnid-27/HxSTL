@@ -4,6 +4,7 @@
 
 #include "pair.h"
 #include "type_traits.h"
+#include <initializer_list>
 
 
 namespace HxSTL {
@@ -35,6 +36,8 @@ namespace HxSTL {
         return static_cast<typename remove_reference<T>::type&&>(t);
     }
 
+    template <class T>
+    using initializer_list = std::initializer_list<T>;
 
 }
 
