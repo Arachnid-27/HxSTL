@@ -97,30 +97,30 @@ namespace HxSTL {
 
     // find_end
 
-    template <class ForwardIterator1, class ForwardIterator2>
-    ForwardIterator1 find_end(ForwardIterator1 first1, ForwardIterator1 last1, 
-            ForwardIterator2 first2, ForwardIterator2 last2) {
+    template <class ForwardIt1, class ForwardIt2>
+    ForwardIt1 find_end(ForwardIt1 first1, ForwardIt1 last1, 
+            ForwardIt2 first2, ForwardIt2 last2) {
         return __find_end(first1, last1, first2, last2, 
-                typename iterator_traits<ForwardIterator1>::iterator_category(), 
-                typename iterator_traits<ForwardIterator2>::iterator_category());
+                typename iterator_traits<ForwardIt1>::iterator_category(), 
+                typename iterator_traits<ForwardIt2>::iterator_category());
     }
 
-    template <class ForwardIterator1, class ForwardIterator2, class BinaryPredicate>
-    ForwardIterator1 find_end(ForwardIterator1 first1, ForwardIterator1 last1, 
-            ForwardIterator2 first2, ForwardIterator2 last2, BinaryPredicate pred) {
+    template <class ForwardIt1, class ForwardIt2, class BinaryPredicate>
+    ForwardIt1 find_end(ForwardIt1 first1, ForwardIt1 last1, 
+            ForwardIt2 first2, ForwardIt2 last2, BinaryPredicate pred) {
         return __find_end(first1, last1, first2, last2, pred,
-                typename iterator_traits<ForwardIterator1>::iterator_category(), 
-                typename iterator_traits<ForwardIterator2>::iterator_category());
+                typename iterator_traits<ForwardIt1>::iterator_category(), 
+                typename iterator_traits<ForwardIt2>::iterator_category());
     }
 
-    template <class ForwardIterator1, class ForwardIterator2>
-    ForwardIterator1 __find_end(ForwardIterator1 first1, ForwardIterator1 last1, 
-            ForwardIterator2 first2, ForwardIterator2 last2, 
+    template <class ForwardIt1, class ForwardIt2>
+    ForwardIt1 __find_end(ForwardIt1 first1, ForwardIt1 last1, 
+            ForwardIt2 first2, ForwardIt2 last2, 
             forward_iterator_tag, forward_iterator_tag) {
-        ForwardIterator1 first = search(first1, last1, first2, last2);
+        ForwardIt1 first = search(first1, last1, first2, last2);
         if (first != last1) {
             while (true) {
-                ForwardIterator1 tmp = search(first, last1, first2, last2);
+                ForwardIt1 tmp = search(first, last1, first2, last2);
                 if (tmp != last1) {
                     first = tmp;
                 } else {
@@ -131,14 +131,14 @@ namespace HxSTL {
         return first;
     }
 
-    template <class ForwardIterator1, class ForwardIterator2, class BinaryPredicate>
-    ForwardIterator1 __find_end(ForwardIterator1 first1, ForwardIterator1 last1, 
-            ForwardIterator2 first2, ForwardIterator2 last2, BinaryPredicate pred, 
+    template <class ForwardIt1, class ForwardIt2, class BinaryPredicate>
+    ForwardIt1 __find_end(ForwardIt1 first1, ForwardIt1 last1, 
+            ForwardIt2 first2, ForwardIt2 last2, BinaryPredicate pred, 
             forward_iterator_tag, forward_iterator_tag) {
-        ForwardIterator1 first = search(first1, last1, first2, last2);
+        ForwardIt1 first = search(first1, last1, first2, last2);
         if (first != last1) {
             while (true) {
-                ForwardIterator1 tmp = search(first, last1, first2, last2, pred);
+                ForwardIt1 tmp = search(first, last1, first2, last2, pred);
                 if (tmp != last1) {
                     first = tmp;
                 } else {
@@ -197,11 +197,11 @@ namespace HxSTL {
 
     // find_first_of
 
-    template <class InputIt, class ForwardIterator>
+    template <class InputIt, class ForwardIt>
     InputIt find_first_of(InputIt first1, InputIt last1, 
-            ForwardIterator first2, ForwardIterator last2) {
+            ForwardIt first2, ForwardIt last2) {
         while (first1 != last1) {
-            for (ForwardIterator it = first2; it != last2; ++it) {
+            for (ForwardIt it = first2; it != last2; ++it) {
                 if (*it == *first1) {
                     return first1;
                 }
@@ -211,11 +211,11 @@ namespace HxSTL {
         return last1;
     }
 
-    template <class InputIt, class ForwardIterator, class BinaryPredicate>
+    template <class InputIt, class ForwardIt, class BinaryPredicate>
     InputIt find_first_of(InputIt first1, InputIt last1, 
-            ForwardIterator first2, ForwardIterator last2, BinaryPredicate pred) {
+            ForwardIt first2, ForwardIt last2, BinaryPredicate pred) {
         while (first1 != last1) {
-            for (ForwardIterator it = first2; it != last2; ++it) {
+            for (ForwardIt it = first2; it != last2; ++it) {
                 if (pred(*it, *first1)) {
                     return first1;
                 }
@@ -227,10 +227,10 @@ namespace HxSTL {
 
     // adjacent_find
 
-    template <class ForwardIterator>
-    ForwardIterator adjacent_find(ForwardIterator first, ForwardIterator last) {
+    template <class ForwardIt>
+    ForwardIt adjacent_find(ForwardIt first, ForwardIt last) {
         if (first != last) {
-            ForwardIterator next = first;
+            ForwardIt next = first;
             ++next;
             while (next != last && *first != *next) {
                 ++first;
@@ -240,10 +240,10 @@ namespace HxSTL {
         return first;
     }
 
-    template <class ForwardIterator, class BinaryPredicate>
-    ForwardIterator adjacent_find(ForwardIterator first, ForwardIterator last, BinaryPredicate pred) {
+    template <class ForwardIt, class BinaryPredicate>
+    ForwardIt adjacent_find(ForwardIt first, ForwardIt last, BinaryPredicate pred) {
         if (first != last) {
-            ForwardIterator next = first;
+            ForwardIt next = first;
             ++next;
             while (next != last && !pred(*first, *next)) {
                 ++first;
@@ -337,25 +337,25 @@ namespace HxSTL {
 
     // is_permutation
 
-    template <class ForwardIterator1, class ForwardIterator2>
-    bool is_permutation(ForwardIterator1 first1, ForwardIterator1 last1, 
-            ForwardIterator2 first2);
+    template <class ForwardIt1, class ForwardIt2>
+    bool is_permutation(ForwardIt1 first1, ForwardIt1 last1, 
+            ForwardIt2 first2);
 
-    template <class ForwardIterator1, class ForwardIterator2, class BinaryPredicate>
-    bool is_permutation(ForwardIterator1 first1, ForwardIterator1 last1, 
-            ForwardIterator2 first2, BinaryPredicate pred);
+    template <class ForwardIt1, class ForwardIt2, class BinaryPredicate>
+    bool is_permutation(ForwardIt1 first1, ForwardIt1 last1, 
+            ForwardIt2 first2, BinaryPredicate pred);
 
     // search
  
-    template <class ForwardIterator1, class ForwardIterator2>
-    ForwardIterator1 search(ForwardIterator1 first1, ForwardIterator1 last1, 
-            ForwardIterator2 first2, ForwardIterator2 last2) {
+    template <class ForwardIt1, class ForwardIt2>
+    ForwardIt1 search(ForwardIt1 first1, ForwardIt1 last1, 
+            ForwardIt2 first2, ForwardIt2 last2) {
         if (first2 == last2) {
             return first1;
         }
 
-        ForwardIterator1 it1;
-        ForwardIterator2 it2;
+        ForwardIt1 it1;
+        ForwardIt2 it2;
         while (first1 != last1) {
             it1 = first1;
             it2 = first2;
@@ -374,15 +374,15 @@ namespace HxSTL {
         return last1;
     }
 
-    template <class ForwardIterator1, class ForwardIterator2, class BinaryPredicate>
-    ForwardIterator1 search(ForwardIterator1 first1, ForwardIterator1 last1, 
-            ForwardIterator2 first2, ForwardIterator2 last2, BinaryPredicate pred) {
+    template <class ForwardIt1, class ForwardIt2, class BinaryPredicate>
+    ForwardIt1 search(ForwardIt1 first1, ForwardIt1 last1, 
+            ForwardIt2 first2, ForwardIt2 last2, BinaryPredicate pred) {
         if (first2 == last2) {
             return first1;
         }
 
-        ForwardIterator1 it1;
-        ForwardIterator2 it2;
+        ForwardIt1 it1;
+        ForwardIt2 it2;
         while (first1 != last1) {
             it1 = first1;
             it2 = first2;
@@ -403,13 +403,13 @@ namespace HxSTL {
 
     // search_n
 
-    template <class ForwardIterator, class Size, class T>
-    ForwardIterator search_n(ForwardIterator first, ForwardIterator last, 
+    template <class ForwardIt, class Size, class T>
+    ForwardIt search_n(ForwardIt first, ForwardIt last, 
             Size count, const T& val) {
-        ForwardIterator limit = first;
+        ForwardIt limit = first;
         advance(limit, distance(first, last) - count);
         
-        ForwardIterator it;
+        ForwardIt it;
         Size n;
         while (first != limit) {
             it = first;
@@ -425,13 +425,13 @@ namespace HxSTL {
         return first;
     }
 
-    template <class ForwardIterator, class Size, class T, class BinaryPredicate>
-    ForwardIterator search_n(ForwardIterator first, ForwardIterator last, 
+    template <class ForwardIt, class Size, class T, class BinaryPredicate>
+    ForwardIt search_n(ForwardIt first, ForwardIt last, 
             Size count, const T& val, BinaryPredicate pred) {
-        ForwardIterator limit = first;
+        ForwardIt limit = first;
         advance(limit, distance(first, last) - count);
         
-        ForwardIterator it;
+        ForwardIt it;
         Size n;
         while (first != limit) {
             it = first;
@@ -673,8 +673,8 @@ namespace HxSTL {
 
     // swap_range
 
-    template <class ForwardIterator1, class ForwardIterator2>
-    ForwardIterator2 swap_ranges(ForwardIterator1 first1, ForwardIterator1 last1, ForwardIterator2 first2) {
+    template <class ForwardIt1, class ForwardIt2>
+    ForwardIt2 swap_ranges(ForwardIt1 first1, ForwardIt1 last1, ForwardIt2 first2) {
         while (first1 != last1) {
             swap(*first1, *first2);
             ++first1;
@@ -685,8 +685,8 @@ namespace HxSTL {
 
     // iter_swap
 
-    template <class ForwardIterator1, class ForwardIterator2>
-    void iter_swap(ForwardIterator1 a, ForwardIterator2 b) {
+    template <class ForwardIt1, class ForwardIt2>
+    void iter_swap(ForwardIt1 a, ForwardIt2 b) {
         swap(*a, *b);
     }
 
@@ -717,8 +717,8 @@ namespace HxSTL {
     
     // replace
 
-    template <class ForwardIterator, class T>
-    void replace(ForwardIterator first, ForwardIterator last, 
+    template <class ForwardIt, class T>
+    void replace(ForwardIt first, ForwardIt last, 
             const T& old_val, const T& new_val) {
         while (first != last) {
             if (*first == old_val) {
@@ -769,8 +769,8 @@ namespace HxSTL {
 
     // fill
 
-    template <class ForwardIterator, class T>
-    void fill(ForwardIterator first, ForwardIterator last, const T& val) {
+    template <class ForwardIt, class T>
+    void fill(ForwardIt first, ForwardIt last, const T& val) {
         while (first != last) {
             *first = val;
             ++first;
@@ -791,8 +791,8 @@ namespace HxSTL {
 
     // generate
 
-    template <class ForwardIterator, class Generator>
-    void generate(ForwardIterator first, ForwardIterator last, Generator gen) {
+    template <class ForwardIt, class Generator>
+    void generate(ForwardIt first, ForwardIt last, Generator gen) {
         while (first != last) {
             *first = gen();
             ++first;
@@ -813,9 +813,9 @@ namespace HxSTL {
     
     // remove
 
-    template <class ForwardIterator, class T>
-    ForwardIterator remove(ForwardIterator first, ForwardIterator last, const T& val) {
-        ForwardIterator result = first;
+    template <class ForwardIt, class T>
+    ForwardIt remove(ForwardIt first, ForwardIt last, const T& val) {
+        ForwardIt result = first;
         while (first != last) {
             if (*first != val) {
                 *result = *first;
@@ -828,9 +828,9 @@ namespace HxSTL {
 
     // remove_if
 
-    template <class ForwardIterator, class UnaryPredicate>
-    ForwardIterator remove_if(ForwardIterator first, ForwardIterator last, UnaryPredicate pred) {
-        ForwardIterator result = first;
+    template <class ForwardIt, class UnaryPredicate>
+    ForwardIt remove_if(ForwardIt first, ForwardIt last, UnaryPredicate pred) {
+        ForwardIt result = first;
         while (first != last) {
             if (!pred(*first)) {
                 *result = *first;
@@ -873,10 +873,10 @@ namespace HxSTL {
 
     // unique
 
-    template <class ForwardIterator>
-    ForwardIterator unique(ForwardIterator first, ForwardIterator last) {
+    template <class ForwardIt>
+    ForwardIt unique(ForwardIt first, ForwardIt last) {
         if (first != last) {
-            ForwardIterator result = first;
+            ForwardIt result = first;
             ++first;
             while (first != last) {
                 if (*first != *result) {
@@ -890,10 +890,10 @@ namespace HxSTL {
         return last;
     }
 
-    template <class ForwardIterator, class BinaryPredicate>
-    ForwardIterator unique(ForwardIterator first, ForwardIterator last, BinaryPredicate pred) {
+    template <class ForwardIt, class BinaryPredicate>
+    ForwardIt unique(ForwardIt first, ForwardIt last, BinaryPredicate pred) {
         if (first != last) {
-            ForwardIterator result = first;
+            ForwardIt result = first;
             ++first;
             while (first != last) {
                 if (!pred(*first, *result)) {
@@ -980,15 +980,15 @@ namespace HxSTL {
 
     // rotate**
 
-    template <class ForwardIterator>
-    void rotate(ForwardIterator first, ForwardIterator middle, ForwardIterator last) {
-        __rotate(first, middle, last, typename iterator_traits<ForwardIterator>::iterator_category());
+    template <class ForwardIt>
+    void rotate(ForwardIt first, ForwardIt middle, ForwardIt last) {
+        __rotate(first, middle, last, typename iterator_traits<ForwardIt>::iterator_category());
     }
 
-    template <class ForwardIterator>
-    void __rotate(ForwardIterator first, ForwardIterator middle, 
-            ForwardIterator last, forward_iterator_tag) {
-        ForwardIterator next = middle;
+    template <class ForwardIt>
+    void __rotate(ForwardIt first, ForwardIt middle, 
+            ForwardIt last, forward_iterator_tag) {
+        ForwardIt next = middle;
         while (first != last) {
             iter_swap(first, next);
             ++first;
@@ -1019,9 +1019,9 @@ namespace HxSTL {
 
     // rotate_copy
 
-    template <class ForwardIterator, class OutputIterator>
-    OutputIterator rotate_copy(ForwardIterator first, ForwardIterator middle, 
-            ForwardIterator last, OutputIterator result) {
+    template <class ForwardIt, class OutputIterator>
+    OutputIterator rotate_copy(ForwardIt first, ForwardIt middle, 
+            ForwardIt last, OutputIterator result) {
         result = copy(middle, last, result);
         return copy(first, middle, result);
     }
@@ -1068,13 +1068,13 @@ namespace HxSTL {
 
     // partitioned**
 
-    template <class ForwardIterator, class UnaryPredicate>
-    ForwardIterator partition(ForwardIterator first, ForwardIterator last, UnaryPredicate pred) {
-        return __partition(first, last, pred, typename iterator_traits<ForwardIterator>::iterator_category());
+    template <class ForwardIt, class UnaryPredicate>
+    ForwardIt partition(ForwardIt first, ForwardIt last, UnaryPredicate pred) {
+        return __partition(first, last, pred, typename iterator_traits<ForwardIt>::iterator_category());
     }
 
-    template <class ForwardIterator, class UnaryPredicate>
-    ForwardIterator __partition(ForwardIterator first, ForwardIterator last, 
+    template <class ForwardIt, class UnaryPredicate>
+    ForwardIt __partition(ForwardIt first, ForwardIt last, 
             UnaryPredicate pred, forward_iterator_tag) {
         while (pred(*first)) {
             ++first;
@@ -1082,7 +1082,7 @@ namespace HxSTL {
                 return last;
             }
         }
-        ForwardIterator next = first;
+        ForwardIt next = first;
         while (++next != last) {
             while (!pred(*next)) {
                 ++next;
@@ -1167,8 +1167,8 @@ namespace HxSTL {
 
     // partition_point
 
-    template <class ForwardIterator, class UnaryPredicate>
-    ForwardIterator partition_point(ForwardIterator first, ForwardIterator last, UnaryPredicate pred) {
+    template <class ForwardIt, class UnaryPredicate>
+    ForwardIt partition_point(ForwardIt first, ForwardIt last, UnaryPredicate pred) {
     }
 
     /**
@@ -1378,6 +1378,40 @@ namespace HxSTL {
     /*
      * Sorting
      */
+
+    template <class ForwardIt>
+    ForwardIt is_sorted_until(ForwardIt first, ForwardIt last) {
+        if (first != last) {
+            for (ForwardIt next = first; ++next != last; first = next) {
+                if (*next < *first) {
+                    return next;
+                }
+            }
+        }
+        return last;
+    }
+
+    template <class ForwardIt, class Compare>
+    ForwardIt is_sorted_until(ForwardIt first, ForwardIt last, Compare comp) {
+        if (first != last) {
+            for (ForwardIt next = first; ++next != last; first = next) {
+                if (comp(*next, *first)) {
+                    return next;
+                }
+            }
+        }
+        return last;
+    }
+
+    template <class ForwardIt>
+    bool is_sorted(ForwardIt first, ForwardIt last) {
+        return is_sorted_until(first, last) == last;
+    }
+
+    template <class ForwardIt, class Compare>
+    bool is_sorted(ForwardIt first, ForwardIt last, Compare comp) {
+        return is_sorted_until(first, last, comp) == last;
+    }
 
     const int  __introsort_threshold = 16;
 
@@ -1685,9 +1719,9 @@ namespace HxSTL {
 
     // min_element
 
-    template <class ForwardIterator>
-    ForwardIterator min_element(ForwardIterator first, ForwardIterator last) {
-        ForwardIterator result = first;
+    template <class ForwardIt>
+    ForwardIt min_element(ForwardIt first, ForwardIt last) {
+        ForwardIt result = first;
         while (first != last) {
             if (*first < *result) {
                 result = first;
@@ -1696,9 +1730,9 @@ namespace HxSTL {
         return result;
     }
 
-    template <class ForwardIterator, class Compare>
-    ForwardIterator min_element(ForwardIterator first, ForwardIterator last, Compare comp) {
-        ForwardIterator result = first;
+    template <class ForwardIt, class Compare>
+    ForwardIt min_element(ForwardIt first, ForwardIt last, Compare comp) {
+        ForwardIt result = first;
         while (first != last) {
             if (comp(*first, *result)) {
                 result = first;
@@ -1709,9 +1743,9 @@ namespace HxSTL {
 
     // max_element
 
-    template <class ForwardIterator>
-    ForwardIterator max_element(ForwardIterator first, ForwardIterator last) {
-        ForwardIterator result = first;
+    template <class ForwardIt>
+    ForwardIt max_element(ForwardIt first, ForwardIt last) {
+        ForwardIt result = first;
         while (first != last) {
             if (*result < *first) {
                 result = first;
@@ -1720,9 +1754,9 @@ namespace HxSTL {
         return result;
     }
 
-    template <class ForwardIterator, class Compare>
-    ForwardIterator max_element(ForwardIterator first, ForwardIterator last, Compare comp) {
-        ForwardIterator result = first;
+    template <class ForwardIt, class Compare>
+    ForwardIt max_element(ForwardIt first, ForwardIt last, Compare comp) {
+        ForwardIt result = first;
         while (first != last) {
             if (comp(*result, *first)) {
                 result = first;

@@ -233,7 +233,7 @@ namespace HxSTL {
         ~list() {
             if (_node) {
                 clear();
-                destroy_node(_node);
+                _alloc.deallocate(_node, 1);
             }
         }
 
@@ -332,7 +332,7 @@ namespace HxSTL {
         }
 
         iterator erase(const_iterator pos) {
-            if (pos != end()) {
+            if (pos != cend()) {
                 pos = erase_aux(pos);
             }
             return iterator(pos._node);
@@ -342,7 +342,7 @@ namespace HxSTL {
             if (first != last) {
                 first = erase_aux(first, last);
             }
-            return reinterpret_cast<iterator>(first);
+            return iterator(first._node);
         }
 
         void push_back(const T& value) { insert_aux(end(), value); }
@@ -352,12 +352,7 @@ namespace HxSTL {
         template <class... Args>
         void emplace_back(Args&&... args) { emplace_aux(end(), HxSTL::forward<Args>(args)...); }
 
-        void pop_back() {
-            iterator last = end();
-            if (last != begin()) {
-                erase_aux(--last);
-            }
-        }
+        void pop_back() { erase_aux(--end()); }
 
         void push_front(const T& value) { insert_aux(begin(), value); }
 
@@ -366,12 +361,7 @@ namespace HxSTL {
         template <class... Args>
         void emplace_front(Args&&... args) { emplace_aux(begin(), HxSTL::forward<Args>(args)...); }
 
-        void pop_front() {
-            iterator first = begin();
-            if (first != end()) {
-                erase_aux(first);
-            }
-        }
+        void pop_front() { erase_aux(begin()); }
 
         void resize(size_type count) {
             resize(count, T());
@@ -710,16 +700,17 @@ namespace HxSTL {
 
     template <class T, class Alloc>
     void list<T, Alloc>::reverse() {
-        iterator first = begin();
-        iterator last = end();
-        _node -> prev = first;
-        while (first != last) {
-            iterator it = first._node -> next;
-            first -> prev = it;
-            it -> next = first;
-            first = it;
+        link_type temp;
+
+        for (link_type node = _node -> next; node != _node; node = temp) {
+            temp = node -> next;
+            node -> next = node -> prev;
+            node -> prev = temp;
         }
-        _node -> next = first;
+
+        temp = _node -> next;
+        _node -> next = _node -> prev;
+        _node -> prev = temp;
     }
 
     template <class T, class Alloc>
