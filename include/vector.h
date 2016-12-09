@@ -114,9 +114,9 @@ namespace HxSTL {
             return operator[](n);
         }
 
-        reference operator[](size_type n) { return *(_start + n); }
+        reference operator[](size_type n) { return *(begin() + n); }
 
-        const_reference operator[](size_type n) const { return *(_start + n); }
+        const_reference operator[](size_type n) const { return *(begin() + n); }
 
         reference front() { return *begin(); }
 

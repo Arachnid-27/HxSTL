@@ -31,7 +31,7 @@ namespace HxSTL {
         typedef T&                                  reference;
         typedef size_t                              size_type;
         typedef ptrdiff_t                           difference_type;
-        typedef __list_node<value_type>*              link_type;
+        typedef __list_node<value_type>*            link_type;
     protected:
         link_type _node;
     public:
@@ -95,7 +95,7 @@ namespace HxSTL {
         typedef const T&                            reference;
         typedef size_t                              size_type;
         typedef ptrdiff_t                           difference_type;
-        typedef __list_node<value_type>*              link_type;
+        typedef __list_node<value_type>*            link_type;
     protected:
         link_type _node;
     public:
