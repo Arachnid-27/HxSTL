@@ -406,7 +406,7 @@ namespace HxSTL {
             iterator old_finish = _finish;
             if (count > element_after) {
                 // 插入点之后元素少于待插入元素
-                _finish = HxSTL::uninitialized_copy(pos, _finish, _finish + (count - element_after));
+                _finish = HxSTL::uninitialized_copy(pos, _finish, _finish + count - element_after);
                 copy_n(first, element_after, pos);
                 HxSTL::advance(first, element_after);
                 HxSTL::uninitialized_copy(first, last, old_finish);
