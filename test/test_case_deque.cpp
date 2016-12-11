@@ -180,5 +180,74 @@ TEST_CASE("deque_member_insert_1") {
 TEST_CASE("deque_member_insert_2") {
 }
 
-TEST_CASE('deque_member_insert_3') {
+TEST_CASE("deque_member_insert_3") {
+
+    SECTION("index < size / 2") {
+        HxSTL::deque<int> d1({ 4, 4, 4, 4, 4, 4, 4, 4 });
+
+        REQUIRE(*d1.insert(d1.begin(), 3, 3) == 3);
+        REQUIRE(*d1.insert(d1.begin() + 2, 3, 2) == 2);
+        REQUIRE(*d1.insert(d1.begin() + 5, 2, 1) == 1);
+        REQUIRE(d1 == HxSTL::deque<int>({ 3, 3, 2, 2, 2, 1, 1, 3, 4, 4, 4, 4, 4, 4, 4, 4 }));
+
+        HxSTL::deque<int> d2(127, 1);
+
+        REQUIRE(*d2.insert(d2.begin(), 10, 1) == 1);
+        REQUIRE(d2 == HxSTL::deque<int>(137, 1));
+    }
+
+    SECTION("index >= size / 2") {
+        HxSTL::deque<int> d1({ 4, 4, 4, 4, 4, 4, 4, 4 });
+
+        REQUIRE(*d1.insert(d1.end(), 3, 3) == 3);
+        REQUIRE(*d1.insert(d1.end() - 2, 3, 2) == 2);
+        REQUIRE(*d1.insert(d1.end() - 5, 2, 1) == 1);
+        REQUIRE(d1 == HxSTL::deque<int>({ 4, 4, 4, 4, 4, 4, 4, 4, 3, 1, 1, 2, 2, 2, 3, 3 }));
+
+        HxSTL::deque<int> d2(127, 1);
+
+        REQUIRE(*d2.insert(d2.end(), 10, 1) == 1);
+        REQUIRE(d2 == HxSTL::deque<int>(137, 1));
+    }
+
+}
+
+TEST_CASE("deque_member_insert_4") {
+
+    SECTION("index < size / 2") {
+        HxSTL::deque<int> d1({ 8, 9, 10, 11, 12, 13, 14, 15 });
+        HxSTL::deque<int> d2({ 0, 1, 7 });
+        HxSTL::deque<int> d3({ 2, 3, 4 });
+        HxSTL::deque<int> d4({ 5, 6 });
+
+        REQUIRE(*d1.insert(d1.begin(), d2.begin(), d2.end()) == 0);
+        REQUIRE(*d1.insert(d1.begin() + 2, d3.begin(), d3.end()) == 2);
+        REQUIRE(*d1.insert(d1.begin() + 5, d4.begin(), d4.end()) == 5);
+        REQUIRE(d1 == HxSTL::deque<int>({ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 }));
+
+        HxSTL::deque<int> d5(127, 1);
+        HxSTL::deque<int> d6(10, 1);
+
+        REQUIRE(*d5.insert(d5.begin(), d6.begin(), d6.end()) == 1);
+        REQUIRE(d5 == HxSTL::deque<int>(137, 1));
+    }
+
+    SECTION("index >= size / 2") {
+        HxSTL::deque<int> d1({ 0, 1, 2, 3, 4, 5, 6, 7 });
+        HxSTL::deque<int> d2({ 8, 14, 15 });
+        HxSTL::deque<int> d3({ 11, 12, 13 });
+        HxSTL::deque<int> d4({ 9, 10 });
+
+        REQUIRE(*d1.insert(d1.end(), d2.begin(), d2.end()) == 8);
+        REQUIRE(*d1.insert(d1.end() - 2, d3.begin(), d3.end()) == 11);
+        REQUIRE(*d1.insert(d1.end() - 5, d4.begin(), d4.end()) == 9);
+        REQUIRE(d1 == HxSTL::deque<int>({ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 }));
+
+        HxSTL::deque<int> d5(127, 1);
+        HxSTL::deque<int> d6(10, 1);
+
+        REQUIRE(*d5.insert(d5.end(), d6.begin(), d6.end()) == 1);
+        REQUIRE(d5 == HxSTL::deque<int>(137, 1));
+    }
+
 }

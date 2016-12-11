@@ -191,7 +191,12 @@ namespace HxSTL {
         template <class InputIt>
         iterator insert_aux(iterator pos, InputIt first, InputIt last, HxSTL::false_type);
         iterator insert_aux(iterator pos, size_type count, const T& value, HxSTL::true_type);
-        void alloc_node(size_type count, bool alloc_at_front);
+        iterator erase_aux(iterator pos);
+        iterator erase_aux(iterator first, iterator last);
+        void alloc_node_front(size_type count);
+        void alloc_node_back(size_type count);
+        void dealloc_node_front(iterator new_start);
+        void dealloc_node_back(iterator new_finish);
         void create_map(size_type count);
         void reallocate_map(size_type add_num_nodes, bool add_at_front);
         iterator REMOVE_CONST(const_iterator it) noexcept { return iterator(it._cur, it._node); }
@@ -357,10 +362,7 @@ namespace HxSTL {
 
         template <class InputIt>
         iterator insert(const_iterator pos, InputIt first, InputIt last) {
-            if (first != last) {
-                return insert_aux(REMOVE_CONST(pos), first, last, typename HxSTL::is_integeral<InputIt>::type());
-            }
-            return REMOVE_CONST(pos);
+            return insert_aux(REMOVE_CONST(pos), first, last, typename HxSTL::is_integeral<InputIt>::type());
         }
 
         iterator insert(const_iterator pos, HxSTL::initializer_list<T> init) {
@@ -469,27 +471,37 @@ namespace HxSTL {
     }
 
     template <class T, class Alloc>
-    void deque<T, Alloc>::alloc_node(size_type count, bool alloc_at_front) {
-        size_type remain_element = alloc_at_front ? _start._cur - _start._first : _finish._last - _finish._cur;
+    void deque<T, Alloc>::alloc_node_front(size_type count) {
+        size_type remain_element =  _start._cur - _start._first;
         if (remain_element < count) {
             size_type add_num_nodes = (count - remain_element - 1) / iterator::buffer_size() + 1;
 
-            size_type remain_map = alloc_at_front ? _start._node - _map : _map + _map_size - _finish._node;
-            size_type remain = remain_element + iterator::buffer_size() * remain_map;
+            size_type remain = remain_element + iterator::buffer_size() * (_start._node - _map);
             if (remain < count) {
-                reallocate_map(add_num_nodes, alloc_at_front);
+                reallocate_map(add_num_nodes, true);
             }
 
-            if (alloc_at_front) {
-                map_pointer mp = _start._node - 1;
-                for (size_type i = 0; i != add_num_nodes; ++i) {
-                    mp[-i] = _alloc(iterator::buffer_size());
-                }
-            } else {
-                map_pointer mp = _finish._node + 1;
-                for (size_type i = 0; i != add_num_nodes; ++i) {
-                    mp[i] = _alloc(iterator::buffer_size());
-                }
+            map_pointer mp = _start._node - 1;
+            for (size_type i = 0; i != add_num_nodes; ++i) {
+                mp[-i] = _alloc.allocate(iterator::buffer_size());
+            }
+        }
+    }
+
+    template <class T, class Alloc>
+    void deque<T, Alloc>::alloc_node_back(size_type count) {
+        size_type remain_element = _finish._last - _finish._cur;
+        if (remain_element < count) {
+            size_type add_num_nodes = (count - remain_element - 1) / iterator::buffer_size() + 1;
+
+            size_type remain = remain_element + iterator::buffer_size() * (_map + _map_size - _finish._node);
+            if (remain < count) {
+                reallocate_map(add_num_nodes, false);
+            }
+
+            map_pointer mp = _finish._node + 1;
+            for (size_type i = 0; i != add_num_nodes; ++i) {
+                mp[i] = _alloc.allocate(iterator::buffer_size());
             }
         }
     }
@@ -498,52 +510,161 @@ namespace HxSTL {
     template <class InputIt>
     typename deque<T, Alloc>::iterator
     deque<T, Alloc>::insert_aux(iterator pos, InputIt first, InputIt last, HxSTL::false_type) {
+        if (first == last) return pos;
+
         size_type count = HxSTL::distance(first, last);
         size_type index = pos - _start;
         if (index < size() / 2) {
-            alloc_node(count, true);
+            alloc_node_front(count);
 
             iterator old_start = _start;
             _start -= count;
-            if (pos == _start) {
+
+            if (index == 0) {
                 HxSTL::uninitialized_copy(first, last, _start);
-                return _start;
             } else if (index < count) {
                 HxSTL::uninitialized_copy_n(old_start, index, _start);
                 HxSTL::uninitialized_copy_n(first, count - index, _start + index);
                 HxSTL::advance(first, count - index);
                 HxSTL::copy(first, last, old_start);
-                return _start + index;
             } else {
                 HxSTL::uninitialized_copy_n(old_start, count, _start);
                 HxSTL::copy_n(old_start + count, index - count, old_start);
-                HxSTL::copy(first, last, old_start + count);
-                return old_start + count;
+                HxSTL::copy(first, last, old_start + index - count);
             }
+
+            return _start + index;
         } else {
             size_type element_after = _finish - pos;
 
-            alloc_node(count, false);
+            alloc_node_back(count);
 
             iterator old_finish = _finish;
-            if (element_after < count) {
-                _finish = HxSTL::uninitialized_copy(_finish - element_after, _finish, _finish + count - element_after);
-                HxSTL::copy_n(first, element_after, old_finish - element_after);
+            pos = _finish - element_after;
+
+            if (element_after == 0) {
+                _finish = HxSTL::uninitialized_copy(first, last, _finish);
+            } else if (element_after < count) {
+                _finish = HxSTL::uninitialized_copy_n(pos, element_after, _finish + count - element_after);
+                HxSTL::copy_n(first, element_after, pos);
                 HxSTL::advance(first, element_after);
                 HxSTL::uninitialized_copy(first, last, old_finish);
-                return old_finish - element_after;
             } else {
-                _finish = HxSTL::uninitialized_copy(_finish - count, _finish, _finish);
+                _finish = HxSTL::uninitialized_copy_n(_finish - count, count, _finish);
                 HxSTL::copy_backward(pos, old_finish - count, old_finish);
                 HxSTL::copy(first, last, pos);
-                return old_finish - element_after;
             }
+
+            return pos;
         }
     }
 
     template <class T, class Alloc>
     typename deque<T, Alloc>::iterator
     deque<T, Alloc>::insert_aux(iterator pos, size_type count, const T& value, HxSTL::true_type) {
+        size_type index = pos - _start;
+        if (index < size() / 2) {
+            alloc_node_front(count);
+
+            iterator old_start = _start;
+            _start -= count;
+
+            if (index == 0) {
+                HxSTL::uninitialized_fill_n(_start, count, value);
+            } else if (index < count) {
+                HxSTL::uninitialized_copy_n(old_start, index, _start);
+                HxSTL::uninitialized_fill_n(_start + index, count - index, value);
+                HxSTL::fill_n(old_start, index, index);
+            } else {
+                HxSTL::uninitialized_copy_n(old_start, count, _start);
+                HxSTL::copy_n(old_start + count, index - count, old_start);
+                HxSTL::fill_n(old_start + index - count, count, value);
+            }
+
+            return _start + index;
+        } else {
+            size_type element_after = _finish - pos;
+
+            alloc_node_back(count);
+
+            iterator old_finish = _finish;
+            pos = _finish - element_after;
+
+            if (element_after == 0) {
+                _finish = HxSTL::uninitialized_fill_n(_finish, count, value);
+            } else if (element_after < count) {
+                _finish = HxSTL::uninitialized_fill_n(_finish, count - element_after, value);
+                _finish = HxSTL::uninitialized_copy_n(pos, element_after, _finish);
+                HxSTL::fill_n(pos, element_after, value);
+            } else {
+                _finish = HxSTL::uninitialized_copy_n(_finish - count, count, _finish);
+                HxSTL::copy_backward(pos, old_finish - count, old_finish);
+                HxSTL::fill_n(pos, count, value);
+            }
+
+            return pos;
+        }
+    }
+
+    template <class T, class Alloc>
+    void deque<T, Alloc>::dealloc_node_front(iterator new_start) {
+        for (map_pointer mp = _start._node, new_mp = new_start._node; mp != new_mp; ++mp) {
+            _alloc.deallocate(*mp, iterator::buffer_size());
+        }
+        _start = new_start;
+    }
+
+    template <class T, class Alloc>
+    void deque<T, Alloc>::dealloc_node_back(iterator new_finish) {
+        for (map_pointer mp = _finish._node, new_mp = new_finish._node; mp != new_mp; --mp) {
+            _alloc.deallocate(*mp, iterator::buffer_size());
+        }
+        _finish = new_finish;
+    }
+
+    template <class T, class Alloc>
+    typename deque<T, Alloc>::iterator
+    deque<T, Alloc>::erase_aux(iterator pos) {
+        size_type index = pos - _start;
+        if (index < size() / 2) {
+            if (pos != _start) {
+                HxSTL::copy_backward(_start, pos, pos + 1);
+            }
+            _alloc.destroy(&*_start);
+            dealloc_node_front(_start + 1);
+        } else {
+            if (pos != _finish) {
+                HxSTL::copy(pos + 1, _finish, pos);
+            }
+            _alloc.destroy(&*_finish);
+            dealloc_node_back(_finish - 1);
+        }
+        return _start + index;
+    }
+
+    template <class T, class Alloc>
+    typename deque<T, Alloc>::iterator
+    deque<T, Alloc>::erase_aux(iterator first, iterator last) {
+        size_type count = last - first;
+        size_type index_front = first - _start;
+        size_type index_back = _finish - last;
+        if (index_front < index_back) {
+            HxSTL::copy_backward(_start, first, last);
+            HxSTL::destroy(_alloc, _start, _start + count);
+            dealloc_node_front(_start + count);
+            return _start + index_front;
+        } else {
+            HxSTL::copy(last, _finish, first);
+            HxSTL::destroy(_alloc, _finish - count, _finish);
+            dealloc_node_back(_finish - count);
+            return _finish - index_back - count;
+        }
+    }
+
+    template <class T, class Alloc>
+    template <class... Args>
+    typename deque<T, Alloc>::iterator
+    deque<T, Alloc>::emplace(const_iterator pos, Args&&... args) {
     }
 
     template <class T, class Alloc>

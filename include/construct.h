@@ -19,21 +19,21 @@ namespace HxSTL {
         p->~T();
     }
 
-    template <class ForwardIterator>
-    inline void destroy(ForwardIterator first, ForwardIterator last) {
-        typedef typename iterator_traits<ForwardIterator>::value_type value_type;
-        __destroy(first, last, typename HxSTL::is_trivially_destructible<value_type>::type());
+    template <class Alloc, class ForwardIt>
+    inline void destroy(const Alloc& alloc, ForwardIt first, ForwardIt last) {
+        typedef typename HxSTL::iterator_traits<ForwardIt>::value_type value_type;
+        __destroy(alloc, first, last, typename HxSTL::is_trivially_destructible<value_type>::type());
     }
 
-    template <class ForwardIterator>
-    inline void __destroy(ForwardIterator first, ForwardIterator last, false_type) {
-        for (; first != last; ++first) {
-            destroy(&*first);
+    template <class Alloc, class ForwardIt>
+    inline void __destroy(const Alloc& alloc, ForwardIt first, ForwardIt last, HxSTL::false_type) {
+        while (first != last) {
+            alloc.deallocate(&*(first++));
         }
     }
 
-    template <class ForwardIterator>
-    inline void __destroy(ForwardIterator first, ForwardIterator last, true_type) {}
+    template <class Alloc, class ForwardIt>
+    inline void __destroy(const Alloc&, ForwardIt, ForwardIt, HxSTL::true_type) {}
 
 }
 
