@@ -159,6 +159,40 @@ TEST_CASE("deque_member_front deque_member_back") {
 
 }
 
+TEST_CASE("deque_member_begin deque_member_cbegin") {
+    
+    HxSTL::deque<int> d1({ 0, 1 });
+    const HxSTL::deque<int> d2({ 1, 2 });
+
+    REQUIRE(*d1.begin() == 0);
+    REQUIRE(*d2.begin() == 1);
+    REQUIRE(*d1.cbegin() == 0);
+    REQUIRE(*d2.cbegin() == 1);
+
+}
+
+TEST_CASE("deque_member_end deque_member_cend") {
+    
+    HxSTL::deque<int> d1({ 0, 1 });
+    const HxSTL::deque<int> d2({ 1, 2 });
+
+    REQUIRE(*(d1.end() - 1) == 1);
+    REQUIRE(*(d2.end() - 1) == 2);
+    REQUIRE(*(d1.cend() - 1) == 1);
+    REQUIRE(*(d2.cend() - 1) == 2);
+
+}
+
+TEST_CASE("deque_member_clear") {
+
+    HxSTL::deque<int> d1(10, 10);
+
+    d1.clear();
+
+    REQUIRE(d1.empty());
+
+}
+
 TEST_CASE("deque_member_insert_1") {
     
     HxSTL::deque<int> d1({ 1, 2, 4, 5, 6, 8 });
@@ -249,5 +283,39 @@ TEST_CASE("deque_member_insert_4") {
         REQUIRE(*d5.insert(d5.end(), d6.begin(), d6.end()) == 1);
         REQUIRE(d5 == HxSTL::deque<int>(137, 1));
     }
+
+}
+
+TEST_CASE("deque_member_erase_1") {
+
+    HxSTL::deque<int> d1({ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 });
+
+    REQUIRE(*d1.erase(d1.begin() + 1) == 2);
+    REQUIRE(*d1.erase(d1.begin() + 1) == 3);
+    REQUIRE(*d1.erase(d1.begin()) == 3);
+    REQUIRE(*d1.erase(d1.end() - 2) == 9);
+
+    auto it = d1.erase(d1.end() - 1);
+
+    REQUIRE(it == d1.end());
+    REQUIRE(d1.erase(d1.end()) == d1.end());
+    REQUIRE(d1 == HxSTL::deque<int>({ 3, 4, 5, 6, 7 }));
+
+}
+
+TEST_CASE("deque_member_erase_2") {
+
+    HxSTL::deque<int> d1({ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 });
+
+    REQUIRE(*d1.erase(d1.begin(), d1.begin() + 2) == 2);
+    REQUIRE(*d1.erase(d1.end() - 3, d1.end() - 1) == 9);
+    REQUIRE(d1.erase(d1.end(), d1.end()) == d1.end());
+    REQUIRE(d1 == HxSTL::deque<int>({ 2, 3, 4, 5, 6, 9 }));
+
+    HxSTL::deque<int> d2(150, 1);
+
+    d2.erase(d2.end() - 100, d2.end());
+
+    REQUIRE(d2 == HxSTL::deque<int>(50, 1));
 
 }

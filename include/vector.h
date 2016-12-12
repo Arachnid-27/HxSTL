@@ -74,7 +74,7 @@ namespace HxSTL {
 
         ~vector() {
             if (_start) {
-                destroy(_start, _finish);
+                HxSTL::destroy(_alloc, _start, _finish);
                 _alloc.deallocate(_start, capacity());
             }
         }
@@ -204,7 +204,7 @@ namespace HxSTL {
             emplace_aux(end(), HxSTL::forward<Args>(args)...);
         }
 
-        void pop_back() { destroy(--_finish); }
+        void pop_back() { _alloc.destroy(--_finish); }
 
         void resize(size_type count) { resize_aux(count, T()); }
 
@@ -252,13 +252,12 @@ namespace HxSTL {
     void vector<T, Alloc>::resize_aux(size_type count, const T& value) {
         if (count <= size()) {
             // 删除多余元素
-            destroy(_start + count, _finish);
+            HxSTL::destroy(_alloc, _start + count, _finish);
             _finish = _start + count;
         } else if (count <= capacity()) {
             // 填充元素
             _finish = uninitialized_fill_n(_finish, count - size(), value);
         } else {
-            // Todo 异常处理
             iterator new_start = _alloc.allocate(count);
             iterator new_finish = new_start;
             new_finish = uninitialized_copy(_start, _finish, new_start);
@@ -272,7 +271,6 @@ namespace HxSTL {
         if (new_cap > max_size()) {
             throw HxSTL::length_error();
         } else if (new_cap > capacity()) {
-            // Todo 处理异常
             iterator new_start = _alloc.allocate(new_cap);
             iterator new_finish = HxSTL::uninitialized_copy(_start, _finish, new_start);
             destroy_and_reset(new_start, new_finish, new_start + new_cap);
@@ -282,7 +280,6 @@ namespace HxSTL {
     template <class T, class Alloc>
     void vector<T, Alloc>::shrink_to_fit() {
         if (_end_of_storage != _finish) {
-            // Todo 处理异常
             iterator new_start = _alloc.allocate(size());
             iterator new_finish = HxSTL::uninitialized_copy(_start, _finish, new_start);
             destroy_and_reset(new_start, new_finish, new_start + size());
@@ -297,7 +294,7 @@ namespace HxSTL {
             // 拷贝并删除多余元素
             iterator old_finish = _finish;
             _finish = HxSTL::copy(first, last, _start);
-            HxSTL::destroy(_finish, old_finish);
+            HxSTL::destroy(_alloc, _finish, old_finish);
         } else if (count <= capacity()) {
             // 分开拷贝已初始化和未初始化区域
             size_type sz = size();
@@ -305,7 +302,6 @@ namespace HxSTL {
             HxSTL::advance(first, sz);
             _finish = HxSTL::uninitialized_copy(first, last, _finish);
         } else {
-            // Todo 处理异常
             iterator new_start = _alloc.allocate(count);
             iterator new_finish = HxSTL::uninitialized_copy(first, last, new_start);
             destroy_and_reset(new_start, new_finish, new_finish);
@@ -318,14 +314,13 @@ namespace HxSTL {
             // 填充并删除多余元素
             iterator old_finish = _finish;
             _finish = HxSTL::fill_n(_start, count, value);
-            HxSTL::destroy(_finish, old_finish);
+            HxSTL::destroy(_alloc, _finish, old_finish);
         } else if (count <= capacity()) {
             // 分开填充已初始化和未初始化区域
             size_type sz = size();
             HxSTL::fill_n(_start, sz, value);
             _finish = HxSTL::uninitialized_fill_n(_finish, count - sz, value);
         } else {
-            // Todo 处理异常
             iterator new_start = _alloc.allocate(count);
             iterator new_finish = HxSTL::uninitialized_fill_n(new_start, count, value);
             destroy_and_reset(new_start, new_finish, new_finish);
@@ -350,7 +345,6 @@ namespace HxSTL {
             ++_finish;
             return pos;
         } else {
-            // Todo 处理异常
             size_type new_sz = size() ? 2 * size() : 1;
             iterator new_start = _alloc.allocate(new_sz);
             iterator new_finish = HxSTL::uninitialized_copy(_start, pos, new_start);
@@ -381,7 +375,6 @@ namespace HxSTL {
             ++_finish;
             return pos;
         } else {
-            // Todo 处理异常
             size_type new_sz = size() ? 2 * size() : 1;
             iterator new_start = _alloc.allocate(new_sz);
             iterator new_finish = HxSTL::uninitialized_copy(_start, pos, new_start);
@@ -418,7 +411,6 @@ namespace HxSTL {
             }
             return pos;
         } else {
-            // Todo 异常处理
             size_type new_sz = 2 * capacity() > size() + count ? 2 * capacity() : size() + count;
             iterator new_start = _alloc.allocate(new_sz);
             iterator new_finish = HxSTL::uninitialized_copy(_start, pos, new_start);
@@ -452,7 +444,6 @@ namespace HxSTL {
             }
             return pos;
         } else {
-            // Todo 异常处理
             size_type new_sz = 2 * capacity() > count + size() ? 2 * capacity(): count + size();
             iterator new_start = _alloc.allocate(new_sz);
             iterator new_finish = HxSTL::uninitialized_copy(_start, pos, new_start);
@@ -475,7 +466,7 @@ namespace HxSTL {
     typename vector<T, Alloc>::iterator vector<T, Alloc>::erase_aux(iterator first, iterator last) {
         iterator old_finish = _finish;
         _finish = HxSTL::copy(last, _finish, first);
-        HxSTL::destroy(_finish, old_finish);
+        HxSTL::destroy(_alloc, _finish, old_finish);
         return first;
     }
 
@@ -490,7 +481,7 @@ namespace HxSTL {
     void vector<T, Alloc>::destroy_and_reset(iterator new_start, 
             iterator new_finish, iterator new_end_of_storage) {
         if (_start) {
-            HxSTL::destroy(_start, _finish);
+            HxSTL::destroy(_alloc, _start, _finish);
             _alloc.deallocate(_start, capacity());
         }
 

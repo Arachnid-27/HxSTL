@@ -197,6 +197,7 @@ namespace HxSTL {
         void alloc_node_back(size_type count);
         void dealloc_node_front(iterator new_start);
         void dealloc_node_back(iterator new_finish);
+        void alloc_or_erase(size_type count);
         void create_map(size_type count);
         void reallocate_map(size_type add_num_nodes, bool add_at_front);
         iterator REMOVE_CONST(const_iterator it) noexcept { return iterator(it._cur, it._node); }
@@ -249,7 +250,7 @@ namespace HxSTL {
 
         ~deque() {
             if (_map) {
-                HxSTL::destroy(_start, _finish);
+                HxSTL::destroy(_alloc, _start, _finish);
                 for (map_pointer mp = _start._node; mp <= _finish._node; ++mp) {
                     _alloc.deallocate(*mp, iterator::buffer_size());
                 }
@@ -258,7 +259,7 @@ namespace HxSTL {
         }
 
         deque& operator=(const deque& other) {
-            deque(other).swap(*this);
+            assign_aux(other.begin(), other.end());
             return *this;
         }
 
@@ -268,7 +269,7 @@ namespace HxSTL {
         }
 
         deque& operator=(HxSTL::initializer_list<T> init) {
-            deque(init).swap(*this);
+            assign_aux(init.begin(), init.end());
             return *this;
         }
 
@@ -343,7 +344,7 @@ namespace HxSTL {
 
         size_type max_size() const { return _alloc.max_size(); }
 
-        void clear();
+        void clear() { erase_aux(begin(), end()); }
     
         iterator insert(const_iterator pos, const T& value) {
             return insert_aux(REMOVE_CONST(pos), value);
@@ -375,9 +376,16 @@ namespace HxSTL {
         template <class... Args>
         iterator emplace(const_iterator pos, Args&&... args);
 
-        iterator erase(const_iterator pos);
+        iterator erase(const_iterator pos) {
+            if (pos != _finish) {
+                return erase_aux(REMOVE_CONST(pos));
+            }
+            return REMOVE_CONST(pos);
+        }
 
-        iterator erase(const_iterator first, const_iterator last);
+        iterator erase(const_iterator first, const_iterator last) {
+            return erase_aux(REMOVE_CONST(first), REMOVE_CONST(last));
+        }
 
         void push_back(const T& value) { insert_aux(end(), value); }
 
@@ -386,7 +394,7 @@ namespace HxSTL {
         template <class... Args>
         void emplace_back(Args&&... args);
 
-        void pop_back();
+        void pop_back() { erase_aux(end() - 1); }
 
         void push_front(const T& value) { insert_aux(begin(), value); }
 
@@ -395,7 +403,7 @@ namespace HxSTL {
         template <class... Args>
         void emplace_front(Args&&... args);
 
-        void pop_front();
+        void pop_front() { erase_aux(begin()); }
 
         void resize(size_type count);
 
@@ -423,12 +431,33 @@ namespace HxSTL {
     }
 
     template <class T, class Alloc>
+    void deque<T, Alloc>::alloc_or_erase(size_type count) {
+        difference_type delt = count - size();
+        if (delt < 0) {
+            size_type remain_front = _start._cur - _start._first + iterator::buffer_size() * (_start._node - _map);
+            size_type remain_back = _finish._last - _finish._cur + iterator::buffer_size() * (_map + _map_size - _finish._node);
+            if (remain_back < remain_front) {
+                alloc_node_front(delt);
+            } else {
+                alloc_node_back(delt);
+            }
+        } else {
+            erase_aux(_start + count, _finish);
+        }
+    }
+
+    template <class T, class Alloc>
     template <class InputIt>
     void deque<T, Alloc>::assign_aux(InputIt first, InputIt last, HxSTL::false_type) {
+        size_type count = HxSTL::distance(first, last);
+        alloc_or_erase(count);
+        HxSTL::copy(first, last, _start);
     }
 
     template <class T, class Alloc>
     void deque<T, Alloc>::assign_aux(size_type count, const T& value, HxSTL::true_type) {
+        alloc_or_erase(count);
+        HxSTL::fill_n(_start, count, value);
     }
 
     template <class T, class Alloc>
@@ -633,7 +662,7 @@ namespace HxSTL {
             _alloc.destroy(&*_start);
             dealloc_node_front(_start + 1);
         } else {
-            if (pos != _finish) {
+            if (pos != _finish - 1) {
                 HxSTL::copy(pos + 1, _finish, pos);
             }
             _alloc.destroy(&*_finish);
@@ -645,20 +674,24 @@ namespace HxSTL {
     template <class T, class Alloc>
     typename deque<T, Alloc>::iterator
     deque<T, Alloc>::erase_aux(iterator first, iterator last) {
+        if (first == last) return first;
+
         size_type count = last - first;
-        size_type index_front = first - _start;
-        size_type index_back = _finish - last;
-        if (index_front < index_back) {
-            HxSTL::copy_backward(_start, first, last);
+        size_type index = first - _start;
+        if (index < size() / 2) {
+            if (_start != first) {
+                HxSTL::copy_backward(_start, first, last);
+            }
             HxSTL::destroy(_alloc, _start, _start + count);
             dealloc_node_front(_start + count);
-            return _start + index_front;
         } else {
-            HxSTL::copy(last, _finish, first);
+            if (last != _finish) {
+                HxSTL::copy(last, _finish, first);
+            }
             HxSTL::destroy(_alloc, _finish - count, _finish);
             dealloc_node_back(_finish - count);
-            return _finish - index_back - count;
         }
+        return _start + index;
     }
 
     template <class T, class Alloc>
