@@ -103,7 +103,7 @@ namespace HxSTL {
 
         ~basic_string() {
             if (_start) {
-                HxSTL::destroy(_start, _finish);
+                HxSTL::destroy(_alloc, _start, _finish);
                 _alloc.deallocate(_start, capacity());
             }
         }
@@ -495,7 +495,7 @@ namespace HxSTL {
     void basic_string<CharT, Alloc>::destroy_and_reset(iterator new_start, 
             iterator new_finish, iterator new_end_of_storage) {
         if (_start) {
-            HxSTL::destroy(_start, _finish);
+            HxSTL::destroy(_alloc, _start, _finish);
             _alloc.deallocate(_start, capacity());
         }
         _start = new_start;
@@ -548,7 +548,7 @@ namespace HxSTL {
             // 拷贝并删除多余元素
             iterator old_finish = _finish;
             _finish = HxSTL::copy(first, last, _start);
-            HxSTL::destroy(_finish, old_finish);
+            HxSTL::destroy(_alloc, _finish, old_finish);
             *_finish = 0;
         } else {
             // 分开拷贝已初始化和未初始化区域
@@ -573,7 +573,7 @@ namespace HxSTL {
             // 填充并删除多余元素
             iterator old_finish = _finish;
             _finish = HxSTL::fill_n(_start, count, ch);
-            HxSTL::destroy(_finish, old_finish);
+            HxSTL::destroy(_alloc, _finish, old_finish);
             *_finish = 0;
         } else {
             // 分开填充已初始化和未初始化区域
@@ -662,7 +662,7 @@ namespace HxSTL {
     basic_string<CharT, Alloc>::erase_aux(iterator first, iterator last) {
         iterator old_finish = _finish;
         _finish = HxSTL::copy(last, _finish, first);
-        HxSTL::destroy(_finish, old_finish);
+        HxSTL::destroy(_alloc, _finish, old_finish);
         return first;
     }
 

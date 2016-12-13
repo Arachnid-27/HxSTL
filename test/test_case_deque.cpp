@@ -76,6 +76,10 @@ TEST_CASE("deque_copy_assignment") {
 
     REQUIRE(d1 == d2);
 
+    d2 = d2;
+
+    REQUIRE(d1 == d2);
+
 }
 
 TEST_CASE("deque_move_assignment") {
@@ -100,12 +104,43 @@ TEST_CASE("deque_init_assignment") {
 }
 
 TEST_CASE("deque_member_assign_1") {
+
+    HxSTL::deque<int> d1;
+    HxSTL::deque<int> d2(10, 10);
+
+    d1.assign(5, 5);
+    d2.assign(15, 15);
+
+    REQUIRE(d1 == HxSTL::deque<int>(5, 5));
+    REQUIRE(d2 == HxSTL::deque<int>(15, 15));
+
 }
 
 TEST_CASE("deque_member_assign_2") {
+
+    HxSTL::deque<int> d1;
+    HxSTL::deque<int> d2({ 0, 1, 2, 3, 4, 5 });
+
+    d1.assign(d2.begin(), d2.end());
+    d2.assign(d1.begin(), d1.begin() + 3);
+
+    REQUIRE(d1 == HxSTL::deque<int>({ 0, 1, 2, 3, 4, 5 }));
+    REQUIRE(d2 == HxSTL::deque<int>({ 0, 1, 2 }));
+
+    d1.assign(d1.begin(), d1.end());
+
+    REQUIRE(d1 == HxSTL::deque<int>({ 0, 1, 2, 3, 4, 5 }));
+
 }
 
 TEST_CASE("deque_member_assign_3") {
+
+    HxSTL::deque<int> d1;
+
+    d1.assign({ 0, 1, 2, 3, 4 });
+
+    REQUIRE(d1 == HxSTL::deque<int>({ 0, 1, 2, 3, 4 }));
+
 }
 
 TEST_CASE("deque_member_at") {
@@ -317,5 +352,23 @@ TEST_CASE("deque_member_erase_2") {
     d2.erase(d2.end() - 100, d2.end());
 
     REQUIRE(d2 == HxSTL::deque<int>(50, 1));
+
+}
+
+TEST_CASE("deque_member_resize") {
+
+    HxSTL::deque<int> d1({ 0, 1, 2 });
+
+    d1.resize(5);
+
+    REQUIRE(d1 == HxSTL::deque<int>({ 0, 1, 2, 0, 0 }));
+
+    d1.resize(8, 8);
+
+    REQUIRE(d1 == HxSTL::deque<int>({ 0, 1, 2, 0, 0, 8, 8, 8 }));
+
+    d1.resize(2);
+
+    REQUIRE(d1 == HxSTL::deque<int>({ 0, 1 }));
 
 }

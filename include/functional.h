@@ -119,6 +119,11 @@ namespace HxSTL {
         return (bool) f;
     }
 
+    template <class T>
+    struct less {
+        bool operator()(const T& lhs, const T& rhs) const { return lhs < rhs; }
+    };
+
 }
 
 

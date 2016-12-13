@@ -10,10 +10,15 @@
 namespace HxSTL {
 
     template <class T>
+    typename remove_reference<T>::type&& move(T&& t) {
+        return static_cast<typename remove_reference<T>::type&&>(t);
+    }
+
+    template <class T>
     void swap(T& a, T& b) {
-        T c(a);
-        a = b;
-        b = c;
+        T c(move(a));
+        a = move(b);
+        b = move(c);
     }
 
     template <class T1, class T2>
@@ -29,11 +34,6 @@ namespace HxSTL {
     template <class T>
     T&& forward(typename remove_reference<T>::type&& t) {
         return static_cast<T&&>(t);
-    }
-
-    template <class T>
-    typename remove_reference<T>::type&& move(T&& t) {
-        return static_cast<typename remove_reference<T>::type&&>(t);
     }
 
     template <class T>
