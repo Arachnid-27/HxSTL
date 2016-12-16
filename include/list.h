@@ -16,37 +16,30 @@ namespace HxSTL {
         __list_node<T>* next;
     };
 
-    template <class T, class Alloc = allocator<__list_node<T>>>
-    class list;
-
-    template <class T>
-    class __list_const_iterator;
-
-    template <class T>
-    class __list_iterator {
-    public:
+    template <class T, class Ref, class Ptr>
+    struct __list_iterator {
         typedef bidirectional_iterator_tag          iterator_category;
         typedef T                                   value_type;
-        typedef T*                                  pointer;
-        typedef T&                                  reference;
+        typedef Ptr                                 pointer;
+        typedef Ref                                 reference;
         typedef size_t                              size_type;
         typedef ptrdiff_t                           difference_type;
-        typedef __list_node<value_type>*            link_type;
-    protected:
-        link_type _node;
-    public:
+        typedef __list_node<T>*                     link_type;
+
+        link_type node;
+
         __list_iterator() {}
 
-        __list_iterator(link_type node): _node(node) {}
+        __list_iterator(link_type x): node(x) {}
 
-        __list_iterator(const __list_iterator& other): _node(other._node) {}
+        __list_iterator(const __list_iterator<T, T&, T*>& other): node(other.node) {}
         
-        reference operator*() const { return _node -> data; }
+        reference operator*() const { return node -> data; }
 
         pointer operator->() const { return &(operator*()); }
 
         __list_iterator& operator++() {
-            _node = _node -> next;
+            node = node -> next;
             return *this;
         }
 
@@ -57,7 +50,7 @@ namespace HxSTL {
         }
 
         __list_iterator& operator--() {
-            _node = _node -> prev;
+            node = node -> prev;
             return *this;
         }
 
@@ -66,92 +59,29 @@ namespace HxSTL {
             --*this;
             return it;
         }
-    public:
-        template <class U, class Alloc>
-        friend class list;
-        friend class __list_const_iterator<T>;
-        template <class U>
-        friend bool operator==(const __list_iterator<U>& lhs, const __list_iterator<U>& rhs);
-        template <class U>
-        friend bool operator!=(const __list_iterator<U>& lhs, const __list_iterator<U>& rhs);
     };
 
-    template <class T>
-    bool operator==(const __list_iterator<T>& lhs, const __list_iterator<T>& rhs) {
-        return lhs._node == rhs._node;
+    template <class T, class Ref, class Ptr>
+    bool operator==(const __list_iterator<T, Ref, Ptr>& lhs, const __list_iterator<T, Ref, Ptr>& rhs) {
+        return lhs.node == rhs.node;
     }
 
-    template <class T>
-    bool operator!=(const __list_iterator<T>& lhs, const __list_iterator<T>& rhs) {
-        return lhs._node != rhs._node;
+    template <class T, class Ref, class Ptr>
+    bool operator!=(const __list_iterator<T, Ref, Ptr>& lhs, const __list_iterator<T, Ref, Ptr>& rhs) {
+        return lhs.node != rhs.node;
     }
 
-    template <class T>
-    class __list_const_iterator {
-    public:
-        typedef bidirectional_iterator_tag          iterator_category;
-        typedef T                                   value_type;
-        typedef const T*                            pointer;
-        typedef const T&                            reference;
-        typedef size_t                              size_type;
-        typedef ptrdiff_t                           difference_type;
-        typedef __list_node<value_type>*            link_type;
-    protected:
-        link_type _node;
-    public:
-        __list_const_iterator() {}
-
-        __list_const_iterator(link_type node): _node(node) {}
-
-        __list_const_iterator(const __list_const_iterator& other): _node(other._node) {}
-
-        __list_const_iterator(const __list_iterator<T>& other): _node(other._node) {}
-        
-        reference operator*() const { return _node -> data; }
-
-        pointer operator->() const { return &(operator*()); }
-
-        __list_const_iterator& operator++() {
-            _node = _node -> next;
-            return *this;
-        }
-
-        __list_const_iterator& operator++(int) {
-            __list_const_iterator& it = *this;
-            ++*this;
-            return it;
-        }
-
-        __list_const_iterator& operator--() {
-            _node = _node -> prev;
-            return *this;
-        }
-
-        __list_const_iterator& operator--(int) {
-            __list_const_iterator& it = *this;
-            --*this;
-            return it;
-        }
-    public:
-        template <class U, class Alloc>
-        friend class list;
-        template <class U>
-        friend bool operator==(const __list_const_iterator<U>& lhs, const __list_const_iterator<U>& rhs);
-        template <class U>
-        friend bool operator!=(const __list_const_iterator<U>& lhs, const __list_const_iterator<U>& rhs);
-    };
-
-    template <class T>
-    bool operator==(const __list_const_iterator<T>& lhs, const __list_const_iterator<T>& rhs) {
-        return lhs._node == rhs._node;
+    template <class T, class RefL, class PtrL, class RefR, class PtrR>
+    bool operator==(const __list_iterator<T, RefL, PtrL>& lhs, const __list_iterator<T, RefR, PtrR>& rhs) {
+        return lhs.node == rhs.node;
     }
 
-    template <class T>
-    bool operator!=(const __list_const_iterator<T>& lhs, const __list_const_iterator<T>& rhs) {
-        return lhs._node != rhs._node;
+    template <class T, class RefL, class PtrL, class RefR, class PtrR>
+    bool operator!=(const __list_iterator<T, RefL, PtrL>& lhs, const __list_iterator<T, RefR, PtrR>& rhs) {
+        return lhs.node != rhs.node;
     }
 
-    template <class T, class Alloc>
+    template <class T, class Alloc = allocator<__list_node<T>>>
     class list {
     public:
         typedef T                                           value_type;
@@ -160,8 +90,8 @@ namespace HxSTL {
         typedef const value_type&                           const_reference;
         typedef value_type*                                 pointer;
         typedef const value_type*                           const_pointer;
-        typedef __list_iterator<T>                          iterator;
-        typedef __list_const_iterator<T>                    const_iterator;
+        typedef __list_iterator<T, T&, T*>                  iterator;
+        typedef __list_iterator<T, const T&, const T*>      const_iterator;
     //  typedef reverse_iterator<iterator>                  reverse_iterator;
     //  typedef reverse_iterator<const_iterator>            const_reverse_iterator;
         typedef ptrdiff_t                                   difference_type;
@@ -307,23 +237,23 @@ namespace HxSTL {
 
         iterator insert(const_iterator pos, const T& value) {
             pos = insert_aux(pos, value);
-            return iterator(pos._node);
+            return iterator(pos.node);
         }
 
         iterator insert(const_iterator pos, T&& value) {
             pos = insert_aux(pos, HxSTL::move(value));
-            return iterator(pos._node);
+            return iterator(pos.node);
         }
 
         iterator insert(const_iterator pos, size_type count, const T& value) {
             if (count != 0) pos = insert_aux(pos, count, value, HxSTL::true_type());
-            return iterator(pos._node);
+            return iterator(pos.node);
         }
 
         template <class InputIt>
         iterator insert(const_iterator pos, InputIt first, InputIt last) {
             pos = insert_aux(pos, first, last, typename HxSTL::is_integeral<InputIt>::type());
-            return iterator(pos._node);
+            return iterator(pos.node);
         }
 
         template <class... Args>
@@ -335,14 +265,14 @@ namespace HxSTL {
             if (pos != cend()) {
                 pos = erase_aux(pos);
             }
-            return iterator(pos._node);
+            return iterator(pos.node);
         }
 
         iterator erase(const_iterator first, const_iterator last) {
             if (first != last) {
                 first = erase_aux(first, last);
             }
-            return iterator(first._node);
+            return iterator(first.node);
         }
 
         void push_back(const T& value) { insert_aux(end(), value); }
@@ -515,10 +445,10 @@ namespace HxSTL {
     typename list<T, Alloc>::iterator
     list<T, Alloc>::emplace_aux(const_iterator pos, Args&&... args) {
         link_type new_node = create_node(HxSTL::forward<Args>(args)...);
-        (pos._node -> prev) -> next =  new_node;
-        new_node -> prev = pos._node -> prev;
-        pos._node -> prev = new_node;
-        new_node -> next = pos._node;
+        (pos.node -> prev) -> next =  new_node;
+        new_node -> prev = pos.node -> prev;
+        pos.node -> prev = new_node;
+        new_node -> next = pos.node;
         return new_node;
     }
 
@@ -527,10 +457,10 @@ namespace HxSTL {
     typename list<T, Alloc>::const_iterator
     list<T, Alloc>::insert_aux(const_iterator pos, U&& value) {
         link_type new_node = create_node(HxSTL::forward<U>(value));
-        (pos._node -> prev) -> next =  new_node;
-        new_node -> prev = pos._node -> prev;
-        pos._node -> prev = new_node;
-        new_node -> next = pos._node;
+        (pos.node -> prev) -> next =  new_node;
+        new_node -> prev = pos.node -> prev;
+        pos.node -> prev = new_node;
+        new_node -> next = pos.node;
         return new_node;
     }
     
@@ -538,7 +468,7 @@ namespace HxSTL {
     template <class InputIt>
     typename list<T, Alloc>::const_iterator
     list<T, Alloc>::insert_aux(const_iterator pos, InputIt first, InputIt last, HxSTL::false_type) {
-        link_type cur_node = pos._node -> prev;
+        link_type cur_node = pos.node -> prev;
         link_type pre_node = cur_node;
         link_type new_node;
         while (first != last) {
@@ -548,15 +478,15 @@ namespace HxSTL {
             cur_node = new_node;
             ++first;
         }
-        pos._node -> prev = cur_node;
-        cur_node -> next = pos._node;
+        pos.node -> prev = cur_node;
+        cur_node -> next = pos.node;
         return pre_node -> next;
     }
 
     template <class T, class Alloc>
     typename list<T, Alloc>::const_iterator
     list<T, Alloc>::insert_aux(const_iterator pos, size_type count, const T& value, HxSTL::true_type) {
-        link_type cur_node = pos._node -> prev;
+        link_type cur_node = pos.node -> prev;
         link_type pre_node = cur_node;
         link_type new_node;
         while (count > 0) {
@@ -566,18 +496,18 @@ namespace HxSTL {
             cur_node = new_node;
             --count;
         }
-        pos._node -> prev = cur_node;
-        cur_node -> next = pos._node;
+        pos.node -> prev = cur_node;
+        cur_node -> next = pos.node;
         return pre_node -> next;
     }
 
     template <class T, class Alloc>
     typename list<T, Alloc>::const_iterator list<T, Alloc>::erase_aux(const_iterator pos) {
-        (pos._node -> next) -> prev = pos._node -> prev;
-        (pos._node -> prev) -> next = pos._node -> next;
+        (pos.node -> next) -> prev = pos.node -> prev;
+        (pos.node -> prev) -> next = pos.node -> next;
         const_iterator old_pos = pos;
         ++pos;
-        destroy_node(old_pos._node);
+        destroy_node(old_pos.node);
         return pos;
     }
 
@@ -595,12 +525,12 @@ namespace HxSTL {
     
     template <class T, class Alloc>
     typename list<T, Alloc>::const_iterator list<T, Alloc>::erase_aux(const_iterator first, const_iterator last) {
-        (first._node -> prev) -> next = last._node;
-        last._node -> prev = first._node -> prev;
+        (first.node -> prev) -> next = last.node;
+        last.node -> prev = first.node -> prev;
         while (first != last) {
             const_iterator old = first;
             ++first;
-            destroy_node(old._node);
+            destroy_node(old.node);
         }
         return first;
     }
@@ -652,23 +582,23 @@ namespace HxSTL {
 
     template <class T, class Alloc>
     void list<T, Alloc>::splice(const_iterator pos, list&, const_iterator it) {
-        it._node -> prev -> next = it._node -> next;
-        it._node -> next -> prev = it._node -> prev;
-        pos._node -> prev -> next = it._node;
-        it._node -> prev = pos._node -> prev;
-        pos._node -> prev = it._node;
-        it._node -> next = pos._node;
+        it.node -> prev -> next = it.node -> next;
+        it.node -> next -> prev = it.node -> prev;
+        pos.node -> prev -> next = it.node;
+        it.node -> prev = pos.node -> prev;
+        pos.node -> prev = it.node;
+        it.node -> next = pos.node;
     }
 
     template <class T, class Alloc>
     void list<T, Alloc>::splice(const_iterator pos, list&, const_iterator first, const_iterator last) {
-        link_type head = first._node -> prev;
-        pos._node -> prev -> next = first._node;
-        first._node -> prev = pos._node -> prev;
-        pos._node -> prev = last._node -> prev;
-        last._node -> prev -> next = pos._node;
-        head -> next = last._node;
-        last._node -> prev = head;
+        link_type head = first.node -> prev;
+        pos.node -> prev -> next = first.node;
+        first.node -> prev = pos.node -> prev;
+        pos.node -> prev = last.node -> prev;
+        last.node -> prev -> next = pos.node;
+        head -> next = last.node;
+        last.node -> prev = head;
     }
     
     template <class T, class Alloc>

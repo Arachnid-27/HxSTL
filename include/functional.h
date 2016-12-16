@@ -124,6 +124,11 @@ namespace HxSTL {
         bool operator()(const T& lhs, const T& rhs) const { return lhs < rhs; }
     };
 
+    template <class T>
+    struct greater {
+        bool operator()(const T& lhs, const T& rhs) const { return lhs > rhs; }
+    };
+
 }
 
 

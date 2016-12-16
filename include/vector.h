@@ -4,7 +4,7 @@
 
 #include "allocator.h"
 #include "uninitialized.h"
-#include "stdexcept.h"
+#include "utility.h"
 
 
 namespace HxSTL {
@@ -71,6 +71,9 @@ namespace HxSTL {
         vector(vector&& other): _alloc(HxSTL::move(other._alloc)) { initialize_aux(HxSTL::move(other)); }
 
         vector(vector&& other, const Alloc& alloc): _alloc(alloc) { initialize_aux(HxSTL::move(other)); }
+
+        vector(HxSTL::initializer_list<T> init, const Alloc& alloc = Alloc())
+            : _alloc(alloc) { initialize_aux(init.begin(), init.end(), HxSTL::false_type()); }
 
         ~vector() {
             if (_start) {
