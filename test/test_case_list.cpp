@@ -440,11 +440,9 @@ TEST_CASE("list_member_remove") {
     HxSTL::list<int> l1;
 
     srand((unsigned) time(NULL));
-
     for (int i = 0; i != 100000; ++i) {
         l1.push_back(rand() % 10);
     }
-
     l1.remove(5);
 
     REQUIRE(HxSTL::find(l1.begin(), l1.end(), 5) == l1.end());
