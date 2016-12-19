@@ -53,15 +53,15 @@ namespace HxSTL {
                 while (node -> left != NULL) {
                     node = node -> left;
                 }
-            } else if (node -> color == __red && node -> parent -> parent == node) {
-                node = node -> parent;
             } else {
                 base_link_type y = node -> parent;
-                if (node == y -> right) {
+                while (node == y -> right) {
                     node = y;
                     y = y -> parent;
                 }
-                node = y;
+                if (node -> right != y) {
+                    node = y;
+                }
             }
         }
 
@@ -109,7 +109,7 @@ namespace HxSTL {
         __rb_tree_iterator operator++(int) {
             __rb_tree_iterator it = *this;
             increment();
-            return *this;
+            return it;
         }
 
         __rb_tree_iterator& operator--() {
@@ -120,7 +120,7 @@ namespace HxSTL {
         __rb_tree_iterator operator--(int) {
             __rb_tree_iterator it = *this;
             decrement();
-            return *this;
+            return it;
         }
     };
 
@@ -181,7 +181,7 @@ namespace HxSTL {
         static color_type& COLOR(base_link_type node) { return node -> color; }
 
         static link_type MIN(link_type node) { return (link_type) __rb_tree_node_base::minimum(node); }
-        static link_type max(link_type node) { return (link_type) __rb_tree_node_base::maxinum(node); }
+        static link_type MAX(link_type node) { return (link_type) __rb_tree_node_base::maxinum(node); }
     private:
         iterator __insert(link_type x, link_type y, const V& value);
     public:
@@ -211,6 +211,8 @@ namespace HxSTL {
         HxSTL::pair<iterator, bool> insert_unique(const V& value);
 
         iterator insert_equal(const V& value);
+
+        void erase(iterator pos);
     };
 
     void __rb_tree_rotate_left(__rb_tree_node_base* x) {
@@ -284,7 +286,7 @@ namespace HxSTL {
                 if (y && y -> color == __red) {
                     x -> parent -> color = __black;
                     y -> color = __black;
-                    y -> parent -> parent -> color = __red;
+                    x -> parent -> parent -> color = __red;
                     x = x -> parent -> parent;
                 } else {
                     if (x == x -> parent -> left) {
@@ -301,6 +303,81 @@ namespace HxSTL {
         root -> color = __black;
     }
 
+    inline bool __rb_tree_is_black(__rb_tree_node_base* x) {
+        return x == NULL || x -> color == __black;
+    }
+
+    void __rb_tree_fixup(__rb_tree_node_base* x, __rb_tree_node_base* x_parent, __rb_tree_node_base*& root) {
+        __rb_tree_node_base* w;
+
+        while (x != root && __rb_tree_is_black(x)) {
+            if (x == x_parent -> left) {
+                w = x_parent -> right;
+                if (w -> color == __red) {
+                    // case1 -> case2, case3, case4
+                    w -> color = __black;
+                    x_parent -> color = __red;
+                    __rb_tree_rotate_left(x_parent);
+                    w = x_parent -> right;
+                }
+                if (__rb_tree_is_black(w -> left) && __rb_tree_is_black(w -> right)) {
+                    // case2 -> case1, case2, case3, case4
+                    w -> color = __red;
+                    x = x_parent;
+                    x_parent = x_parent -> parent;
+                } else { 
+                    if (__rb_tree_is_black(w -> right)) {
+                        // case3 -> case4
+                        if (w -> left) {
+                            w -> left -> color = __black;
+                        }
+                        w -> color = __red;
+                        __rb_tree_rotate_right(w);
+                        w = x_parent -> right;
+                    }
+                    // case4
+                    w -> color = x_parent -> color; 
+                    x_parent -> color = __black;
+                    w -> right -> color = __black;
+                    __rb_tree_rotate_left(x_parent);
+                    break;
+                }
+            } else {
+                w = x_parent -> left;
+                if (w -> color == __red) {
+                    // case1 -> case2, case3, case4
+                    w -> color = __black;
+                    x_parent -> color = __red;
+                    __rb_tree_rotate_right(x_parent);
+                    w = x_parent -> left;
+                }
+                if (__rb_tree_is_black(w -> left) && __rb_tree_is_black(w -> right)) {
+                    // case2 -> case1, case2, case3, case4
+                    w -> color = __red;
+                    x = x_parent;
+                    x_parent = x_parent -> parent;
+                } else {
+                    if (__rb_tree_is_black(w -> left)) {
+                        // case3 -> case4
+                        if (w -> right) {
+                            w -> right -> color = __black;
+                        }
+                        w -> color = __red;
+                        __rb_tree_rotate_left(w);
+                        w = x_parent -> left;
+                    }
+                    // case4
+                    w -> color = x_parent -> color;
+                    x_parent -> color = __black;
+                    w -> left -> color = __black;
+                    __rb_tree_rotate_right(x_parent);
+                    break;
+                }
+            }
+        }
+
+        if (x != NULL) x -> color = __black;
+    }
 
     template <class K, class V, class KOV, class Compare, class Alloc>
     template <class T>
@@ -323,8 +400,8 @@ namespace HxSTL {
 
     template <class K, class V, class KOV, class Compare, class Alloc>
     void rb_tree<K, V, KOV, Compare, Alloc>::destroy_node(link_type node) {
-        _alloc.destroy(&(node -> value), 1);
-        _alloc.deallocate(node);
+        _alloc.destroy(&(node -> value));
+        _alloc.deallocate(node, 1);
     }
 
     template <class K, class V, class KOV, class Compare, class Alloc>
@@ -359,6 +436,85 @@ namespace HxSTL {
         return iterator(node);
     }
 
+    __rb_tree_node_base* __rb_tree_erase(__rb_tree_node_base* z, __rb_tree_node_base*& root, 
+            __rb_tree_node_base*& leftmost, __rb_tree_node_base*& rightmost) {
+        __rb_tree_node_base* y = z -> left == NULL || z -> right == NULL ? z : __rb_tree_node_base::minimum(z -> right);
+        __rb_tree_node_base* x = y -> left != NULL ? y -> left : y -> right;
+        __rb_tree_node_base* x_parent = NULL;
+
+        // 如果 y != z，则用 y 替换 z
+        if (y != z) {
+            // z 不可能是 leftmost 或者 rightmost
+            // z 的左右孩子一定都不是 NULL，且 y 的左孩子一定是 NULL
+            z -> left -> parent = y;
+            y -> left = z -> left;
+
+            if (y != z -> right) {
+                x_parent = y -> parent;
+                if (x != NULL) x -> parent = y -> parent;
+                y -> parent -> left = x;    // y 一定是左孩子
+                y -> right = z -> right;
+                z -> right -> parent = y -> parent;
+            } else {
+                // y == z -> right 这里不用修改 x 的父节点
+                x_parent = y;
+            }
+
+            if (root == z) {
+                root = y;
+            } else if (z -> parent -> left == z) {
+                z -> parent -> left = y;
+            } else {
+                z -> parent -> right = y;
+            }
+
+            y -> parent = z -> parent;
+            HxSTL::swap(y -> color, z -> color);
+            y = z;  // 将 y 指向实际删除的节点
+        } else {
+            x_parent = y -> parent;
+            if (x != NULL) x -> parent = y -> parent;
+
+            if (root == z) {
+                root = x;
+            } else if (z -> parent -> left == z) {
+                z -> parent -> left = x;
+            } else {
+                z -> parent -> right = x;
+            }
+
+            if (leftmost == z) {    // 左孩子一定是 NULL
+                if (x == NULL) {   // 这里 x 是 z 的右孩子
+                    leftmost = z -> parent;
+                } else {
+                    leftmost = x;
+                }
+            }
+
+            if (rightmost == z) {   // 有孩子一定是 NULL
+                if (x == NULL) {    // 这里 x 是 z 的左孩子
+                    rightmost = z -> parent;
+                } else {
+                    rightmost = x;
+                }
+            }
+        }
+
+        if (y -> color == __black) {
+            __rb_tree_fixup(x, x_parent, root);
+        }
+
+        return y;
+    }
+
+    template <class K, class V, class KOV, class Compare, class Alloc>
+    void rb_tree<K, V, KOV, Compare, Alloc>::erase(iterator pos)  {
+        link_type node = (link_type) __rb_tree_erase(pos.node, _header -> parent, _header -> left, _header -> right);
+        destroy_node(node);
+        --_count;
+    }
+
+
     template <class K, class V, class KOV, class Compare, class Alloc>
     typename rb_tree<K, V, KOV, Compare, Alloc>::iterator
     rb_tree<K, V, KOV, Compare, Alloc>::insert_equal(const V& value) {
@@ -392,7 +548,7 @@ namespace HxSTL {
             if (it == begin()) {
                 return HxSTL::pair<iterator, bool>(__insert(x, y, value), true); 
             }
-            it.node = it.node -> parent;
+            --it;
         }
 
         if (_compare(KEY(it.node), KOV()(value))) {
