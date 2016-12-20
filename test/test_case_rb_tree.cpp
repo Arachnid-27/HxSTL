@@ -60,6 +60,8 @@ TEST_CASE("rb_tree_member_insert_unique") {
 
 }
 
+#include <iostream>
+
 TEST_CASE("rb_tree_member_erase") {
 
     HxSTL::rb_tree<int, int, identity<int>, HxSTL::less<int>> t1;
