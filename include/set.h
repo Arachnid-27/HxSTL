@@ -66,13 +66,13 @@ namespace HxSTL {
 
         Alloc get_allocator() const;
 
-        iterator begin() noexcept;
+        iterator begin() noexcept { return _rep.begin(); } 
 
         const_iterator begin() const noexcept;
 
         const_iterator cbegin() const noexcept;
 
-        iterator end() noexcept;
+        iterator end() noexcept { return _rep.end(); }
 
         const_iterator end() const noexcept;
 
@@ -86,26 +86,38 @@ namespace HxSTL {
 
     //  const_reverse_iterator rend() const noexcept;
 
-        bool empty() const noexcept;
+        bool empty() const noexcept { _rep.empty(); }
     
-        size_type size() const noexcept;
+        size_type size() const noexcept { _rep.size(); }
 
         size_type max_size() const noexcept;
 
         void clear();
 
-        HxSTL::pair<iterator, bool> insert(const value_type& value);
+        HxSTL::pair<iterator, bool> insert(const value_type& value) {
+            return _rep.insert_unique(value);
+        }
 
-        HxSTL::pair<iterator, bool> insert(value_type&& value);
+        HxSTL::pair<iterator, bool> insert(value_type&& value) {
+            return _rep.insert_unique(value);
+        }
 
-        iterator insert(const_iterator hint, const value_type& value);
+        iterator insert(const_iterator hint, const value_type& value) {
+            return _rep.insert_unique(hint, value);
+        }
 
-        iterator insert(const_iterator hint, value_type&& value);
+        iterator insert(const_iterator hint, value_type&& value) {
+            return _rep.insert_unique(hint, value);
+        }
 
         template <class InputIt>
-        void insert(InputIt first, InputIt last);
+        void insert(InputIt first, InputIt last) {
+            while (first != last) _rep.insert_unique(first++);
+        }
 
-        void insert(HxSTL::initializer_list<value_type> init);
+        void insert(HxSTL::initializer_list<value_type> init) {
+            insert(init.begin(), init.end());
+        }
 
         template <class... Args>
         HxSTL::pair<iterator, bool> emplace(Args&&... args);
