@@ -8,8 +8,7 @@
 
 namespace HxSTL {
 
-    template <class T>
-    struct identity {
+    template <class T> struct identity {
         const T& operator()(const T& value) const { return value; }
     };
 
@@ -34,27 +33,31 @@ namespace HxSTL {
     protected:
         rep_type _rep;
     public:
-        explicit set(const Compare& comp = Compare(), const Alloc& alloc = Alloc());
+        set(): set(Compare()) {}
 
-        explicit set(const Alloc& alloc);
+        explicit set(const Compare& comp, const Alloc& alloc = Alloc()): _rep(comp, alloc) {}
+
+        explicit set(const Alloc& alloc): _rep(Compare(), alloc) {}
 
         template <class InputIt>
-        set(InputIt first, InputIt last, const Compare& comp = Compare(), const Alloc& alloc = Alloc());
+        set(InputIt first, InputIt last, const Compare& comp = Compare(), const Alloc& alloc = Alloc())
+            : _rep(comp, alloc) { insert(first, last); }
 
         template <class InputIt>
-        set(InputIt first, InputIt last, const Alloc& alloc = Alloc());
+        set(InputIt first, InputIt last, const Alloc& alloc): set(first, last, Compare(), alloc) {}
 
-        set(const set& other);
+        set(const set& other): _rep(other) {}
 
-        set(const set& other, const Alloc& alloc);
+        set(const set& other, const Alloc& alloc): _rep(other, alloc) {}
 
-        set(set&& other);
+        set(set&& other): _rep(HxSTL::move(other)) {}
 
-        set(set&& other, const Alloc& alloc);
+        set(set&& other, const Alloc& alloc): _rep(HxSTL::move(other), alloc) {}
 
-        set(HxSTL::initializer_list<value_type> init, const Compare& comp = Compare(), const Alloc& alloc = Alloc());
+        set(HxSTL::initializer_list<value_type> init, const Compare& comp = Compare(), const Alloc& alloc = Alloc())
+            : _rep(comp, alloc) { insert(init.begin(), init.end()); }
 
-        set(HxSTL::initializer_list<value_type> init, const Alloc& alloc = Alloc());
+        set(HxSTL::initializer_list<value_type> init, const Alloc& alloc): set(init, Compare(), alloc) {}
 
         ~set();
 
@@ -64,19 +67,19 @@ namespace HxSTL {
 
         set& operator=(HxSTL::initializer_list<value_type> init);
 
-        Alloc get_allocator() const;
+        Alloc get_allocator() const { return _rep.get_allocator(); }
 
-        iterator begin() noexcept { return _rep.begin(); } 
+        iterator begin() noexcept { return _rep.begin(); }
 
-        const_iterator begin() const noexcept;
+        const_iterator begin() const noexcept { return _rep.begin(); }
 
-        const_iterator cbegin() const noexcept;
+        const_iterator cbegin() const noexcept { return _rep.begin(); }
 
         iterator end() noexcept { return _rep.end(); }
 
-        const_iterator end() const noexcept;
+        const_iterator end() const noexcept { return _rep.end(); }
 
-        const_iterator cend() const noexcept;
+        const_iterator cend() const noexcept { return _rep.end(); }
 
     //  reverse_iterator rbegin() noexcept;
 
@@ -86,11 +89,11 @@ namespace HxSTL {
 
     //  const_reverse_iterator rend() const noexcept;
 
-        bool empty() const noexcept { _rep.empty(); }
+        bool empty() const noexcept { return _rep.empty(); }
     
-        size_type size() const noexcept { _rep.size(); }
+        size_type size() const noexcept { return _rep.size(); }
 
-        size_type max_size() const noexcept;
+        size_type max_size() const noexcept { return _rep.max_size(); }
 
         void clear();
 
@@ -125,11 +128,11 @@ namespace HxSTL {
         template <class... Args>
         HxSTL::pair<iterator, bool> emplace_hint(const_iterator hint, Args&&... args);
         
-        iterator erase(const_iterator pos);
+        iterator erase(const_iterator pos) { return _rep.erase(pos); }
 
-        iterator erase(const_iterator first, const_iterator last);
+        iterator erase(const_iterator first, const_iterator last) { return _rep.erase(first, last); }
 
-        size_type erase(const Key& key);
+        size_type erase(const Key& key) { return _rep.erase(key); }
 
         void swap(set& other);
 
@@ -143,13 +146,21 @@ namespace HxSTL {
 
         HxSTL::pair<const_iterator, const_iterator> equal_range(const Key& key) const;
 
-        iterator low_bound(const Key& key);
+        iterator lower_bound(const Key& key) {
+            return _rep.lower_bound(key);
+        }
 
-        const_iterator low_bound(const Key& key) const;
+        const_iterator lower_bound(const Key& key) const {
+            return _rep.lower_bound(key);
+        }
 
-        iterator upper_bound(const Key& key);
+        iterator upper_bound(const Key& key) {
+            return _rep.upper_bound(key);
+        }
 
-        const_iterator upper_bound(const Key& key) const;
+        const_iterator upper_bound(const Key& key) const {
+            return _rep.upper_bound(key);
+        }
 
         key_compare key_comp() const;
 

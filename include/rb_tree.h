@@ -63,28 +63,40 @@ namespace HxSTL {
         return lhs.node != rhs.node;
     }
 
+    template <class T, class RefL, class PtrL, class RefR, class PtrR>
+    bool operator==(const __rb_tree_iterator<T, RefL, PtrL>& lhs, const __rb_tree_iterator<T, RefR, PtrR>& rhs) {
+        return lhs.node == rhs.node;
+    }
+
+    template <class T, class RefL, class PtrL, class RefR, class PtrR>
+    bool operator!=(const __rb_tree_iterator<T, RefL, PtrL>& lhs, const __rb_tree_iterator<T, RefR, PtrR>& rhs) {
+        return lhs.node != rhs.node;
+    }
+
     template <class K, class V, class KOV, class Compare, class Alloc = allocator<__rb_tree_node<V>>>
     class rb_tree {
     public:
-        typedef Alloc                                           allocator_type;
-        typedef K                                               key_type;
-        typedef V                                               value_type;
-        typedef V*                                              pointer;
-        typedef const V*                                        const_pointer;
-        typedef V&                                              reference;
-        typedef const V&                                        const_reference;
-        typedef size_t                                          size_type;
-        typedef ptrdiff_t                                       difference_type;
-        typedef __rb_tree_iterator<V, V&, V*>                   iterator;
-        typedef __rb_tree_iterator<V, const V&, const V*>       const_iterator;
-        typedef typename iterator::link_type                    link_type;
-        typedef typename iterator::base_link_type               base_link_type;
-        typedef __rb_tree_node_base::color_type                 color_type;
+        typedef Alloc                                                           allocator_type;
+        typedef K                                                               key_type;
+        typedef V                                                               value_type;
+        typedef V*                                                              pointer;
+        typedef const V*                                                        const_pointer;
+        typedef V&                                                              reference;
+        typedef const V&                                                        const_reference;
+        typedef size_t                                                          size_type;
+        typedef ptrdiff_t                                                       difference_type;
+        typedef __rb_tree_iterator<V, V&, V*>                                   iterator;
+        typedef __rb_tree_iterator<V, const V&, const V*>                       const_iterator;
+        typedef typename iterator::link_type                                    link_type;
+        typedef typename iterator::base_link_type                               base_link_type;
+        typedef __rb_tree_node_base::color_type                                 color_type;
+        typedef typename Alloc::template rebind<__rb_tree_node<V>>::other       node_allocator_type;
     protected:
         size_type _count;
         link_type _header;
         Compare _compare;
-        typename Alloc::template rebind<__rb_tree_node<V>>::other _alloc;
+        Alloc _alloc;
+        node_allocator_type _node_alloc;
     protected:
         template <class T>
         link_type create_node(T&& value);
@@ -101,22 +113,48 @@ namespace HxSTL {
         static reference VALUE(base_link_type node) { return ((link_type) node) -> value; }
         static K KEY(base_link_type node) { return KOV()(((link_type) node) -> value); }
 
+        iterator copy_aux(link_type x, link_type p);
         template <class T>
         iterator insert_aux(link_type y, T&& value);
         template <class T>
         iterator insert_aux(bool is_left, link_type y, T&& value);
+        iterator lower_bound_aux(link_type x, link_type y, const K& key);
+        iterator upper_bound_aux(link_type x, link_type y, const K& key);
     public:
-        rb_tree(const Compare& comp = Compare())
-            :_count(0), _compare(comp), _alloc(Alloc()) {
-                _header = _alloc.allocate(1);
+        explicit rb_tree(const Compare& comp = Compare(), const Alloc& alloc = Alloc())
+            :_count(0), _compare(comp), _alloc(alloc), _node_alloc(node_allocator_type()) {
+                _header = _node_alloc.allocate(1);
                 _header -> color = __red;
                 _header -> parent = NULL;
                 _header -> left = _header;
                 _header -> right = _header;
             }
 
+        rb_tree(const rb_tree& other):_count(other._count), _compare(other._compare), 
+            _alloc(other._alloc), _node_alloc(other._node_alloc) {
+                copy_aux(other.root(), _header);
+            }
+
+        rb_tree(const rb_tree& other, const Alloc& alloc):_count(other._count), 
+            _compare(other._compare), _alloc(alloc), _node_alloc(allocator_type()) {
+                copy_aux(other.root(), _header);
+            }
+
+        rb_tree(rb_tree&& other):_count(other._count), _header(other._header),
+            _compare(HxSTL::move(other._compare)), _alloc(HxSTL::move(other._alloc)), 
+            _node_alloc(HxSTL::move(other._node_alloc)) {
+                other._header = NULL;
+            }
+
+        rb_tree(rb_tree&& other, const Alloc& alloc):_count(other._count), _header(other._header),
+            _compare(HxSTL::move(other._compare)), _alloc(alloc), _node_alloc(allocator_type()) {
+                other._header = NULL;
+            }
+
         ~rb_tree() {}
     public:
+        Alloc get_allocator() const { return _alloc; }
+
         Compare get_compare() const { return _compare; }
 
         iterator begin() const { return leftmost(); }
@@ -141,17 +179,29 @@ namespace HxSTL {
         template <class T>
         iterator insert_equal(iterator hint, T&& value);
 
-        void erase(iterator pos);
+        void clear();
 
-        iterator lower_bound(const K& key);
+        iterator erase(const_iterator pos);
+
+        size_type erase(const K& key);
+
+        iterator erase(const_iterator first, const_iterator last);
+
+        HxSTL::pair<iterator, iterator> equal_range(const K& key);
+
+        HxSTL::pair<const_iterator, const_iterator> equal_range(const K& key) const;
+
+        iterator lower_bound(const K& key) { return lower_bound_aux(root(), _header, key); }
+
+        iterator upper_bound(const K& key) { return upper_bound_aux(root(), _header, key); }
     };
 
     template <class K, class V, class KOV, class Compare, class Alloc>
     template <class T>
     typename rb_tree<K, V, KOV, Compare, Alloc>::link_type
     rb_tree<K, V, KOV, Compare, Alloc>::create_node(T&& value) {
-        link_type node = _alloc.allocate(1);
-        _alloc.construct(&(node -> value), HxSTL::forward<T>(value));
+        link_type node = _node_alloc.allocate(1);
+        _node_alloc.construct(&(node -> value), HxSTL::forward<T>(value));
         return node;
     }
 
@@ -167,8 +217,38 @@ namespace HxSTL {
 
     template <class K, class V, class KOV, class Compare, class Alloc>
     void rb_tree<K, V, KOV, Compare, Alloc>::destroy_node(link_type node) {
-        _alloc.destroy(&(node -> value));
-        _alloc.deallocate(node, 1);
+        _node_alloc.destroy(&(node -> value));
+        _node_alloc.deallocate(node, 1);
+    }
+
+    template <class K, class V, class KOV, class Compare, class Alloc>
+    typename rb_tree<K, V, KOV, Compare, Alloc>::iterator
+    rb_tree<K, V, KOV, Compare, Alloc>::copy_aux(link_type x, link_type p) {
+        // 类似 sort 中的写法，左子树迭代右子树递归，减少递归次数
+        link_type top = clone_node(x);
+        top -> parent = p;
+
+        if (x -> right != NULL) {
+            top -> right = copy_aux(x -> right, p);
+        }
+
+        p = top;
+        x = x -> left;
+
+        while (x != NULL) {
+            link_type y = clone_node(x);
+            p -> left = y;
+            y -> parent = p;
+
+            if (x -> right != NULL) {
+                y -> right = copy_aux(x -> right, p);
+            }
+
+            p = y;
+            x = x -> left;
+        }
+
+        return top;
     }
 
     template <class K, class V, class KOV, class Compare, class Alloc>
@@ -177,6 +257,36 @@ namespace HxSTL {
     rb_tree<K, V, KOV, Compare, Alloc>::insert_aux(link_type p, T&& value) {
         bool is_left = p == _header || _compare(KOV()(value), KEY(p));
         return insert_aux(is_left, p, HxSTL::forward<T>(value));
+    }
+
+    template <class K, class V, class KOV, class Compare, class Alloc>
+    typename rb_tree<K, V, KOV, Compare, Alloc>::iterator
+    rb_tree<K, V, KOV, Compare, Alloc>::lower_bound_aux(link_type x, link_type y, const K& key) {
+        while (x != NULL) {
+            if (!_compare(KEY(x), key)) {
+                y = x;
+                x = (link_type) (x -> left);
+            } else {
+                x = (link_type) (x -> right);
+            }
+        }
+
+        return y;
+    }
+
+    template <class K, class V, class KOV, class Compare, class Alloc>
+    typename rb_tree<K, V, KOV, Compare, Alloc>::iterator
+    rb_tree<K, V, KOV, Compare, Alloc>::upper_bound_aux(link_type x, link_type y, const K& key) {
+        while (x != NULL) {
+            if (_compare(key, KEY(x))) {
+                y = x;
+                x = (link_type) (x -> left);
+            } else {
+                x = (link_type) (x -> right);
+            }
+        }
+
+        return y;
     }
 
     template <class K, class V, class KOV, class Compare, class Alloc>
@@ -192,10 +302,37 @@ namespace HxSTL {
     }
 
     template <class K, class V, class KOV, class Compare, class Alloc>
-    void rb_tree<K, V, KOV, Compare, Alloc>::erase(iterator pos)  {
+    typename rb_tree<K, V, KOV, Compare, Alloc>::iterator
+    rb_tree<K, V, KOV, Compare, Alloc>::erase(const_iterator pos)  {
+        iterator result = pos;
+        ++result;
+
         link_type node = (link_type) __rb_tree_erase(pos.node, _header);
         destroy_node(node);
         --_count;
+
+        return iterator(pos.node);
+    }
+
+    template <class K, class V, class KOV, class Compare, class Alloc>
+    typename rb_tree<K, V, KOV, Compare, Alloc>::iterator
+    rb_tree<K, V, KOV, Compare, Alloc>::erase(const_iterator first, const_iterator last) {
+        if (first == begin() && last == end()) {
+            clear();
+        } else {
+            while (first != last) {
+                erase(first++);
+            }
+        }
+    }
+
+    template <class K, class V, class KOV, class Compare, class Alloc>
+    typename rb_tree<K, V, KOV, Compare, Alloc>::size_type
+    rb_tree<K, V, KOV, Compare, Alloc>::erase(const K& key)  {
+        size_type old_count = _count;
+        HxSTL::pair<iterator, iterator> pr = equal_range(key);
+        erase(pr.first, pr.second);
+        return old_count - _count;
     }
 
     template <class K, class V, class KOV, class Compare, class Alloc>
@@ -222,12 +359,12 @@ namespace HxSTL {
         if (hint.node == _header && 
                 (_count == 0 || _compare(KEY(rightmost()), k_value))) { // end
             return insert_aux(false, rightmost(), HxSTL::forward<T>(value));
-        } else if (!_compare(KOV()(hint.node), k_value)) { // before
+        } else if (!_compare(KEY(hint.node), k_value)) { // before
             iterator before = hint;
 
             if (hint.node == leftmost()) {
                 return insert_aux(true, leftmost(), HxSTL::forward<T>(value));
-            } else if (!_compare(KOV()(k_value, KEY((--before).node)))) {
+            } else if (!_compare(k_value, KEY((--before).node))) {
                 if (before.node -> right == NULL) {
                     return insert_aux(false, before.node, HxSTL::forward<T>(value));
                 } else {
@@ -239,7 +376,7 @@ namespace HxSTL {
 
             if (hint.node == rightmost()) {
                 return insert_aux(false, rightmost(), HxSTL::forward<T>(value));
-            } else if (!_compare(KOV()(KEY((++after).node))), k_value) {
+            } else if (!_compare(KEY((++after).node)), k_value) {
                 if (after.node -> left == NULL) {
                     return insert_aux(true, after.node, HxSTL::forward<T>(value));
                 } else {
@@ -291,14 +428,12 @@ namespace HxSTL {
                 (_count == 0 || _compare(KEY(rightmost()), k_value))) { // end
             return insert_aux(false, rightmost(), HxSTL::forward<T>(value));
         } else {
-            key_type k_hint = KOV()(hint.node);
-
-            if (_compare(k_value, k_hint)) { // before
+            if (_compare(k_value, KEY(hint.node))) { // before
                 iterator before = hint;
 
                 if (hint.node == leftmost()) {
                     return insert_aux(true, leftmost(), HxSTL::forward<T>(value));
-                } else if (_compare(KOV()(KEY((--before).node)), k_value)) {
+                } else if (_compare(KEY((--before).node), k_value)) {
                     //        hint          hint          before
                     //        /  \          /  \           /  \
                     //     before o        o    o         o    o    
@@ -312,12 +447,12 @@ namespace HxSTL {
                         return insert_aux(true, hint.node, HxSTL::forward<T>(value));
                     }
                 }
-            } else if (_compare(k_hint, k_value)) { // after
+            } else if (_compare(KEY(hint.node), k_value)) { // after
                 iterator after = hint;
 
                 if (hint.node == rightmost()) {
                     return insert_aux(false, rightmost(), HxSTL::forward<T>(value));
-                } else if (_compare(k_value, KOV()(KEY((++after).node)))) {
+                } else if (_compare(k_value, KEY((++after).node))) {
                     //       hint          hint            after
                     //       /  \          /  \            /  \
                     //      o  after      o    o          o    o    
@@ -337,6 +472,59 @@ namespace HxSTL {
         }
 
         return insert_unique(HxSTL::forward<T>(value)).first;
+    }
+
+    template <class K, class V, class KOV, class Compare, class Alloc>
+    HxSTL::pair<typename rb_tree<K, V, KOV, Compare, Alloc>::iterator, 
+        typename rb_tree<K, V, KOV, Compare, Alloc>::iterator> 
+    rb_tree<K, V, KOV, Compare, Alloc>::equal_range(const K& key) {
+        //          8(y)
+        //        /   \
+        //       6
+        //     /   \
+        //          7(x)
+        //        /   \
+        //       7     7
+        //     /   \ /   \
+        //    7           7
+        link_type x = root();
+        link_type y = _header;
+
+        while (x != NULL) {
+            if (_compare(KEY(x), key)) {
+                x = x -> right;
+            } else if (_compare(key, KEY(x))) {
+                y = x;
+                x = x -> left;
+            } else {
+                return HxSTL::pair<iterator, iterator>(lower_bound_aux(x -> left, x, key), 
+                        upper_bound_aux(x -> right, y, key));
+            }
+        }
+
+        return HxSTL::pair<iterator, iterator>(y, y);
+    }
+
+    template <class K, class V, class KOV, class Compare, class Alloc>
+    HxSTL::pair<typename rb_tree<K, V, KOV, Compare, Alloc>::const_iterator, 
+        typename rb_tree<K, V, KOV, Compare, Alloc>::const_iterator> 
+    rb_tree<K, V, KOV, Compare, Alloc>::equal_range(const K& key) const {
+        link_type x = root();
+        link_type y = _header;
+
+        while (x != NULL) {
+            if (_compare(KEY(x), key)) {
+                x = x -> right;
+            } else if (_compare(key, KEY(x))) {
+                y = x;
+                x = x -> left;
+            } else {
+                return HxSTL::pair<const_iterator, const_iterator>(lower_bound_aux(x -> left, x, key), 
+                        upper_bound_aux(x -> right, y, key));
+            }
+        }
+
+        return HxSTL::pair<const_iterator, const_iterator>(y, y);
     }
 
 }

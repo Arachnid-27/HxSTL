@@ -84,3 +84,41 @@ TEST_CASE("rb_tree_member_erase") {
     REQUIRE(t1.size() == 5);
 
 }
+
+TEST_CASE("rb_tree_lower_bound") {
+
+    HxSTL::rb_tree<int, int, identity<int>, HxSTL::less<int>> t1;
+
+    REQUIRE(t1.lower_bound(0) == t1.end());
+
+    t1.insert_unique(5);
+    t1.insert_unique(9);
+    t1.insert_unique(1);
+    t1.insert_unique(7);
+    t1.insert_unique(3);
+
+    REQUIRE(*t1.lower_bound(4) == 5);
+    REQUIRE(*t1.lower_bound(5) == 5);
+    REQUIRE(*t1.lower_bound(6) == 7);
+    REQUIRE(*t1.lower_bound(7) == 7);
+    REQUIRE(t1.lower_bound(10) == t1.end());
+
+}
+
+TEST_CASE("rb_tree_upper_bound") {
+
+    HxSTL::rb_tree<int, int, identity<int>, HxSTL::less<int>> t1;
+
+    t1.insert_unique(5);
+    t1.insert_unique(9);
+    t1.insert_unique(1);
+    t1.insert_unique(7);
+    t1.insert_unique(3);
+
+    REQUIRE(*t1.upper_bound(4) == 5);
+    REQUIRE(*t1.upper_bound(5) == 7);
+    REQUIRE(*t1.upper_bound(6) == 7);
+    REQUIRE(*t1.upper_bound(7) == 9);
+    REQUIRE(t1.upper_bound(10) == t1.end());
+
+}
