@@ -59,8 +59,6 @@ namespace HxSTL {
 
         set(HxSTL::initializer_list<value_type> init, const Alloc& alloc): set(init, Compare(), alloc) {}
 
-        ~set();
-
         set& operator=(const set& other);
 
         set& operator=(set&& other);
@@ -95,7 +93,7 @@ namespace HxSTL {
 
         size_type max_size() const noexcept { return _rep.max_size(); }
 
-        void clear();
+        void clear() { _rep.clear(); }
 
         HxSTL::pair<iterator, bool> insert(const value_type& value) {
             return _rep.insert_unique(value);
@@ -115,7 +113,7 @@ namespace HxSTL {
 
         template <class InputIt>
         void insert(InputIt first, InputIt last) {
-            while (first != last) _rep.insert_unique(first++);
+            while (first != last) _rep.insert_unique(*(first++));
         }
 
         void insert(HxSTL::initializer_list<value_type> init) {
@@ -123,10 +121,14 @@ namespace HxSTL {
         }
 
         template <class... Args>
-        HxSTL::pair<iterator, bool> emplace(Args&&... args);
+        HxSTL::pair<iterator, bool> emplace(Args&&... args) {
+            return _rep.emplace_unique(HxSTL::forward<Args>(args)...);
+        }
 
         template <class... Args>
-        HxSTL::pair<iterator, bool> emplace_hint(const_iterator hint, Args&&... args);
+        iterator emplace_hint(const_iterator hint, Args&&... args) {
+            return _rep.emplace_hint_unique(hint, HxSTL::forward<Args>(args)...);
+        }
         
         iterator erase(const_iterator pos) { return _rep.erase(pos); }
 
@@ -134,37 +136,29 @@ namespace HxSTL {
 
         size_type erase(const Key& key) { return _rep.erase(key); }
 
-        void swap(set& other);
+        void swap(set& other) { HxSTL::swap(_rep, other._rep); }
 
-        size_type count(const Key& key) const;
+        size_type count(const Key& key) const { return _rep.count(key); }
 
-        iterator find(const Key& key);
+        iterator find(const Key& key) { return _rep.find(key); }
 
-        const_iterator find(const Key& key) const;
+        const_iterator find(const Key& key) const { return _rep.find(key); }
 
-        HxSTL::pair<iterator, iterator> equal_range(const Key& key);
+        HxSTL::pair<iterator, iterator> equal_range(const Key& key) { return _rep.equal_range(key); }
 
-        HxSTL::pair<const_iterator, const_iterator> equal_range(const Key& key) const;
+        HxSTL::pair<const_iterator, const_iterator> equal_range(const Key& key) const { return _rep.equal_range(key); }
 
-        iterator lower_bound(const Key& key) {
-            return _rep.lower_bound(key);
-        }
+        iterator lower_bound(const Key& key) { return _rep.lower_bound(key); }
 
-        const_iterator lower_bound(const Key& key) const {
-            return _rep.lower_bound(key);
-        }
+        const_iterator lower_bound(const Key& key) const { return _rep.lower_bound(key); }
 
-        iterator upper_bound(const Key& key) {
-            return _rep.upper_bound(key);
-        }
+        iterator upper_bound(const Key& key) { return _rep.upper_bound(key); }
 
-        const_iterator upper_bound(const Key& key) const {
-            return _rep.upper_bound(key);
-        }
+        const_iterator upper_bound(const Key& key) const { return _rep.upper_bound(key); }
 
-        key_compare key_comp() const;
+        key_compare key_comp() const { return _rep.get_compare(); }
 
-        value_compare value_comp() const;
+        value_compare value_comp() const { return _rep.get_compare(); }
     };
 
 }

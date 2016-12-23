@@ -39,6 +39,19 @@ TEST_CASE("rb_tree_member_insert_equal") {
 
 }
 
+TEST_CASE("rb_tree_member_insert_hint_equal") {
+
+    HxSTL::rb_tree<int, int, identity<int>, HxSTL::less<int>> t1;
+
+    REQUIRE(*(t1.insert_equal(1)) == 1);
+    REQUIRE(*(t1.insert_equal(1)) == 1);
+    REQUIRE(*(t1.insert_equal(3)) == 3);
+    REQUIRE(*(t1.insert_equal(2)) == 2);
+    REQUIRE(*(t1.insert_equal(t1.begin(), 0)) == 0);
+    REQUIRE(*(t1.insert_equal(t1.end(), 4)) == 4);
+
+}
+
 TEST_CASE("rb_tree_member_insert_unique") {
 
     HxSTL::rb_tree<int, int, identity<int>, HxSTL::less<int>> t1;
@@ -85,7 +98,7 @@ TEST_CASE("rb_tree_member_erase") {
 
 }
 
-TEST_CASE("rb_tree_lower_bound") {
+TEST_CASE("rb_tree_member_lower_bound") {
 
     HxSTL::rb_tree<int, int, identity<int>, HxSTL::less<int>> t1;
 
@@ -105,7 +118,7 @@ TEST_CASE("rb_tree_lower_bound") {
 
 }
 
-TEST_CASE("rb_tree_upper_bound") {
+TEST_CASE("rb_tree_member_upper_bound") {
 
     HxSTL::rb_tree<int, int, identity<int>, HxSTL::less<int>> t1;
 
@@ -120,5 +133,39 @@ TEST_CASE("rb_tree_upper_bound") {
     REQUIRE(*t1.upper_bound(6) == 7);
     REQUIRE(*t1.upper_bound(7) == 9);
     REQUIRE(t1.upper_bound(10) == t1.end());
+
+}
+
+TEST_CASE("rb_tree_member_find") {
+
+    HxSTL::rb_tree<int, int, identity<int>, HxSTL::less<int>> t1;
+
+    t1.insert_unique(5);
+    t1.insert_unique(9);
+    t1.insert_unique(1);
+    t1.insert_unique(7);
+    t1.insert_unique(3);
+
+    REQUIRE(t1.find(4) == t1.end());
+    REQUIRE(t1.upper_bound(10) == t1.end());
+    REQUIRE(*t1.find(5) == 5);
+    REQUIRE(*t1.find(9) == 9);
+    REQUIRE(*t1.find(1) == 1);
+    REQUIRE(*t1.find(7) == 7);
+
+}
+
+TEST_CASE("rb_tree_member_clear") {
+
+    HxSTL::rb_tree<int, int, identity<int>, HxSTL::less<int>> t1;
+
+    t1.insert_unique(5);
+    t1.insert_unique(9);
+    t1.insert_unique(1);
+    t1.insert_unique(7);
+    t1.insert_unique(3);
+    t1.clear();
+
+    REQUIRE(t1.size() == 0);
 
 }
