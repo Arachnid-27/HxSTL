@@ -796,12 +796,7 @@ namespace HxSTL {
 
     template <class T, class Alloc>
     bool operator==(const deque<T, Alloc> &lhs, const deque<T, Alloc> &rhs) {
-        if (lhs.size() != lhs.size()) return false;
-
-        for (auto first1 = lhs.begin(), last1 = lhs.end(), first2 = rhs.begin(); first1 != last1; ++first1, ++first2) {
-            if (*first1 != *first2) return false;
-        }
-        return true;
+        return lhs.size() == rhs.size() && HxSTL::equal(lhs.begin(), lhs.end(), rhs.begin());
     }
 
     template <class T, class Alloc>

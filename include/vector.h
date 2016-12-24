@@ -495,18 +495,7 @@ namespace HxSTL {
 
     template<class U, class A>
     bool operator==(const vector<U, A>& lhs, const vector<U, A>& rhs) {
-        if (lhs.size() != rhs.size()) return false;
-
-        auto first1 = lhs.cbegin();
-        auto last1 = lhs.cend();
-        auto first2 = rhs.cbegin();
-        auto last2 = rhs.cend();
-        while (first1 != last1) {
-            if (first1 != first2) return false; 
-            ++first1;
-            ++first2;
-        }
-        return true;
+        return lhs.size() == rhs.size() && HxSTL::equal(lhs.begin(), lhs.end(), rhs.begin());
     }
 
     template<class U, class A>

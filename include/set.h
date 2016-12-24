@@ -46,13 +46,13 @@ namespace HxSTL {
         template <class InputIt>
         set(InputIt first, InputIt last, const Alloc& alloc): set(first, last, Compare(), alloc) {}
 
-        set(const set& other): _rep(other) {}
+        set(const set& other): _rep(other._rep) {}
 
-        set(const set& other, const Alloc& alloc): _rep(other, alloc) {}
+        set(const set& other, const Alloc& alloc): _rep(other._rep, alloc) {}
 
-        set(set&& other): _rep(HxSTL::move(other)) {}
+        set(set&& other): _rep(HxSTL::move(other._rep)) {}
 
-        set(set&& other, const Alloc& alloc): _rep(HxSTL::move(other), alloc) {}
+        set(set&& other, const Alloc& alloc): _rep(HxSTL::move(other._rep), alloc) {}
 
         set(HxSTL::initializer_list<value_type> init, const Compare& comp = Compare(), const Alloc& alloc = Alloc())
             : _rep(comp, alloc) { insert(init.begin(), init.end()); }
@@ -159,7 +159,20 @@ namespace HxSTL {
         key_compare key_comp() const { return _rep.get_compare(); }
 
         value_compare value_comp() const { return _rep.get_compare(); }
+    public:
+        template <class K, class C, class A>
+        friend bool operator==(const set<K, C, A> &lhs, const set<K, C, A> &rhs);
     };
+
+    template <class Key, class Compare, class Alloc>
+    bool operator==(const set<Key, Compare, Alloc>& lhs, const set<Key, Compare, Alloc>& rhs) {
+        return lhs._rep == rhs._rep;
+    }
+
+    template <class Key, class Compare, class Alloc>
+    bool operator!=(const set<Key, Compare, Alloc>& lhs, const set<Key, Compare, Alloc>& rhs) {
+        return !(lhs == rhs);
+    }
 
 }
 

@@ -10,14 +10,6 @@ struct identity {
     T operator()(T x) { return x; }
 };
 
-TEST_CASE("rb_tree_default_constructor") {
-
-    HxSTL::rb_tree<int, int, identity<int>, HxSTL::less<int>> t1;
-
-    REQUIRE(t1.size() == 0);
-
-}
-
 TEST_CASE("rb_tree_member_insert_equal") {
 
     HxSTL::rb_tree<int, int, identity<int>, HxSTL::less<int>> t1;
@@ -49,27 +41,6 @@ TEST_CASE("rb_tree_member_insert_hint_equal") {
     REQUIRE(*(t1.insert_equal(2)) == 2);
     REQUIRE(*(t1.insert_equal(t1.begin(), 0)) == 0);
     REQUIRE(*(t1.insert_equal(t1.end(), 4)) == 4);
-
-}
-
-TEST_CASE("rb_tree_member_insert_unique") {
-
-    HxSTL::rb_tree<int, int, identity<int>, HxSTL::less<int>> t1;
-
-    REQUIRE(*(t1.insert_unique(1).first) == 1);
-    REQUIRE(!(t1.insert_unique(1).second));
-    REQUIRE(*(t1.insert_unique(3).first) == 3);
-    REQUIRE((t1.insert_unique(2).second));
-    REQUIRE(t1.size() == 3);
-
-    HxSTL::rb_tree<int, int, identity<int>, HxSTL::less<int>> t2;
-
-    srand((unsigned) time(NULL));
-    for (int i = 0; i != 100000; ++i) {
-        t2.insert_unique(rand() % 50000);
-    }
-
-    REQUIRE(t2.size() <= 50000);
 
 }
 
@@ -152,20 +123,5 @@ TEST_CASE("rb_tree_member_find") {
     REQUIRE(*t1.find(9) == 9);
     REQUIRE(*t1.find(1) == 1);
     REQUIRE(*t1.find(7) == 7);
-
-}
-
-TEST_CASE("rb_tree_member_clear") {
-
-    HxSTL::rb_tree<int, int, identity<int>, HxSTL::less<int>> t1;
-
-    t1.insert_unique(5);
-    t1.insert_unique(9);
-    t1.insert_unique(1);
-    t1.insert_unique(7);
-    t1.insert_unique(3);
-    t1.clear();
-
-    REQUIRE(t1.size() == 0);
 
 }
