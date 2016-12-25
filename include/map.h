@@ -1,5 +1,5 @@
-#ifndef _SET_H_
-#define _SET_H_
+#ifndef _MAP_H_
+#define _MAP_H_
 
 
 #include "rb_tree.h"
@@ -9,75 +9,87 @@
 namespace HxSTL {
 
     template <class T>
-    struct __identity {
-        const T& operator()(const T& value) const { return value; }
+    struct __select1st;
+   
+    template <class F, class S>
+    struct __select1st<HxSTL::pair<F, S>> {
+        const F& operator()(const HxSTL::pair<F, S>& pr) const { return pr.first; }
     };
 
-    template <class Key, class Compare = HxSTL::less<Key>, class Alloc = HxSTL::allocator<Key>>
-    class set {
+    template <class Key, class T, class Compare = HxSTL::less<Key>, 
+             class Alloc = HxSTL::allocator<HxSTL::pair<const Key, T>>>
+    class map {
     public:
         typedef Key                                     key_type;
-        typedef Key                                     value_type;
+        typedef T                                       mapped_type;
+        typedef HxSTL::pair<const Key, T>               value_type;
         typedef size_t                                  size_type;
         typedef ptrdiff_t                               difference_type;
         typedef Compare                                 key_compare;
-        typedef Compare                                 value_compare;
         typedef Alloc                                   allocator_type;
         typedef value_type&                             reference;
         typedef const value_type&                       const_reference;
         typedef value_type*                             pointer;
         typedef const value_type*                       const_pointer;
     protected:
-        typedef HxSTL::rb_tree<key_type, value_type, __identity<value_type>, key_compare, allocator_type>       rep_type;
+        typedef HxSTL::rb_tree<key_type, value_type, __select1st<value_type>, key_compare, allocator_type>       rep_type;
     public:
         typedef typename rep_type::const_iterator       iterator;
         typedef typename rep_type::const_iterator       const_iterator;
     protected:
         rep_type _rep;
     public:
-        set(): set(Compare()) {}
+        map();
 
-        explicit set(const Compare& comp, const Alloc& alloc = Alloc()): _rep(comp, alloc) {}
+        explicit map(const Compare& comp, const Alloc& alloc = Alloc());
 
-        explicit set(const Alloc& alloc): _rep(Compare(), alloc) {}
-
-        template <class InputIt>
-        set(InputIt first, InputIt last, const Compare& comp = Compare(), const Alloc& alloc = Alloc())
-            : _rep(comp, alloc) { insert(first, last); }
+        explicit map(const Alloc& alloc);
 
         template <class InputIt>
-        set(InputIt first, InputIt last, const Alloc& alloc): set(first, last, Compare(), alloc) {}
+        map(InputIt first, InputIt last, const Compare& comp = Compare(), const Alloc& alloc = Alloc());
 
-        set(const set& other): _rep(other._rep) {}
+        template <class InputIt>
+        map(InputIt first, InputIt last, const Alloc& alloc);
 
-        set(const set& other, const Alloc& alloc): _rep(other._rep, alloc) {}
+        map(const map& other);
 
-        set(set&& other): _rep(HxSTL::move(other._rep)) {}
+        map(const map& other, const Alloc& alloc);
 
-        set(set&& other, const Alloc& alloc): _rep(HxSTL::move(other._rep), alloc) {}
+        map(map&& other);
 
-        set(HxSTL::initializer_list<value_type> init, const Compare& comp = Compare(), const Alloc& alloc = Alloc())
-            : _rep(comp, alloc) { insert(init.begin(), init.end()); }
+        map(map&& other, const Alloc& alloc);
 
-        set(HxSTL::initializer_list<value_type> init, const Alloc& alloc): set(init, Compare(), alloc) {}
+        map(HxSTL::initializer_list<value_type> init, const Compare& comp = Compare(), const Alloc& alloc = Alloc());
 
-        set& operator=(const set& other) {
+        map(HxSTL::initializer_list<value_type> init, const Alloc& alloc);
+
+        ~map();
+
+        map& operator=(const map& other) {
             _rep = other._rep;
             return *this;
         }
 
-        set& operator=(set&& other) {
+        map& operator=(map&& other) {
             _rep = HxSTL::move(other._rep);
             return *this;
         }
 
-        set& operator=(HxSTL::initializer_list<value_type> init) {
+        map& operator=(HxSTL::initializer_list<value_type> init) {
             clear();
             insert(init.begin(), init.end());
             return *this;
         }
 
         Alloc get_allocator() const { return _rep.get_allocator(); }
+
+        T& at(const Key& key);
+
+        const T& at(const Key& key) const;
+
+        T& operator[](const Key& key);
+
+        T& operator[](Key& key);
 
         iterator begin() noexcept { return _rep.begin(); }
 
@@ -148,7 +160,7 @@ namespace HxSTL {
 
         size_type erase(const Key& key) { return _rep.erase(key); }
 
-        void swap(set& other) { HxSTL::swap(_rep, other._rep); }
+        void swap(map& other) { HxSTL::swap(_rep, other._rep); }
 
         size_type count(const Key& key) const { return _rep.count(key); }
 
@@ -170,21 +182,8 @@ namespace HxSTL {
 
         key_compare key_comp() const { return _rep.get_compare(); }
 
-        value_compare value_comp() const { return _rep.get_compare(); }
-    public:
-        template <class K, class C, class A>
-        friend bool operator==(const set<K, C, A> &lhs, const set<K, C, A> &rhs);
+    //  value_compare value_comp() const { return _rep.get_compare(); }
     };
-
-    template <class Key, class Compare, class Alloc>
-    bool operator==(const set<Key, Compare, Alloc>& lhs, const set<Key, Compare, Alloc>& rhs) {
-        return lhs._rep == rhs._rep;
-    }
-
-    template <class Key, class Compare, class Alloc>
-    bool operator!=(const set<Key, Compare, Alloc>& lhs, const set<Key, Compare, Alloc>& rhs) {
-        return !(lhs == rhs);
-    }
 
 }
 
