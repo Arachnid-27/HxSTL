@@ -293,7 +293,7 @@ namespace HxSTL {
                 if (x != NULL) x -> parent = y -> parent;
                 y -> parent -> left = x;    // y 一定是左孩子
                 y -> right = z -> right;
-                z -> right -> parent = y -> parent;
+                z -> right -> parent = y;
             } else {
                 //     z
                 //    / \

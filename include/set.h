@@ -59,11 +59,21 @@ namespace HxSTL {
 
         set(HxSTL::initializer_list<value_type> init, const Alloc& alloc): set(init, Compare(), alloc) {}
 
-        set& operator=(const set& other);
+        set& operator=(const set& other) {
+            _rep = other._rep;
+            return *this;
+        }
 
-        set& operator=(set&& other);
+        set& operator=(set&& other) {
+            _rep = HxSTL::move(other._rep);
+            return *this;
+        }
 
-        set& operator=(HxSTL::initializer_list<value_type> init);
+        set& operator=(HxSTL::initializer_list<value_type> init) {
+            clear();
+            insert(init.begin(), init.end());
+            return *this;
+        }
 
         Alloc get_allocator() const { return _rep.get_allocator(); }
 
