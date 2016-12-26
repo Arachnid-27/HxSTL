@@ -15,10 +15,11 @@ namespace HxSTL {
 
     template <class T, class Ref, class Ptr>
     struct __rb_tree_iterator: public __rb_tree_iterator_base {
-        typedef T                       value_type;
-        typedef Ref                     reference;
-        typedef Ptr                     pointer;
-        typedef __rb_tree_node<T>*      link_type;
+        typedef HxSTL::bidirectional_iterator_tag       iterator_category;
+        typedef T                                       value_type;
+        typedef Ref                                     reference;
+        typedef Ptr                                     pointer;
+        typedef __rb_tree_node<T>*                      link_type;
 
         __rb_tree_iterator() {}
 
@@ -99,7 +100,7 @@ namespace HxSTL {
         node_allocator_type _node_alloc;
     protected:
         template <class... Args>
-        link_type create_node(Args&&... value);
+        link_type create_node(Args&&... args);
         link_type clone_node(link_type node);
         void destroy_node(link_type node);
         void reset();
@@ -206,7 +207,7 @@ namespace HxSTL {
         }
 
         template <class... Args>
-        iterator emplace_hint_equal(iterator hint, Args&&... args) {
+        iterator emplace_hint_equal(const_iterator hint, Args&&... args) {
         }
 
         template <class... Args>
@@ -327,9 +328,9 @@ namespace HxSTL {
     template <class K, class V, class KOV, class Compare, class Alloc>
     template <class... Args>
     typename rb_tree<K, V, KOV, Compare, Alloc>::link_type
-    rb_tree<K, V, KOV, Compare, Alloc>::create_node(Args&&... value) {
+    rb_tree<K, V, KOV, Compare, Alloc>::create_node(Args&&... args) {
         link_type node = _node_alloc.allocate(1);
-        _node_alloc.construct(&(node -> value), HxSTL::forward<Args>(value)...);
+        _node_alloc.construct(&(node -> value), HxSTL::forward<Args>(args)...);
         return node;
     }
 
