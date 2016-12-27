@@ -34,6 +34,8 @@ namespace HxSTL {
         }
     };
 
+    constexpr size_t __prime_hash_policy::prime_list[PRIME_NUM];
+
     struct __hash_node_base {
         typedef __hash_node_base*      base_link_type;
         base_link_type next;
@@ -52,6 +54,65 @@ namespace HxSTL {
             node = node -> next;
         }
     };
+
+    template <class Result, class Arg>
+    struct __hash_base {
+        typedef Result      result_type;
+        typedef Arg         argument_type;
+    };
+
+    template <class T>
+    struct hash;
+
+    template <class T>
+    struct hash<T*>: public __hash_base<size_t, T*> {
+        size_t operator()(T* p) const noexcept {
+            return reinterpret_cast<size_t>(p);
+        }
+    };
+
+#define _define_trivial_hash(T)                     \
+    template <>                                     \
+    struct hash<T>: public __hash_base<size_t, T> { \
+        size_t operator()(T value) const noexcept { \
+            return static_cast<size_t>(value);      \
+        }                                           \
+    };
+
+    _define_trivial_hash(bool);
+
+    _define_trivial_hash(char);
+
+    _define_trivial_hash(signed char);
+
+    _define_trivial_hash(unsigned char);
+
+    _define_trivial_hash(wchar_t);
+
+    _define_trivial_hash(char16_t);
+
+    _define_trivial_hash(char32_t);
+
+    _define_trivial_hash(short);
+
+    _define_trivial_hash(unsigned short);
+
+    _define_trivial_hash(int);
+
+    _define_trivial_hash(unsigned int);
+
+    _define_trivial_hash(long);
+
+    _define_trivial_hash(unsigned long);
+
+    _define_trivial_hash(long long);
+
+    _define_trivial_hash(unsigned long long);
+
+#undef _define_trivial_hash
+
+
+
 
 }
 
