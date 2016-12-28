@@ -37,7 +37,8 @@ namespace HxSTL {
     constexpr size_t __prime_hash_policy::prime_list[PRIME_NUM];
 
     struct __hash_node_base {
-        typedef __hash_node_base*      base_link_type;
+        typedef HxSTL::forward_iterator_tag     iterator_category;
+        typedef __hash_node_base*               base_link_type;
         base_link_type next;
     };
 
@@ -49,10 +50,17 @@ namespace HxSTL {
         __hash_table_iterator_base() {}
 
         __hash_table_iterator_base(base_link_type x): node(x) {}
+    };
 
-        void increment() noexcept {
-            node = node -> next;
-        }
+    struct __hash_table_local_iterator_base: public __hash_table_iterator_base {
+        size_t bucket;
+        size_t bucket_count;
+
+        __hash_table_local_iterator_base(size_t bkt, size_t cnt)
+            : bucket(bkt), bucket_count(cnt) {}
+
+        __hash_table_local_iterator_base(base_link_type x, size_t bkt, size_t cnt)
+            : __hash_table_iterator_base(x), bucket(bkt), bucket_count(cnt) {}
     };
 
     template <class Result, class Arg>
@@ -110,9 +118,6 @@ namespace HxSTL {
     _define_trivial_hash(unsigned long long);
 
 #undef _define_trivial_hash
-
-
-
 
 }
 

@@ -134,6 +134,11 @@ namespace HxSTL {
         bool operator()(const T& lhs, const T& rhs) const { return lhs > rhs; }
     };
 
+    template <class T>
+    struct __identity {
+        const T& operator()(const T& value) const { return value; }
+    };
+
 }
 
 

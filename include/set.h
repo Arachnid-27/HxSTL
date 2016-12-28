@@ -8,11 +8,6 @@
 
 namespace HxSTL {
 
-    template <class T>
-    struct __identity {
-        const T& operator()(const T& value) const { return value; }
-    };
-
     template <class Key, class Compare = HxSTL::less<Key>, class Alloc = HxSTL::allocator<Key>>
     class set {
     public:
