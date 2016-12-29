@@ -33,20 +33,21 @@ namespace HxSTL {
         rep_type _rep;
     public:
         explicit unordered_set(size_type bucket = 0, const Hash& hash = Hash(), 
-                const Equal& equal = Equal(), const Alloc& alloc = Alloc());
+                const Equal& equal = Equal(), const Alloc& alloc = Alloc())
+            : _rep(bucket, hash, equal, alloc) {}
 
         template <class InputIt>
         unordered_set(InputIt first, InputIt last, size_type bucket = 0, 
-                const Hash& hash = Hash(), const Equal& equal = Equal(), const Alloc& alloc = Alloc());
+                const Hash& hash = Hash(), const Equal& equal = Equal(), const Alloc& alloc = Alloc())
+            : _rep(bucket, hash, equal, alloc) { insert(first, last); }
 
-        unordered_set(const unordered_set& other);
+        unordered_set(const unordered_set& other): _rep(other) {}
 
-        unordered_set(unordered_set&& other);
+        unordered_set(unordered_set&& other): _rep(HxSTL::move(other)) {}
 
         unordered_set(HxSTL::initializer_list<value_type> init, size_type bucket = 0, 
-                const Hash& hash = Hash(), const Equal& equal = Equal(), const Alloc& alloc = Alloc());
-    
-        ~unordered_set();
+                const Hash& hash = Hash(), const Equal& equal = Equal(), const Alloc& alloc = Alloc())
+            : _rep(bucket, hash, equal, alloc) { insert(init); }
 
         unordered_set& operator=(const unordered_set& other);
 
@@ -54,40 +55,54 @@ namespace HxSTL {
 
         unordered_set& operator=(HxSTL::initializer_list<value_type> init);
 
-        allocator_type get_allocator() const noexcept;
+        allocator_type get_allocator() const noexcept { return _rep.get_allocator(); }
 
-        iterator begin() noexcept;
+        iterator begin() noexcept { return _rep.begin(); }
 
-        const_iterator begin() const noexcept;
+        const_iterator begin() const noexcept { return _rep.begin(); }
 
-        const_iterator cbegin() const noexcept;
+        const_iterator cbegin() const noexcept { return _rep.cbegin(); }
         
-        iterator end() noexcept;
+        iterator end() noexcept { return _rep.end(); }
 
-        const_iterator end() const noexcept;
+        const_iterator end() const noexcept { return _rep.end(); }
 
-        const_iterator cend() const noexcept;
+        const_iterator cend() const noexcept { return _rep.cend(); }
 
-        bool empty() const noexcept;
+        bool empty() const noexcept { return _rep.empty(); }
 
-        size_type size() const noexcept;
+        size_type size() const noexcept { return _rep.size(); }
 
-        size_type max_size() const noexcept;
+        size_type max_size() const noexcept { return _rep.max_size(); }
 
-        void clear();
+        void clear() { _rep.clear(); }
 
-        HxSTL::pair<iterator, bool> insert(const value_type& value);
+        HxSTL::pair<iterator, bool> insert(const value_type& value) {
+            return _rep.insert_unique(value);
+        }
 
-        HxSTL::pair<iterator, bool> insert(value_type&& value);
+        HxSTL::pair<iterator, bool> insert(value_type&& value) {
+            return _rep.isnert_unique(HxSTL::move(value));
+        }
 
-        iterator insert(const_iterator hint, const value_type& value);
+        iterator insert(const_iterator hint, const value_type& value) {
+            return _rep.insert_unique(hint, value);
+        }
 
-        iterator insert(const_iterator hint, value_type&& value);
+        iterator insert(const_iterator hint, value_type&& value) {
+            return _rep.insert_unique(hint, HxSTL::move(value));
+        }
 
         template <class InputIt>
-        void insert(InputIt first, InputIt last);
+        void insert(InputIt first, InputIt last) {
+            while (first != last) {
+                _rep.insert_unique(*first);
+            }
+        }
 
-        void insert(HxSTL::initializer_list<value_type> init);
+        void insert(HxSTL::initializer_list<value_type> init) {
+            insert(init.begin(), init.end());
+        }
 
         template <class... Args>
         HxSTL::pair<iterator, bool> emplace(Args&&... args);
@@ -95,51 +110,51 @@ namespace HxSTL {
         template <class... Args>
         iterator emplace_hint(const_iterator hint, Args&&... args);
 
-        iterator erase(const_iterator pos);
+        iterator erase(const_iterator pos) { return _rep.erase(pos); }
 
-        iterator erase(const_iterator first, const_iterator last);
+        iterator erase(const_iterator first, const_iterator last) { return _rep.erase(first, last); }
 
-        size_type erase(const key_type& key);
+        size_type erase(const key_type& key) { return _rep.erase(key); }
 
-        void swap(unordered_set& other);
+        void swap(unordered_set& other) { HxSTL::swap(_rep, other._rep); }
 
-        size_type count(const Key& key) const;
+        size_type count(const Key& key) const { return _rep.count(key); }
 
-        iterator find(const Key& key);
+        iterator find(const Key& key) { return _rep.find(key); }
 
-        const_iterator find(const Key& key) const;
+        const_iterator find(const Key& key) const { return _rep.find(key); }
 
-        HxSTL::pair<iterator, iterator> equal_range(const Key& key);
+        HxSTL::pair<iterator, iterator> equal_range(const Key& key) { return _rep.equal_range(key); }
 
-        HxSTL::pair<const_iterator, const_iterator> equal_range(const Key& key) const;
+        HxSTL::pair<const_iterator, const_iterator> equal_range(const Key& key) const { return _rep.equal_range(key); }
         
-        local_iterator begin(size_type n) noexcept;
+        local_iterator begin(size_type n) noexcept { return _rep.begin(n); }
 
-        const_local_iterator begin(size_type n) const noexcept;
+        const_local_iterator begin(size_type n) const noexcept { return _rep.begin(n); }
 
-        const_local_iterator cbegin(size_type n) const noexcept;
+        const_local_iterator cbegin(size_type n) const noexcept { return _rep.cbegin(n); }
 
-        local_iterator end(size_type n) noexcept;
+        local_iterator end(size_type n) noexcept { return _rep.end(n); }
 
-        const_local_iterator end(size_type n) const noexcept;
+        const_local_iterator end(size_type n) const noexcept { return _rep.end(n); }
 
-        const_local_iterator cend(size_type n) const noexcept;
+        const_local_iterator cend(size_type n) const noexcept { return _rep.cend(n); }
 
-        size_type bucket_count() const noexcept;
+        size_type bucket_count() const noexcept { return _rep.bucket_count(); }
 
-        size_type max_bucket_count() const noexcept;
+        size_type max_bucket_count() const noexcept { return _rep.max_bucket_count(); }
 
-        size_type bucket_size(size_type n) const noexcept;
+        size_type bucket_size(size_type n) const noexcept { return _rep.bucket_size(n); }
 
-        size_type bucket_size(const Key& key) const noexcept;
+        size_type bucket(const Key& key) const noexcept { return _rep.bucket(key); }
 
-        float load_factor() const noexcept;
+        float load_factor() const noexcept { return _rep.load_factor(); }
 
-        float max_load_factor() const noexcept;
+        float max_load_factor() const noexcept { return _rep.max_load_factor(); }
 
-        void max_load_factor(float ml);
+        void max_load_factor(float ml) { _rep.max_load_factor(ml); }
 
-        void rehash(size_type count);
+        void rehash(size_type count) { _rep.rehash(count); }
 
         void reverse(size_type count);
 

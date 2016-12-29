@@ -165,8 +165,8 @@ namespace HxSTL {
         typedef const value_type*                                       const_pointer;
         typedef deque_iterator<T, T&, T*>                               iterator;
         typedef deque_iterator<T, const T&, const T*>                   const_iterator;
-    //  typedef reverse_iterator<iterator>                              reverse_iterator;
-    //  typedef reverse_iterator<const_iterator>                        const_reverse_iterator;
+        typedef HxSTL::reverse_iterator<iterator>                       reverse_iterator;
+        typedef HxSTL::reverse_iterator<const_iterator>                 const_reverse_iterator;
         typedef ptrdiff_t                                               difference_type;
         typedef size_t                                                  size_type;
 
@@ -314,29 +314,29 @@ namespace HxSTL {
 
         const_reference back() const { return *(end() - 1); }
 
-        iterator begin() { return _start; }
+        iterator begin() noexcept { return _start; }
 
-        const_iterator begin() const { return _start; }
+        const_iterator begin() const noexcept { return _start; }
 
-        const_iterator cbegin() const { return _start; }
+        const_iterator cbegin() const noexcept { return _start; }
 
-        iterator end() { return _finish; }
+        iterator end() noexcept { return _finish; }
 
-        const_iterator end() const { return _finish; }
+        const_iterator end() const noexcept { return _finish; }
 
-        const_iterator cend() const { return _finish; }
+        const_iterator cend() const noexcept { return _finish; }
 
-    //  reverse_iterator rbegin();
+        reverse_iterator rbegin() noexcept { return reverse_iterator(end()); }
 
-    //  const_reverse_iterator rbegin() const;
+        const_reverse_iterator rbegin() const noexcept { return reverse_iterator(end()); }
 
-    //  const_reverse_iterator crbegin() const;
+        const_reverse_iterator crbegin() const noexcept { return reverse_iterator(end()); }
 
-    //  reverse_iterator rend();
+        reverse_iterator rend() noexcept { return reverse_iterator(begin()); }
 
-    //  const_reverse_iterator rend() const;
+        const_reverse_iterator rend() const noexcept { return reverse_iterator(begin()); }
     
-    //  const_reverse_iterator crend() const;
+        const_reverse_iterator crend() const noexcept { return reverse_iterator(begin()); }
 
         bool empty() const { return begin() == end(); }
 

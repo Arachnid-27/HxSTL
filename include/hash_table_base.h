@@ -37,17 +37,17 @@ namespace HxSTL {
     constexpr size_t __prime_hash_policy::prime_list[PRIME_NUM];
 
     struct __hash_node_base {
-        typedef HxSTL::forward_iterator_tag     iterator_category;
         typedef __hash_node_base*               base_link_type;
         base_link_type next;
     };
 
     struct __hash_table_iterator_base {
+        typedef HxSTL::forward_iterator_tag             iterator_category;
         typedef __hash_node_base::base_link_type        base_link_type;
 
         base_link_type node;
 
-        __hash_table_iterator_base() {}
+        __hash_table_iterator_base(): node(nullptr) {}
 
         __hash_table_iterator_base(base_link_type x): node(x) {}
     };

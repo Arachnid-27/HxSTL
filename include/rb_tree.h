@@ -19,6 +19,8 @@ namespace HxSTL {
         typedef T                                       value_type;
         typedef Ref                                     reference;
         typedef Ptr                                     pointer;
+        typedef size_t                                  size_type;
+        typedef ptrdiff_t                               difference_type;
         typedef __rb_tree_node<T>*                      link_type;
 
         __rb_tree_iterator() {}
