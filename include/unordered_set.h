@@ -39,21 +39,31 @@ namespace HxSTL {
         template <class InputIt>
         unordered_set(InputIt first, InputIt last, size_type bucket = 0, 
                 const Hash& hash = Hash(), const Equal& equal = Equal(), const Alloc& alloc = Alloc())
-            : _rep(bucket, hash, equal, alloc) { insert(first, last); }
+            : _rep(first, last, bucket, hash, equal, alloc) { insert(first, last); }
 
-        unordered_set(const unordered_set& other): _rep(other) {}
+        unordered_set(const unordered_set& other): _rep(other._rep) {}
 
-        unordered_set(unordered_set&& other): _rep(HxSTL::move(other)) {}
+        unordered_set(unordered_set&& other): _rep(HxSTL::move(other._rep)) {}
 
         unordered_set(HxSTL::initializer_list<value_type> init, size_type bucket = 0, 
                 const Hash& hash = Hash(), const Equal& equal = Equal(), const Alloc& alloc = Alloc())
-            : _rep(bucket, hash, equal, alloc) { insert(init); }
+            : unordered_set(init.begin(), init.end(), bucket, hash, equal, alloc) {}
 
-        unordered_set& operator=(const unordered_set& other);
+        unordered_set& operator=(const unordered_set& other) {
+            _rep = other._rep;
+            return *this;
+        }
 
-        unordered_set& operator=(unordered_set&& other);
+        unordered_set& operator=(unordered_set&& other) {
+            _rep = HxSTL::move(other._rep);
+            return *this;
+        }
 
-        unordered_set& operator=(HxSTL::initializer_list<value_type> init);
+        unordered_set& operator=(HxSTL::initializer_list<value_type> init) {
+            clear();
+            insert(init);
+            return *this;
+        }
 
         allocator_type get_allocator() const noexcept { return _rep.get_allocator(); }
 
@@ -96,7 +106,7 @@ namespace HxSTL {
         template <class InputIt>
         void insert(InputIt first, InputIt last) {
             while (first != last) {
-                _rep.insert_unique(*first);
+                _rep.insert_unique(*first++);
             }
         }
 
@@ -161,7 +171,20 @@ namespace HxSTL {
         Hash hash_function() const noexcept;
 
         Equal key_eq() const noexcept;
+    public:
+        template <class K, class H, class E, class A>
+        friend bool operator==(const unordered_set<K, H, E, A> &lhs, const unordered_set<K, H, E, A> &rhs);
     };
+
+    template <class K, class H, class E, class A>
+    bool operator==(const unordered_set<K, H, E, A> &lhs, const unordered_set<K, H, E, A> &rhs) {
+        return lhs._rep == rhs._rep;
+    }
+
+    template <class K, class H, class E, class A>
+    bool operator!=(const unordered_set<K, H, E, A> &lhs, const unordered_set<K, H, E, A> &rhs) {
+        return !(lhs == rhs);
+    }
 
 }
 
