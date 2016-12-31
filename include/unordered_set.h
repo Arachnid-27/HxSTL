@@ -92,7 +92,7 @@ namespace HxSTL {
         }
 
         HxSTL::pair<iterator, bool> insert(value_type&& value) {
-            return _rep.isnert_unique(HxSTL::move(value));
+            return _rep.insert_unique(HxSTL::move(value));
         }
 
         iterator insert(const_iterator hint, const value_type& value) {
@@ -115,10 +115,14 @@ namespace HxSTL {
         }
 
         template <class... Args>
-        HxSTL::pair<iterator, bool> emplace(Args&&... args);
+        HxSTL::pair<iterator, bool> emplace(Args&&... args) {
+            return _rep.emplace_unique(HxSTL::forward<Args>(args)...);
+        }
 
         template <class... Args>
-        iterator emplace_hint(const_iterator hint, Args&&... args);
+        iterator emplace_hint(const_iterator hint, Args&&... args) {
+            return _rep.emplace_hint_unique(hint, HxSTL::forward<Args>(args)...);
+        }
 
         iterator erase(const_iterator pos) { return _rep.erase(pos); }
 

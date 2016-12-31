@@ -626,11 +626,13 @@ namespace HxSTL {
     template <class K, class V, class KOV, class Compare, class Alloc>
     typename rb_tree<K, V, KOV, Compare, Alloc>::iterator
     rb_tree<K, V, KOV, Compare, Alloc>::erase(const_iterator first, const_iterator last) {
-        if (first == begin() && last == end()) {
-            clear();
-        } else {
-            while (first != last) {
-                erase(first++);
+        if (first != last) {
+            if (first == begin() && last == end()) {
+                clear();
+            } else {
+                while (first != last) {
+                    erase(first++);
+                }
             }
         }
 

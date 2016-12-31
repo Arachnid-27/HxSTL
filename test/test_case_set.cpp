@@ -62,7 +62,7 @@ int main() {
             assert(s2 == HxSTL::set<int>({ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 }));
         }
 
-        { // move assignment
+        { // init assignment
             HxSTL::set<int> s1;
 
             assert((s1 = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 }) == HxSTL::set<int>({ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 }));

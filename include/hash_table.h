@@ -14,37 +14,6 @@ namespace HxSTL {
         T value;
     };
 
-    template <class T, class Ref, class Ptr>
-    struct __hash_table_iterator: public __hash_table_iterator_base {
-        typedef T                               value_type;
-        typedef Ref                             reference;
-        typedef Ptr                             pointer;
-        typedef size_t                          size_type;
-        typedef ptrdiff_t                       difference_type;
-        typedef __hash_node<T>*                 link_type;
-
-        __hash_table_iterator() {}
-
-        __hash_table_iterator(base_link_type x): __hash_table_iterator_base(x) {}
-
-        __hash_table_iterator(const __hash_table_iterator<T, T&, T*>& other): __hash_table_iterator_base(other.node) {}
-
-        reference operator*() const noexcept { return static_cast<link_type>(node) -> value; }
-
-        pointer operator->() const noexcept { return &(operator*()); }
-
-        __hash_table_iterator& operator++() noexcept {
-            node = node -> next;
-            return *this;
-        }
-
-        __hash_table_iterator operator++(int) noexcept {
-            auto it = *this;
-            node = node -> next;
-            return it;
-        }
-    };
-
     template <class T, class Ref, class Ptr, class Extract, class Hash>
     struct __hash_table_local_iterator: public __hash_table_local_iterator_base {
         typedef T                               value_type;
@@ -84,26 +53,6 @@ namespace HxSTL {
         }
     };
 
-    template <class T, class Ref, class Ptr>
-    bool operator==(const __hash_table_iterator<T, Ref, Ptr>& lhs, const __hash_table_iterator<T, Ref, Ptr>& rhs) noexcept {
-        return lhs.node == rhs.node;
-    }
-
-    template <class T, class Ref, class Ptr>
-    bool operator!=(const __hash_table_iterator<T, Ref, Ptr>& lhs, const __hash_table_iterator<T, Ref, Ptr>& rhs) noexcept {
-        return lhs.node != rhs.node;
-    }
-
-    template <class T, class RefL, class PtrL, class RefR, class PtrR>
-    bool operator==(const __hash_table_iterator<T, RefL, PtrL>& lhs, const __hash_table_iterator<T, RefR, PtrR>& rhs) noexcept {
-        return lhs.node == rhs.node;
-    }
-
-    template <class T, class RefL, class PtrL, class RefR, class PtrR>
-    bool operator!=(const __hash_table_iterator<T, RefL, PtrL>& lhs, const __hash_table_iterator<T, RefR, PtrR>& rhs) noexcept {
-        return lhs.node != rhs.node;
-    }
-
     template <class T, class Ref, class Ptr, class Extract, class Hash>
     bool operator==(const __hash_table_local_iterator<T, Ref, Ptr, Extract, Hash>& lhs, 
             const __hash_table_local_iterator<T, Ref, Ptr, Extract, Hash>& rhs) noexcept {
@@ -125,6 +74,61 @@ namespace HxSTL {
     template <class T, class RefL, class PtrL, class RefR, class PtrR, class Extract, class Hash>
     bool operator!=(const __hash_table_local_iterator<T, RefL, PtrL, Extract, Hash>& lhs, 
             const __hash_table_local_iterator<T, RefR, PtrR, Extract, Hash>& rhs) noexcept {
+        return lhs.node != rhs.node;
+    }
+
+    template <class T, class Ref, class Ptr>
+    struct __hash_table_iterator: public __hash_table_iterator_base {
+        typedef T                               value_type;
+        typedef Ref                             reference;
+        typedef Ptr                             pointer;
+        typedef size_t                          size_type;
+        typedef ptrdiff_t                       difference_type;
+        typedef __hash_node<T>*                 link_type;
+
+        __hash_table_iterator() {}
+
+        __hash_table_iterator(base_link_type x): __hash_table_iterator_base(x) {}
+
+        __hash_table_iterator(const __hash_table_iterator<T, T&, T*>& other): __hash_table_iterator_base(other.node) {}
+
+        template <class Extract, class Hash>
+        __hash_table_iterator(const __hash_table_local_iterator<T, Ref, Ptr, Extract, Hash>& other)
+        : __hash_table_iterator_base(other.node) {}
+
+        reference operator*() const noexcept { return static_cast<link_type>(node) -> value; }
+
+        pointer operator->() const noexcept { return &(operator*()); }
+
+        __hash_table_iterator& operator++() noexcept {
+            node = node -> next;
+            return *this;
+        }
+
+        __hash_table_iterator operator++(int) noexcept {
+            auto it = *this;
+            node = node -> next;
+            return it;
+        }
+    };
+
+    template <class T, class Ref, class Ptr>
+    bool operator==(const __hash_table_iterator<T, Ref, Ptr>& lhs, const __hash_table_iterator<T, Ref, Ptr>& rhs) noexcept {
+        return lhs.node == rhs.node;
+    }
+
+    template <class T, class Ref, class Ptr>
+    bool operator!=(const __hash_table_iterator<T, Ref, Ptr>& lhs, const __hash_table_iterator<T, Ref, Ptr>& rhs) noexcept {
+        return lhs.node != rhs.node;
+    }
+
+    template <class T, class RefL, class PtrL, class RefR, class PtrR>
+    bool operator==(const __hash_table_iterator<T, RefL, PtrL>& lhs, const __hash_table_iterator<T, RefR, PtrR>& rhs) noexcept {
+        return lhs.node == rhs.node;
+    }
+
+    template <class T, class RefL, class PtrL, class RefR, class PtrR>
+    bool operator!=(const __hash_table_iterator<T, RefL, PtrL>& lhs, const __hash_table_iterator<T, RefR, PtrR>& rhs) noexcept {
         return lhs.node != rhs.node;
     }
 
@@ -169,12 +173,12 @@ namespace HxSTL {
         template <class... Args>
         bucket_type create_node(Args&&... args);
         void destroy_node(bucket_type node);
-        HxSTL::pair<bool, bucket_type> find_node_before(size_type bkt, const Value& value);
+        bucket_type find_node(size_type bkt, const Value& value);
+        bucket_type find_node_before(size_type bkt, bucket_type node);
         void initialize_aux(size_type count);
         void copy_aux(bucket_type first);
         void insert_aux(size_type bkt, bucket_type node);
         void insert_aux(bucket_type pos, bucket_type node);
-        size_type erase_aux(const Value& value);
         void clear_aux();
     public:
         hash_table(size_type bucket, const Hash& hash, const Equal& equal, const Alloc& alloc)
@@ -214,7 +218,7 @@ namespace HxSTL {
             return *this;
         }
 
-        hash_table&& operator=(hash_table&& other) {
+        hash_table& operator=(hash_table&& other) {
             hash_table(HxSTL::move(other)).swap(*this);
             return *this;
         }
@@ -243,6 +247,16 @@ namespace HxSTL {
             _start = nullptr;
         }
 
+        void swap(hash_table& other) {
+            HxSTL::swap(_max_factor, other._max_factor);
+            HxSTL::swap(_count, other._count);
+            HxSTL::swap(_bucket_count, other._bucket_count);
+            HxSTL::swap(_buckets, other._buckets);
+            HxSTL::swap(_start, other._start);
+            HxSTL::swap(_hash, other._hash);
+            HxSTL::swap(_equal, other._equal);
+        }
+
         template <class T>
         iterator insert_equal(T&& value);
 
@@ -257,23 +271,25 @@ namespace HxSTL {
             return insert_unique(HxSTL::forward<T>(value)).first;
         }
 
-        iterator erase(const_iterator pos) {
-            iterator it = *pos++;
-            erase_aux(*it);
-            return iterator(pos.node);
+        template <class... Args>
+        iterator emplace_equal(Args&&... args);
+
+        template <class... Args>
+        iterator emplace_hint_equal(const_iterator hint, Args&&... args);
+
+        template <class... Args>
+        HxSTL::pair<iterator, bool> emplace_unique(Args&&... args);
+
+        template <class... Args>
+        iterator emplace_hint_unique(const_iterator, Args&&... args) {
+            return insert_unique(HxSTL::forward<Args>(args)...).first;
         }
 
-        iterator erase(const_iterator first, const_iterator last) {
-            if (first == begin() && last == end()) {
-                clear();
-            } else {
-                while (first != last) erase_aux(*first++);
-            }
+        iterator erase(const_iterator pos);
 
-            return last;
-        }
+        iterator erase(const_iterator first, const_iterator last);
 
-        size_type erase(const Value& value) { return erase_aux(value); }
+        size_type erase(const Value& value);
 
         size_type count(const Key& key) const noexcept {
             const size_type bkt = bucket(key);
@@ -290,9 +306,19 @@ namespace HxSTL {
             return HxSTL::find_if(begin(bkt), end(bkt), [&key, this] (const int &val) { return this -> _equal(key, Extract()(val)); });
         }
 
-        HxSTL::pair<iterator, iterator> equal_range(const Key& key);
+        HxSTL::pair<iterator, iterator> equal_range(const Key& key) {
+            iterator it1 = find(key);
+            iterator it2 = HxSTL::find_if_not(it1, end(),
+                    [&key, this] (const int &val) { return this -> _equal(key, Extract()(val)); });
+            return HxSTL::pair<iterator, iterator>(it1, it2);
+        }
 
-        HxSTL::pair<const_iterator, const_iterator> equal_range(const Key& key) const;
+        HxSTL::pair<const_iterator, const_iterator> equal_range(const Key& key) const {
+            const_iterator it1 = find(key);
+            const_iterator it2 = HxSTL::find_if_not(it1, end(),
+                    [&key, this] (const int &val) { return this -> _equal(key, Extract()(val)); });
+            return HxSTL::pair<const_iterator, const_iterator>(it1, it2);
+        }
 
         local_iterator begin(size_type n) noexcept {
             return local_iterator(_buckets[n], n, _bucket_count);
@@ -431,46 +457,30 @@ namespace HxSTL {
     }
 
     template <class K, class V, class Ex, class Eq, class H, class A>
-    auto hash_table<K, V, Ex, Eq, H, A>::erase_aux(const V& value) -> size_type {
-        size_type count = _count;
-        size_type bkt = BKT_NUM(value);
-
+    auto hash_table<K, V, Ex, Eq, H, A>::find_node_before(size_type bkt, bucket_type node) -> bucket_type {
         bucket_type prev = nullptr;
         bucket_type cur = _buckets[bkt];
 
-        while (cur && BKT_NUM(cur) == bkt) {
-            bucket_type next = NEXT(cur);
-            if (EQUAL(value, cur -> value)) {
-                if (prev == nullptr) {
-                    _buckets[bkt] = next;
-                } else {
-                    cur -> next = next;
-                }
-                destroy_node(cur);
-                --_count;
-            } else {
-                prev = cur;
-            }
-            cur = next;
+        if (cur == node) {
+            cur = _start;
         }
 
-        return count - _count;
-    }
-
-    template <class K, class V, class Ex, class Eq, class H, class A>
-    auto hash_table<K, V, Ex, Eq, H, A>::find_node_before(size_type bkt, const V& value) -> HxSTL::pair<bool, bucket_type> {
-        bucket_type prev = nullptr;
-        bucket_type cur = _buckets[bkt];
-
-        while (cur && BKT_NUM(cur) == bkt) {
-            if (EQUAL(value, cur -> value)) {
-                return HxSTL::pair<bool, bucket_type>(true, prev);
-            }
+        while (cur != node) {
             prev = cur;
             cur = NEXT(cur);
         }
 
-        return HxSTL::pair<bool, bucket_type>(false, nullptr);
+        return prev;
+    }
+
+    template <class K, class V, class Ex, class Eq, class H, class A>
+    auto hash_table<K, V, Ex, Eq, H, A>::find_node(size_type bkt, const V& value) -> bucket_type {
+        for (bucket_type cur = _buckets[bkt]; cur && BKT_NUM(cur) == bkt; cur = NEXT(cur)) {
+            if (EQUAL(value, cur -> value)) {
+                return cur;
+            }
+        }
+        return nullptr;
     }
 
     template <class K, class V, class Ex, class Eq, class H, class A>
@@ -478,18 +488,16 @@ namespace HxSTL {
     auto hash_table<K, V, Ex, Eq, H, A>::insert_equal(T&& value) -> iterator {
         rehash(_count + 1);
 
-        size_type bkt = BKT_NUM(value);
         bucket_type node = create_node(HxSTL::forward<T>(value));
+        size_type bkt = BKT_NUM(value);
+        bucket_type temp = find_node(bkt, node -> value);
 
-        for (bucket_type cur = _buckets[bkt]; cur && BKT_NUM(cur) == bkt; cur = NEXT(cur)) {
-            if (EQUAL(value, cur -> value)) {
-                insert_aux(cur, node);
-                ++_count;
-                return node;
-            }
+        if (temp) {
+            insert_aux(temp, node);
+        } else {
+            insert_aux(bkt, node);
         }
 
-        insert_aux(bkt, node);
         ++_count;
         return node;
     }
@@ -502,50 +510,109 @@ namespace HxSTL {
     template <class K, class V, class Ex, class Eq, class H, class A>
     template <class T>
     auto hash_table<K, V, Ex, Eq, H, A>::insert_unique(T&& value) -> HxSTL::pair<iterator, bool> {
-        rehash(_count + 1);
-
         size_type bkt = BKT_NUM(value);
+        bucket_type node = find_node(bkt, value);
 
-        for (bucket_type cur = _buckets[bkt]; cur && BKT_NUM(cur) == bkt; cur = NEXT(cur)) {
-            if (EQUAL(value, cur -> value)) {
-                return HxSTL::pair<iterator, bool>(cur, false);
-            }
+        if (node) {
+            return HxSTL::pair<iterator, bool>(node, false);
         }
 
-        bucket_type node = create_node(HxSTL::forward<T>(value));
+        rehash(_count + 1);
+
+        node = create_node(HxSTL::forward<T>(value));
         insert_aux(bkt, node);
         ++_count;
         return HxSTL::pair<iterator, bool>(node, true);
     }
 
     template <class K, class V, class Ex, class Eq, class H, class A>
-    auto hash_table<K, V, Ex, Eq, H, A>::equal_range(const K& key) -> HxSTL::pair<iterator, iterator> {
-        iterator it1 = find(key);
-        iterator it2 = it1;
-        iterator first = it1;
-        iterator last = end(bucket(key));
-        while (it2 != last) {
-            if (Eq()(key, Ex()(*first))) {
-                it2 = first;
-            }
-            ++it2;
+    template <class... Args>
+    auto hash_table<K, V, Ex, Eq, H, A>::emplace_equal(Args&&... args) -> iterator {
+        rehash(_count + 1);
+
+        bucket_type node = create_node(HxSTL::forward<Args>(args)...);
+        size_type bkt = BKT_NUM(node -> value);
+        bucket_type temp = find_node(bkt, node -> value);
+
+        if (temp) {
+            insert_aux(temp, node);
+        } else {
+            insert_aux(bkt, node);
         }
-        return HxSTL::pair<iterator, iterator>(it1, it2);
+
+        ++_count;
+        return node;
     }
 
     template <class K, class V, class Ex, class Eq, class H, class A>
-    auto hash_table<K, V, Ex, Eq, H, A>::equal_range(const K& key) const -> HxSTL::pair<const_iterator, const_iterator> {
-        const_iterator it1 = find(key);
-        const_iterator it2 = it1;
-        const_iterator first = it1;
-        const_iterator last = end(bucket(key));
-        while (it2 != last) {
-            if (Eq()(key, Ex()(*first))) {
-                it2 = first;
-            }
-            ++it2;
+    template <class... Args>
+    auto hash_table<K, V, Ex, Eq, H, A>::emplace_unique(Args&&... args) -> HxSTL::pair<iterator, bool> {
+        bucket_type node = create_node(HxSTL::forward<Args>(args)...);
+        size_type bkt = BKT_NUM(node -> value);
+        bucket_type temp = find_node(bkt, node -> value);
+
+        if (temp) {
+            return HxSTL::pair<iterator, bool>(temp, false);
         }
-        return HxSTL::pair<const_iterator, const_iterator>(it1, it2);
+
+        rehash(_count + 1);
+
+        insert_aux(bkt, node);
+        ++_count;
+        return HxSTL::pair<iterator, bool>(node, true);
+    }
+
+    template <class K, class V, class Ex, class Eq, class H, class A>
+    auto hash_table<K, V, Ex, Eq, H, A>::erase(const_iterator pos) -> iterator {
+        bucket_type node = static_cast<bucket_type>((pos++).node);
+
+        size_type bkt = BKT_NUM(node -> value);
+        bucket_type prev = find_node_before(bkt, node);
+
+        _buckets[bkt] = static_cast<bucket_type>(node -> next);
+        if (prev) {
+            prev -> next = node -> next;
+            destroy_node(node);
+        } else {
+            _start = _buckets[bkt];
+        }
+
+        --_count;
+        return iterator(pos.node);
+    }
+
+    template <class K, class V, class Ex, class Eq, class H, class A>
+    auto hash_table<K, V, Ex, Eq, H, A>::erase(const_iterator first, const_iterator last) -> iterator {
+        if (first != last) {
+            if (first == begin() && last == end()) {
+                clear();
+            } else {
+                size_type bkt = BKT_NUM(*first);
+                bucket_type cur = find_node_before(bkt, static_cast<bucket_type>(first.node));
+
+                while (first != last) {
+                    destroy_node(static_cast<bucket_type>((first++).node));
+                    --_count;
+                }
+
+                _buckets[bkt] = static_cast<bucket_type>(last.node);
+                if (cur) {
+                    cur -> next = last.node;
+                } else {
+                    _start = _buckets[bkt];
+                }
+            }
+        }
+
+        return iterator(last.node);
+    }
+
+    template <class K, class V, class Ex, class Eq, class H, class A>
+    auto hash_table<K, V, Ex, Eq, H, A>::erase(const V& value) -> size_type {
+        size_type old_count = _count;
+        HxSTL::pair<const_iterator, const_iterator> pr = equal_range(value);
+        erase(pr.first, pr.second);
+        return old_count - _count;
     }
 
     template <class K, class V, class Ex, class Eq, class H, class A>
