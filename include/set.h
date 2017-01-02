@@ -34,27 +34,16 @@ namespace HxSTL {
 
         explicit set(const Compare& comp, const Alloc& alloc = Alloc()): _rep(comp, alloc) {}
 
-        explicit set(const Alloc& alloc): _rep(Compare(), alloc) {}
-
         template <class InputIt>
         set(InputIt first, InputIt last, const Compare& comp = Compare(), const Alloc& alloc = Alloc())
             : _rep(comp, alloc) { insert(first, last); }
 
-        template <class InputIt>
-        set(InputIt first, InputIt last, const Alloc& alloc): set(first, last, Compare(), alloc) {}
-
         set(const set& other): _rep(other._rep) {}
-
-        set(const set& other, const Alloc& alloc): _rep(other._rep, alloc) {}
 
         set(set&& other): _rep(HxSTL::move(other._rep)) {}
 
-        set(set&& other, const Alloc& alloc): _rep(HxSTL::move(other._rep), alloc) {}
-
         set(HxSTL::initializer_list<value_type> init, const Compare& comp = Compare(), const Alloc& alloc = Alloc())
             : _rep(comp, alloc) { insert(init.begin(), init.end()); }
-
-        set(HxSTL::initializer_list<value_type> init, const Alloc& alloc): set(init, Compare(), alloc) {}
 
         set& operator=(const set& other) {
             _rep = other._rep;

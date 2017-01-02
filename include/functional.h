@@ -139,6 +139,14 @@ namespace HxSTL {
         const T& operator()(const T& value) const { return value; }
     };
 
+    template <class T>
+    struct __select1st;
+   
+    template <class F, class S>
+    struct __select1st<HxSTL::pair<F, S>> {
+        const F& operator()(const HxSTL::pair<F, S>& pr) const { return pr.first; }
+    };
+
 }
 
 

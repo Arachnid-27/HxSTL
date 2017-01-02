@@ -3,6 +3,7 @@
 
 
 #include "allocator.h"
+#include "iterator.h"
 #include "rb_tree_base.h"
 
 
@@ -136,7 +137,7 @@ namespace HxSTL {
         HxSTL::pair<bool, link_type> get_insert_hint_equal_pos(const_iterator hint, const V& value) const;
         HxSTL::pair<bool, link_type> get_insert_hint_unique_pos(const_iterator hint, const V& value) const;
     public:
-        explicit rb_tree(const Compare& comp = Compare(), const Alloc& alloc = Alloc())
+        explicit rb_tree(const Compare& comp, const Alloc& alloc)
             : _compare(comp), _alloc(alloc), _node_alloc(node_allocator_type()) {
                 _header = _node_alloc.allocate(1);
                 _header -> color = __red;
@@ -148,19 +149,9 @@ namespace HxSTL {
                 initialize_aux(other.root());
             }
 
-        rb_tree(const rb_tree& other, const Alloc& alloc): _count(other._count), 
-            _compare(other._compare), _alloc(alloc), _node_alloc(allocator_type()) {
-                initialize_aux(other.root());
-            }
-
         rb_tree(rb_tree&& other): _count(other._count), _header(other._header),
             _compare(HxSTL::move(other._compare)), _alloc(HxSTL::move(other._alloc)), 
             _node_alloc(HxSTL::move(other._node_alloc)) {
-                other._header = NULL;
-            }
-
-        rb_tree(rb_tree&& other, const Alloc& alloc): _count(other._count), _header(other._header),
-            _compare(HxSTL::move(other._compare)), _alloc(alloc), _node_alloc(allocator_type()) {
                 other._header = NULL;
             }
 
@@ -186,7 +177,7 @@ namespace HxSTL {
             rb_tree(HxSTL::move(other)).swap(*this);
             return *this;
         }
-    public:
+
         Alloc get_allocator() const { return _alloc; }
 
         Compare get_compare() const { return _compare; }

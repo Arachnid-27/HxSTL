@@ -4,7 +4,6 @@
 
 #include "allocator.h"
 #include "hash_table_base.h"
-#include <iostream>
 
 
 namespace HxSTL {
@@ -49,7 +48,7 @@ namespace HxSTL {
 
         void increment() {
             link_type next = static_cast<link_type>(node -> next);
-            node = next && bucket == Hash()(Extract()(next -> value)) ? next : nullptr;
+            node = next && bucket == (Hash()(Extract()(next -> value)) % bucket_count) ? next : nullptr;
         }
     };
 
@@ -180,6 +179,7 @@ namespace HxSTL {
         void insert_aux(size_type bkt, bucket_type node);
         void insert_aux(bucket_type pos, bucket_type node);
         void clear_aux();
+        void rehash_aux(size_type bucket_count);
     public:
         hash_table(size_type bucket, const Hash& hash, const Equal& equal, const Alloc& alloc)
             : _max_factor(1.0), _count(0), _hash(hash), _equal(equal), _alloc(alloc) {
@@ -293,30 +293,33 @@ namespace HxSTL {
 
         size_type count(const Key& key) const noexcept {
             const size_type bkt = bucket(key);
-            return HxSTL::count_if(begin(bkt), end(bkt), [&key, this] (const int &val) { return this -> _equal(key, Extract()(val)); });
+            return HxSTL::count_if(begin(bkt), end(bkt), 
+                    [&key, this] (const int &value) { return this -> _equal(key, Extract()(value)); });
         }
 
         iterator find(const Key& key) {
             const size_type bkt = bucket(key);
-            return HxSTL::find_if(begin(bkt), end(bkt), [&key, this] (const int &val) { return this -> _equal(key, Extract()(val)); });
+            return HxSTL::find_if(begin(bkt), end(bkt), 
+                    [&key, this] (const int &value) { return this -> _equal(key, Extract()(value)); });
         }
 
         const_iterator find(const Key& key) const {
             const size_type bkt = bucket(key);
-            return HxSTL::find_if(begin(bkt), end(bkt), [&key, this] (const int &val) { return this -> _equal(key, Extract()(val)); });
+            return HxSTL::find_if(begin(bkt), end(bkt), 
+                    [&key, this] (const int &value) { return this -> _equal(key, Extract()(value)); });
         }
 
         HxSTL::pair<iterator, iterator> equal_range(const Key& key) {
             iterator it1 = find(key);
             iterator it2 = HxSTL::find_if_not(it1, end(),
-                    [&key, this] (const int &val) { return this -> _equal(key, Extract()(val)); });
+                    [&key, this] (const int &value) { return this -> _equal(key, Extract()(value)); });
             return HxSTL::pair<iterator, iterator>(it1, it2);
         }
 
         HxSTL::pair<const_iterator, const_iterator> equal_range(const Key& key) const {
             const_iterator it1 = find(key);
             const_iterator it2 = HxSTL::find_if_not(it1, end(),
-                    [&key, this] (const int &val) { return this -> _equal(key, Extract()(val)); });
+                    [&key, this] (const int &value) { return this -> _equal(key, Extract()(value)); });
             return HxSTL::pair<const_iterator, const_iterator>(it1, it2);
         }
 
@@ -364,7 +367,13 @@ namespace HxSTL {
 
         void max_load_factor(float ml) noexcept { _max_factor = ml; }
 
-        void rehash(size_type count);
+        void rehash(size_type count) {
+            if (size() / max_load_factor() < count) rehash_aux(count);
+        }
+
+        Hash hash_function() const noexcept { return _hash; }
+
+        Equal key_eq() const noexcept { return _equal; }
     };
 
     template <class K, class V, class Ex, class Eq, class H, class A>
@@ -484,13 +493,32 @@ namespace HxSTL {
     }
 
     template <class K, class V, class Ex, class Eq, class H, class A>
+    void hash_table<K, V, Ex, Eq, H, A>::rehash_aux(size_type count) {
+        // 暂不考虑异常
+        bucket_type first = _start;
+
+        _bucket_alloc.deallocate(_buckets, _bucket_count);
+
+        initialize_aux(count);
+
+        while (first != nullptr) {
+            bucket_type node = first;
+            first = NEXT(first);
+            size_type bkt = BKT_NUM(node);
+            insert_aux(bkt, node);
+        }
+    }
+
+    template <class K, class V, class Ex, class Eq, class H, class A>
     template <class T>
     auto hash_table<K, V, Ex, Eq, H, A>::insert_equal(T&& value) -> iterator {
-        rehash(_count + 1);
-
         bucket_type node = create_node(HxSTL::forward<T>(value));
         size_type bkt = BKT_NUM(value);
         bucket_type temp = find_node(bkt, node -> value);
+
+        if ((_count + 1) * 1.0 / _bucket_count > max_load_factor()) {
+            rehash_aux(_bucket_count + 1);
+        }
 
         if (temp) {
             insert_aux(temp, node);
@@ -517,7 +545,9 @@ namespace HxSTL {
             return HxSTL::pair<iterator, bool>(node, false);
         }
 
-        rehash(_count + 1);
+        if ((_count + 1) * 1.0 / _bucket_count > max_load_factor()) {
+            rehash_aux(_bucket_count + 1);
+        }
 
         node = create_node(HxSTL::forward<T>(value));
         insert_aux(bkt, node);
@@ -528,11 +558,13 @@ namespace HxSTL {
     template <class K, class V, class Ex, class Eq, class H, class A>
     template <class... Args>
     auto hash_table<K, V, Ex, Eq, H, A>::emplace_equal(Args&&... args) -> iterator {
-        rehash(_count + 1);
-
         bucket_type node = create_node(HxSTL::forward<Args>(args)...);
         size_type bkt = BKT_NUM(node -> value);
         bucket_type temp = find_node(bkt, node -> value);
+
+        if ((_count + 1) * 1.0 / _bucket_count > max_load_factor()) {
+            rehash_aux(_bucket_count + 1);
+        }
 
         if (temp) {
             insert_aux(temp, node);
@@ -555,7 +587,9 @@ namespace HxSTL {
             return HxSTL::pair<iterator, bool>(temp, false);
         }
 
-        rehash(_count + 1);
+        if ((_count + 1) * 1.0 / _bucket_count > max_load_factor()) {
+            rehash_aux(_bucket_count + 1);
+        }
 
         insert_aux(bkt, node);
         ++_count;
@@ -613,25 +647,6 @@ namespace HxSTL {
         HxSTL::pair<const_iterator, const_iterator> pr = equal_range(value);
         erase(pr.first, pr.second);
         return old_count - _count;
-    }
-
-    template <class K, class V, class Ex, class Eq, class H, class A>
-    void hash_table<K, V, Ex, Eq, H, A>::rehash(size_type count) {
-        if (count < size() / max_load_factor()) {
-            // 暂不考虑异常
-            bucket_type first = _start;
-
-            _bucket_alloc.deallocate(_buckets, _bucket_count);
-
-            initialize_aux(_bucket_count);
-
-            while (first != nullptr) {
-                bucket_type node = first;
-                first = NEXT(first);
-                size_type bkt = BKT_NUM(node);
-                insert_aux(bkt, node);
-            }
-        }
     }
 
 }

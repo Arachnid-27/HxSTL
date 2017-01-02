@@ -253,6 +253,96 @@ int main() {
             assert(s2.equal_range(6).first == s2.end());
         }
 
+        { // begin(int) cbegin(int)
+            HxSTL::unordered_set<int> s1({ 0, 1, 54 });
+            const HxSTL::unordered_set<int> s2({ 1, 2 });
+
+            assert(*s1.begin(1) == 1);
+            assert(*(++s1.begin(1)) == 54);
+            assert(*s2.begin(1) == 1);
+            assert(*s1.cbegin(1) == 1);
+            assert(*s2.cbegin(1) == 1);
+        }
+
+        { // end(int) cend(int)
+            HxSTL::unordered_set<int> s1({ 0 });
+            const HxSTL::unordered_set<int> s2({ 1 });
+
+            assert(s1.end(0) == ++s1.begin(0));
+            assert(s2.end(1) == ++s2.begin(1));
+            assert(s1.cend(0) == ++s1.begin(0));
+            assert(s2.cend(1) == ++s2.begin(1));
+        }
+
+        { // bucket_count
+            HxSTL::unordered_set<int> s1;
+            const HxSTL::unordered_set<int> s2(100);
+
+            assert(s1.bucket_count() == 53);
+            assert(s2.bucket_count() == 193);
+        }
+
+        { // max_bucket_count
+            HxSTL::unordered_set<int> s1;
+
+            assert(s1.max_bucket_count() == 4294967291);
+        }
+
+        { // bucket_size
+            HxSTL::unordered_set<int> s1({ 0, 1, 54 });
+
+            assert(s1.bucket_size(0) == 1);
+            assert(s1.bucket_size(1) == 2);
+            assert(s1.bucket_size(2) == 0);
+        }
+
+        { // bucket
+            HxSTL::unordered_set<int> s1;
+
+            assert(s1.bucket(0) == 0);
+            assert(s1.bucket(100) == 47);
+        }
+
+        { // load_factor
+            HxSTL::unordered_set<int> s1({ 1 });
+
+            assert((s1.load_factor() - (1.0 / 53)) < 1e-6);
+        }
+
+        { // max_load_factor
+            HxSTL::unordered_set<int> s1;
+
+            assert(s1.max_load_factor() == 1.0);
+
+            s1.max_load_factor(2.0);
+
+            assert(s1.max_load_factor() == 2.0);
+        }
+
+        { // rehash
+            HxSTL::unordered_set<int> s1({ 0, 1, 2, 3, 54 });
+
+            s1.rehash(100);
+
+            assert(s1.bucket_count() == 193);
+            assert(s1 == HxSTL::unordered_set<int>({ 3, 2, 1, 54, 0 }, 100));
+        }
+
+        { // reserve
+            HxSTL::unordered_set<int> s1;
+            HxSTL::unordered_set<int> s2;
+
+            s1.max_load_factor(2.0);
+            s1.reserve(100);
+            s2.reserve(60);
+
+            assert(s1.bucket_count() == 53);
+            assert(s2.bucket_count() == 97);
+        }
+
+    }
+
+    { // non-member
     }
 
     printf("\033[1;32m=================================================\033[0m\n");

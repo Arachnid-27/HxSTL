@@ -2,6 +2,7 @@
 #define _UNORDERED_SET_
 
 
+#include <cmath>
 #include "hash_table.h"
 #include "functional.h"
 
@@ -32,7 +33,9 @@ namespace HxSTL {
     protected:
         rep_type _rep;
     public:
-        explicit unordered_set(size_type bucket = 0, const Hash& hash = Hash(), 
+        unordered_set(): unordered_set(0) {}
+
+        explicit unordered_set(size_type bucket, const Hash& hash = Hash(), 
                 const Equal& equal = Equal(), const Alloc& alloc = Alloc())
             : _rep(bucket, hash, equal, alloc) {}
 
@@ -170,11 +173,11 @@ namespace HxSTL {
 
         void rehash(size_type count) { _rep.rehash(count); }
 
-        void reverse(size_type count);
+        void reserve(size_type count) { _rep.rehash(ceil(count / max_load_factor())); }
 
-        Hash hash_function() const noexcept;
+        Hash hash_function() const noexcept { return _rep.hash_function(); }
 
-        Equal key_eq() const noexcept;
+        Equal key_eq() const noexcept { return _rep.key_eq(); }
     public:
         template <class K, class H, class E, class A>
         friend bool operator==(const unordered_set<K, H, E, A> &lhs, const unordered_set<K, H, E, A> &rhs);

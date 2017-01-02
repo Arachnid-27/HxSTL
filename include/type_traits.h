@@ -72,6 +72,21 @@ namespace HxSTL {
     };
 
     template <class T>
+    struct remove_extents {
+        typedef T       type;
+    };
+
+    template <class T>
+    struct remove_extents<T[]> {
+        typedef T       type;
+    };
+
+    template <class T, size_t N>
+    struct remove_extents<T[N]> {
+        typedef T       type;
+    };
+
+    template <class T>
     struct remove_all_extents {
         typedef T       type;
     };
@@ -340,6 +355,24 @@ namespace HxSTL {
         __is_no_qualified_function<T>::value || 
         is_object<T>::value> {};
 
+    template <class T, bool is_function_type = false>
+    struct __add_pointer {
+        typedef typename HxSTL::remove_cv<T>::type*     type;
+    };
+
+    template <class T>
+    struct __add_pointer<T, true> {
+        typedef T       type;
+    };
+
+    template <class T, class... Args>
+    struct __add_pointer<T(Args...), true> {
+        typedef T(*type)(Args...);
+    };
+
+    template <class T>
+    struct add_pointer: public __add_pointer<T, HxSTL::is_function<T>::value> {};
+
     template <class T, bool = __is_referenable<T>::value>
     struct add_lvalue_reference {
         typedef T       type;
@@ -424,6 +457,22 @@ namespace HxSTL {
         public integeral_constant<bool, 
         is_destructible<T>::value && 
         __has_trivial_destructor(T)> {};
+
+    template <class T>
+    struct decay {
+    private:
+        typedef typename HxSTL::remove_reference<T>::type U;
+    public:
+        typedef typename HxSTL::conditional<
+            HxSTL::is_array<U>::value,
+            typename HxSTL::remove_extents<U>::type*,
+            typename HxSTL::conditional<
+                HxSTL::is_function<U>::value,
+                typename HxSTL::add_pointer<U>::type,
+                typename HxSTL::remove_cv<U>::type
+            >::type
+        >::type         type;
+    };
 
 }
 
