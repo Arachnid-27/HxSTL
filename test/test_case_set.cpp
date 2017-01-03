@@ -241,21 +241,15 @@ int main() {
 
             { // before to right
                 HxSTL::set<int> s1({ 6, 4, 7, 3 });
-                auto hint = s1.cbegin();
 
-                ++hint, ++hint;
-
-                assert(*(s1.emplace_hint(hint, 5)) == 5);
+                assert(*(s1.emplace_hint(++++s1.begin(), 5)) == 5);
                 assert(s1 == HxSTL::set<int>({ 3, 4, 5, 6, 7 }));
             }
 
             { // before to left
                 HxSTL::set<int> s1({ 4, 3, 6, 7 });
-                auto hint = s1.cbegin();
 
-                ++hint, ++hint;
-
-                assert(*(s1.emplace_hint(hint, 5)) == 5);
+                assert(*(s1.emplace_hint(++++s1.begin(), 5)) == 5);
                 assert(s1 == HxSTL::set<int>({ 3, 4, 5, 6, 7 }));
             }
 

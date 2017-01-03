@@ -9,7 +9,7 @@
 namespace HxSTL {
 
     template <class Key, class Compare = HxSTL::less<Key>, class Alloc = HxSTL::allocator<Key>>
-    class set {
+    class multiset {
     public:
         typedef Key                                     key_type;
         typedef Key                                     value_type;
@@ -32,32 +32,32 @@ namespace HxSTL {
     protected:
         rep_type _rep;
     public:
-        set(): set(Compare()) {}
+        multiset(): multiset(Compare()) {}
 
-        explicit set(const Compare& comp, const Alloc& alloc = Alloc()): _rep(comp, alloc) {}
+        explicit multiset(const Compare& comp, const Alloc& alloc = Alloc()): _rep(comp, alloc) {}
 
         template <class InputIt>
-        set(InputIt first, InputIt last, const Compare& comp = Compare(), const Alloc& alloc = Alloc())
+        multiset(InputIt first, InputIt last, const Compare& comp = Compare(), const Alloc& alloc = Alloc())
             : _rep(comp, alloc) { insert(first, last); }
 
-        set(const set& other): _rep(other._rep) {}
+        multiset(const multiset& other): _rep(other._rep) {}
 
-        set(set&& other): _rep(HxSTL::move(other._rep)) {}
+        multiset(multiset&& other): _rep(HxSTL::move(other._rep)) {}
 
-        set(HxSTL::initializer_list<value_type> init, const Compare& comp = Compare(), const Alloc& alloc = Alloc())
+        multiset(HxSTL::initializer_list<value_type> init, const Compare& comp = Compare(), const Alloc& alloc = Alloc())
             : _rep(comp, alloc) { insert(init.begin(), init.end()); }
 
-        set& operator=(const set& other) {
+        multiset& operator=(const multiset& other) {
             _rep = other._rep;
             return *this;
         }
 
-        set& operator=(set&& other) {
+        multiset& operator=(multiset&& other) {
             _rep = HxSTL::move(other._rep);
             return *this;
         }
 
-        set& operator=(HxSTL::initializer_list<value_type> init) {
+        multiset& operator=(HxSTL::initializer_list<value_type> init) {
             clear();
             insert(init.begin(), init.end());
             return *this;
@@ -97,25 +97,25 @@ namespace HxSTL {
 
         void clear() { _rep.clear(); }
 
-        HxSTL::pair<iterator, bool> insert(const value_type& value) {
-            return _rep.insert_unique(value);
+        iterator insert(const value_type& value) {
+            return _rep.insert_equal(value);
         }
 
-        HxSTL::pair<iterator, bool> insert(value_type&& value) {
-            return _rep.insert_unique(value);
+        iterator insert(value_type&& value) {
+            return _rep.insert_equal(value);
         }
 
         iterator insert(const_iterator hint, const value_type& value) {
-            return _rep.insert_unique(hint, value);
+            return _rep.insert_equal(hint, value);
         }
 
         iterator insert(const_iterator hint, value_type&& value) {
-            return _rep.insert_unique(hint, value);
+            return _rep.insert_equal(hint, value);
         }
 
         template <class InputIt>
         void insert(InputIt first, InputIt last) {
-            while (first != last) _rep.insert_unique(*(first++));
+            while (first != last) _rep.insert_equal(*(first++));
         }
 
         void insert(HxSTL::initializer_list<value_type> init) {
@@ -123,13 +123,13 @@ namespace HxSTL {
         }
 
         template <class... Args>
-        HxSTL::pair<iterator, bool> emplace(Args&&... args) {
-            return _rep.emplace_unique(HxSTL::forward<Args>(args)...);
+        iterator emplace(Args&&... args) {
+            return _rep.emplace_equal(HxSTL::forward<Args>(args)...);
         }
 
         template <class... Args>
         iterator emplace_hint(const_iterator hint, Args&&... args) {
-            return _rep.emplace_hint_unique(hint, HxSTL::forward<Args>(args)...);
+            return _rep.emplace_hint_equal(hint, HxSTL::forward<Args>(args)...);
         }
         
         iterator erase(const_iterator pos) { return _rep.erase(pos); }
@@ -138,7 +138,7 @@ namespace HxSTL {
 
         size_type erase(const Key& key) { return _rep.erase(key); }
 
-        void swap(set& other) { HxSTL::swap(_rep, other._rep); }
+        void swap(multiset& other) { HxSTL::swap(_rep, other._rep); }
 
         size_type count(const Key& key) const { return _rep.count(key); }
 
@@ -163,16 +163,16 @@ namespace HxSTL {
         value_compare value_comp() const { return _rep.get_compare(); }
     public:
         template <class K, class C, class A>
-        friend bool operator==(const set<K, C, A> &lhs, const set<K, C, A> &rhs);
+        friend bool operator==(const multiset<K, C, A> &lhs, const multiset<K, C, A> &rhs);
     };
 
     template <class Key, class Compare, class Alloc>
-    bool operator==(const set<Key, Compare, Alloc>& lhs, const set<Key, Compare, Alloc>& rhs) {
+    bool operator==(const multiset<Key, Compare, Alloc>& lhs, const multiset<Key, Compare, Alloc>& rhs) {
         return lhs._rep == rhs._rep;
     }
 
     template <class Key, class Compare, class Alloc>
-    bool operator!=(const set<Key, Compare, Alloc>& lhs, const set<Key, Compare, Alloc>& rhs) {
+    bool operator!=(const multiset<Key, Compare, Alloc>& lhs, const multiset<Key, Compare, Alloc>& rhs) {
         return !(lhs == rhs);
     }
 

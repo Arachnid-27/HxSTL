@@ -108,17 +108,17 @@ namespace HxSTL {
         void destroy_node(link_type node);
         void reset();
 
-        link_type root() const { return (link_type) (_header -> parent); }
-        link_type leftmost() const { return (link_type) (_header -> left); }
-        link_type rightmost() const { return (link_type) (_header -> right); }
+        link_type root() const { return static_cast<link_type>(_header -> parent); }
+        link_type leftmost() const { return static_cast<link_type>(_header -> left); }
+        link_type rightmost() const { return static_cast<link_type>(_header -> right); }
 
-        static link_type LEFT(link_type node) { return (link_type) (node -> left); }
-        static link_type RIGHT(link_type node) { return (link_type) (node -> right); }
+        static link_type LEFT(link_type node) { return static_cast<link_type>(node -> left); }
+        static link_type RIGHT(link_type node) { return static_cast<link_type>(node -> right); }
         static reference VALUE(link_type node) { return node -> value; }
         static K KEY(link_type node) { return KOV()(node -> value); }
 
-        static reference VALUE(base_link_type node) { return ((link_type) node) -> value; }
-        static K KEY(base_link_type node) { return KOV()(((link_type) node) -> value); }
+        static reference VALUE(base_link_type node) { return (static_cast<link_type>(node)) -> value; }
+        static K KEY(base_link_type node) { return KOV()((static_cast<link_type>(node)) -> value); }
 
         void clear_aux(link_type x);
         void initialize_aux(link_type x);
@@ -178,19 +178,19 @@ namespace HxSTL {
             return *this;
         }
 
-        Alloc get_allocator() const { return _alloc; }
+        Alloc get_allocator() const noexcept { return _alloc; }
 
-        Compare get_compare() const { return _compare; }
+        Compare get_compare() const noexcept { return _compare; }
 
-        iterator begin() const { return leftmost(); }
+        iterator begin() const noexcept { return leftmost(); }
 
-        iterator end() const { return _header; }
+        iterator end() const noexcept { return _header; }
         
-        bool empty() const { return _count == 0; }
+        bool empty() const noexcept { return _count == 0; }
     
-        size_type size() const { return _count; }
+        size_type size() const noexcept { return _count; }
 
-        size_type max_size() const { return _alloc.max_size(); }
+        size_type max_size() const noexcept { return _alloc.max_size(); }
 
         template <class... Args>
         iterator emplace_equal(Args&&... args) {
@@ -201,6 +201,16 @@ namespace HxSTL {
 
         template <class... Args>
         iterator emplace_hint_equal(const_iterator hint, Args&&... args) {
+            link_type z = create_node(HxSTL::forward<Args>(args)...);
+
+            HxSTL::pair<bool, link_type> pr = get_insert_hint_equal_pos(hint, z -> value);
+            if (pr.second == NULL) {
+                emplace_aux(get_insert_equal_pos(z -> value), z);
+            } else {
+                emplace_aux(pr.first, pr.second, z);
+            }
+
+            return z;
         }
 
         template <class... Args>
@@ -393,8 +403,7 @@ namespace HxSTL {
     }
 
     template <class K, class V, class KOV, class Compare, class Alloc>
-    HxSTL::pair<typename rb_tree<K, V, KOV, Compare, Alloc>::iterator, bool>
-    rb_tree<K, V, KOV, Compare, Alloc>::emplace_unique_aux(link_type z) {
+    auto rb_tree<K, V, KOV, Compare, Alloc>::emplace_unique_aux(link_type z) -> HxSTL::pair<iterator, bool> {
         HxSTL::pair<bool, link_type> pr = get_insert_unique_pos(z -> value);
         if (pr.first) {
             emplace_aux(pr.second, z);
@@ -417,16 +426,14 @@ namespace HxSTL {
 
     template <class K, class V, class KOV, class Compare, class Alloc>
     template <class T>
-    typename rb_tree<K, V, KOV, Compare, Alloc>::iterator
-    rb_tree<K, V, KOV, Compare, Alloc>::insert_aux(link_type p, T&& value) {
+    auto rb_tree<K, V, KOV, Compare, Alloc>::insert_aux(link_type p, T&& value) -> iterator {
         bool is_left = p == _header || _compare(KOV()(value), KEY(p));
         return insert_aux(is_left, p, HxSTL::forward<T>(value));
     }
 
     template <class K, class V, class KOV, class Compare, class Alloc>
     template <class T>
-    typename rb_tree<K, V, KOV, Compare, Alloc>::iterator
-    rb_tree<K, V, KOV, Compare, Alloc>::insert_aux(bool is_left, link_type p, T&& value) {
+    auto rb_tree<K, V, KOV, Compare, Alloc>::insert_aux(bool is_left, link_type p, T&& value) -> iterator {
         link_type z = create_node(HxSTL::forward<T>(value));
 
         __rb_tree_insert(is_left, z, p, _header);
@@ -436,8 +443,7 @@ namespace HxSTL {
     }
 
     template <class K, class V, class KOV, class Compare, class Alloc>
-    typename rb_tree<K, V, KOV, Compare, Alloc>::iterator
-    rb_tree<K, V, KOV, Compare, Alloc>::lower_bound_aux(link_type x, link_type y, const K& key) const {
+    auto rb_tree<K, V, KOV, Compare, Alloc>::lower_bound_aux(link_type x, link_type y, const K& key) const -> iterator {
         while (x != NULL) {
             if (!_compare(KEY(x), key)) {
                 y = x;
@@ -451,8 +457,7 @@ namespace HxSTL {
     }
 
     template <class K, class V, class KOV, class Compare, class Alloc>
-    typename rb_tree<K, V, KOV, Compare, Alloc>::iterator
-    rb_tree<K, V, KOV, Compare, Alloc>::upper_bound_aux(link_type x, link_type y, const K& key) const {
+    auto rb_tree<K, V, KOV, Compare, Alloc>::upper_bound_aux(link_type x, link_type y, const K& key) const -> iterator {
         while (x != NULL) {
             if (_compare(key, KEY(x))) {
                 y = x;
@@ -466,8 +471,7 @@ namespace HxSTL {
     }
 
     template <class K, class V, class KOV, class Compare, class Alloc>
-    typename rb_tree<K, V, KOV, Compare, Alloc>::link_type
-    rb_tree<K, V, KOV, Compare, Alloc>::get_insert_equal_pos(const V& value) const {
+    auto rb_tree<K, V, KOV, Compare, Alloc>::get_insert_equal_pos(const V& value) const -> link_type {
         link_type y = _header;
         link_type x = root();
 
@@ -480,8 +484,7 @@ namespace HxSTL {
     }
 
     template <class K, class V, class KOV, class Compare, class Alloc>
-    HxSTL::pair<bool, typename rb_tree<K, V, KOV, Compare, Alloc>::link_type>
-    rb_tree<K, V, KOV, Compare, Alloc>::get_insert_unique_pos(const V& value) const {
+    auto rb_tree<K, V, KOV, Compare, Alloc>::get_insert_unique_pos(const V& value) const -> HxSTL::pair<bool, link_type> {
         link_type y = _header;
         link_type x = root();
         bool comp = true;
@@ -505,27 +508,27 @@ namespace HxSTL {
             return HxSTL::pair<bool, link_type>(true, y);
         }
 
-        return HxSTL::pair<bool, link_type>(false, (link_type) it.node);
+        return HxSTL::pair<bool, link_type>(false, static_cast<link_type>(it.node));
     }
 
     template <class K, class V, class KOV, class Compare, class Alloc>
-    HxSTL::pair<bool, typename rb_tree<K, V, KOV, Compare, Alloc>::link_type>
-    rb_tree<K, V, KOV, Compare, Alloc>::get_insert_hint_equal_pos(const_iterator hint, const V& value) const {
+    auto rb_tree<K, V, KOV, Compare, Alloc>::get_insert_hint_equal_pos(const_iterator hint, 
+            const V& value) const -> HxSTL::pair<bool, link_type> {
         key_type k_value = KOV()(value);
 
         if (hint.node == _header && 
                 (_count == 0 || _compare(KEY(rightmost()), k_value))) { // end
             return HxSTL::pair<bool, link_type>(false, rightmost());
-        } else if (!_compare(KEY(hint.node), k_value)) { // before
+        } else if (_compare(k_value, KEY(hint.node))) { // before
             const_iterator before = hint;
 
             if (hint.node == leftmost()) {
                 return HxSTL::pair<bool, link_type>(true, leftmost());
             } else if (!_compare(k_value, KEY((--before).node))) {
                 if (before.node -> right == NULL) {
-                    return HxSTL::pair<bool, link_type>(false, (link_type) before.node);
+                    return HxSTL::pair<bool, link_type>(false, static_cast<link_type>(before.node));
                 } else {
-                    return HxSTL::pair<bool, link_type>(true, (link_type) hint.node);
+                    return HxSTL::pair<bool, link_type>(true, static_cast<link_type>(hint.node));
                 }
             }
         } else { // after
@@ -535,19 +538,21 @@ namespace HxSTL {
                 return HxSTL::pair<bool, link_type>(false, rightmost());
             } else if (!_compare((KEY((++after).node)), k_value)) {
                 if (after.node -> left == NULL) {
-                    return HxSTL::pair<bool, link_type>(true, (link_type) after.node);
+                    return HxSTL::pair<bool, link_type>(true, static_cast<link_type>(after.node));
                 } else {
-                    return HxSTL::pair<bool, link_type>(false, (link_type) hint.node);
+                    return HxSTL::pair<bool, link_type>(false, static_cast<link_type>(hint.node));
                 }
             }
         }
 
-        return HxSTL::pair<bool, link_type>(true, NULL);
+        return HxSTL::pair<bool, link_type>(false, static_cast<link_type>(NULL));
     }
 
     template <class K, class V, class KOV, class Compare, class Alloc>
-    HxSTL::pair<bool, typename rb_tree<K, V, KOV, Compare, Alloc>::link_type> 
-    rb_tree<K, V, KOV, Compare, Alloc>::get_insert_hint_unique_pos(const_iterator hint, const V& value) const {
+    auto rb_tree<K, V, KOV, Compare, Alloc>::get_insert_hint_unique_pos(const_iterator hint, 
+            const V& value) const -> HxSTL::pair<bool, link_type> {
+        // 叶子节点(不是指 NIL)的前驱后继一定是非叶子节点
+        // 非叶子节点的前驱后继一定是叶子节点(不是指 NIL)
         key_type k_value = KOV()(value);
 
         if (hint.node == _header && 
@@ -568,9 +573,9 @@ namespace HxSTL {
                     //                      /  \            / \
                     //                     o   NIL        NIL  o
                     if (before.node -> right == NULL) {
-                        return HxSTL::pair<bool, link_type>(false, (link_type) before.node);
+                        return HxSTL::pair<bool, link_type>(false, static_cast<link_type>(before.node));
                     } else {
-                        return HxSTL::pair<bool, link_type>(true, (link_type) hint.node);
+                        return HxSTL::pair<bool, link_type>(true, static_cast<link_type>(hint.node));
                     }
                 }
             } else if (_compare(KEY(hint.node), k_value)) { // after
@@ -587,27 +592,26 @@ namespace HxSTL {
                     //                     /  \           / \
                     //                   NIL   o         o  NIL 
                     if (after.node -> left == NULL) {
-                        return HxSTL::pair<bool, link_type>(true, (link_type) after.node);
+                        return HxSTL::pair<bool, link_type>(true, static_cast<link_type>(after.node));
                     } else {
-                        return HxSTL::pair<bool, link_type>(false, (link_type) hint.node);
+                        return HxSTL::pair<bool, link_type>(false, static_cast<link_type>(hint.node));
                     }
                 }
             } else { // equal
                 // (false, NULL) = 不插入
-                return HxSTL::pair<bool, link_type>(false, NULL);
+                return HxSTL::pair<bool, link_type>(false, static_cast<link_type>(NULL));
             }
         }
 
-        return HxSTL::pair<bool, link_type>(true, NULL);
+        return HxSTL::pair<bool, link_type>(true, static_cast<link_type>(NULL));
     }
 
     template <class K, class V, class KOV, class Compare, class Alloc>
-    typename rb_tree<K, V, KOV, Compare, Alloc>::iterator
-    rb_tree<K, V, KOV, Compare, Alloc>::erase(const_iterator pos)  {
+    auto rb_tree<K, V, KOV, Compare, Alloc>::erase(const_iterator pos) -> iterator {
         iterator result = iterator(pos.node);
         ++result;
 
-        link_type node = (link_type) __rb_tree_erase(pos.node, _header);
+        link_type node = static_cast<link_type>(__rb_tree_erase(pos.node, _header));
         destroy_node(node);
         --_count;
 
@@ -615,8 +619,7 @@ namespace HxSTL {
     }
 
     template <class K, class V, class KOV, class Compare, class Alloc>
-    typename rb_tree<K, V, KOV, Compare, Alloc>::iterator
-    rb_tree<K, V, KOV, Compare, Alloc>::erase(const_iterator first, const_iterator last) {
+    auto rb_tree<K, V, KOV, Compare, Alloc>::erase(const_iterator first, const_iterator last) -> iterator {
         if (first != last) {
             if (first == begin() && last == end()) {
                 clear();
@@ -631,8 +634,7 @@ namespace HxSTL {
     }
 
     template <class K, class V, class KOV, class Compare, class Alloc>
-    typename rb_tree<K, V, KOV, Compare, Alloc>::size_type
-    rb_tree<K, V, KOV, Compare, Alloc>::erase(const K& key)  {
+    auto rb_tree<K, V, KOV, Compare, Alloc>::erase(const K& key) -> size_type {
         size_type old_count = _count;
         HxSTL::pair<iterator, iterator> pr = equal_range(key);
         erase(pr.first, pr.second);
@@ -640,9 +642,7 @@ namespace HxSTL {
     }
 
     template <class K, class V, class KOV, class Compare, class Alloc>
-    HxSTL::pair<typename rb_tree<K, V, KOV, Compare, Alloc>::iterator, 
-        typename rb_tree<K, V, KOV, Compare, Alloc>::iterator> 
-    rb_tree<K, V, KOV, Compare, Alloc>::equal_range(const K& key) {
+    auto rb_tree<K, V, KOV, Compare, Alloc>::equal_range(const K& key) -> HxSTL::pair<iterator, iterator> {
         //          8(y)
         //        /   \
         //       6
@@ -671,9 +671,7 @@ namespace HxSTL {
     }
 
     template <class K, class V, class KOV, class Compare, class Alloc>
-    HxSTL::pair<typename rb_tree<K, V, KOV, Compare, Alloc>::const_iterator, 
-        typename rb_tree<K, V, KOV, Compare, Alloc>::const_iterator> 
-    rb_tree<K, V, KOV, Compare, Alloc>::equal_range(const K& key) const {
+    auto rb_tree<K, V, KOV, Compare, Alloc>::equal_range(const K& key) const -> HxSTL::pair<const_iterator, const_iterator> {
         link_type x = root();
         link_type y = _header;
 
@@ -693,15 +691,13 @@ namespace HxSTL {
     }
 
     template <class K, class V, class KOV, class Compare, class Alloc>
-    typename rb_tree<K, V, KOV, Compare, Alloc>::iterator
-    rb_tree<K, V, KOV, Compare, Alloc>::find(const K& key) {
+    auto rb_tree<K, V, KOV, Compare, Alloc>::find(const K& key) -> iterator {
         iterator it = lower_bound(key);
         return it == end() || _compare(key, KEY(it.node)) ? end() : it;
     }
 
     template <class K, class V, class KOV, class Compare, class Alloc>
-    typename rb_tree<K, V, KOV, Compare, Alloc>::const_iterator
-    rb_tree<K, V, KOV, Compare, Alloc>::find(const K& key) const {
+    auto rb_tree<K, V, KOV, Compare, Alloc>::find(const K& key) const -> const_iterator {
         const_iterator it = lower_bound(key);
         return it == end() || _compare(key, KEY(it.node)) ? end() : it;
     }
